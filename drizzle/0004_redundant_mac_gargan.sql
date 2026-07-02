@@ -1,0 +1,27 @@
+ALTER TABLE `scouting_reports` ADD `family_positive_encouragement` real;--> statement-breakpoint
+ALTER TABLE `scouting_reports` ADD `family_watching_calmly` real;--> statement-breakpoint
+ALTER TABLE `scouting_reports` ADD `family_comments_shouting_at_others` real;--> statement-breakpoint
+ALTER TABLE `scouting_reports` ADD `family_arguing_with_other_parents` real;--> statement-breakpoint
+ALTER TABLE `scouting_reports` ADD `work_rate_off_ball` real;--> statement-breakpoint
+ALTER TABLE `scouting_reports` ADD `tackling_press_defense` real;--> statement-breakpoint
+ALTER TABLE `scouting_reports` ADD `dribbling_shooting_creating` real;--> statement-breakpoint
+ALTER TABLE `scouting_reports` ADD `passing_range_under_pressure` real;--> statement-breakpoint
+ALTER TABLE `scouting_reports` ADD `first_touch_tight_space` real;--> statement-breakpoint
+ALTER TABLE `scouting_reports` ADD `space_awareness` real;--> statement-breakpoint
+ALTER TABLE `scouting_reports` ADD `team_communication` real;--> statement-breakpoint
+ALTER TABLE `scouting_reports` ADD `self_control_after_foul` real;--> statement-breakpoint
+ALTER TABLE `scouting_reports` ADD `game_reading_anticipation` real;--> statement-breakpoint
+ALTER TABLE `scouting_reports` ADD `posture_confidence` real;--> statement-breakpoint
+ALTER TABLE `scouting_reports` ADD `reaction_to_team_loss` real;--> statement-breakpoint
+ALTER TABLE `scouting_reports` ADD `reaction_to_own_loss` real;--> statement-breakpoint
+ALTER TABLE `scouting_reports` ADD `concentration_when_uninvolved` real;--> statement-breakpoint
+ALTER TABLE `scouting_reports` ADD `composure_under_pressure` real;--> statement-breakpoint
+ALTER TABLE `scouting_reports` ADD `team_organisation_encouragement` real;--> statement-breakpoint
+ALTER TABLE `scouting_reports` ADD `end_game_effort` real;--> statement-breakpoint
+ALTER TABLE `scouting_reports` ADD `respect_for_referee` real;--> statement-breakpoint
+ALTER TABLE `scouting_reports` ADD `attitude_during_substitution` real;--> statement-breakpoint
+ALTER TABLE `scouting_reports` ADD `coach_bench_interaction` real;--> statement-breakpoint
+ALTER TABLE `scouting_reports` ADD `recovery_from_tackles` real;--> statement-breakpoint
+ALTER TABLE `scouting_reports` ADD `general_technical_ability` real;--> statement-breakpoint
+ALTER TABLE `scouting_reports` ADD `mental_resilience` real;--> statement-breakpoint
+ALTER TABLE `scouting_reports` ADD `overall_potential` real;

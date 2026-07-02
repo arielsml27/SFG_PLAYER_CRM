@@ -1,0 +1,74 @@
+"use client";
+
+import Link from "next/link";
+import Image from "next/image";
+import { usePathname } from "next/navigation";
+import { Users, LayoutDashboard, ListChecks, Building2, Plus } from "lucide-react";
+
+const NAV = [
+  { href: "/", label: "דשבורד", icon: LayoutDashboard },
+  { href: "/players", label: "שחקנים", icon: Users },
+  { href: "/tasks", label: "משימות", icon: ListChecks },
+  { href: "/clubs", label: "מועדונים", icon: Building2 },
+];
+
+export default function Sidebar() {
+  const pathname = usePathname();
+
+  return (
+    <aside
+      className="w-60 shrink-0 flex flex-col h-screen sticky top-0"
+      style={{ background: "var(--sidebar-bg)", color: "var(--sidebar-fg)" }}
+    >
+      <div className="px-5 py-5 border-b border-white/10 flex items-center gap-3">
+        <Image
+          src="/logo-icon.png"
+          alt="SFG"
+          width={38}
+          height={38}
+          className="rounded-xl w-[38px] h-[38px]"
+        />
+        <div>
+          <div className="text-lg font-bold text-white leading-tight">SFG</div>
+          <div className="text-[11px]" style={{ color: "var(--gold)" }}>
+            Player CRM
+          </div>
+        </div>
+      </div>
+
+      <nav className="flex-1 py-4 px-3 space-y-1">
+        {NAV.map((item) => {
+          const Icon = item.icon;
+          const active = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                active ? "" : "hover:bg-white/10"
+              }`}
+              style={active ? { background: "var(--gold)", color: "#06280c" } : undefined}
+            >
+              <Icon size={17} />
+              <span>{item.label}</span>
+            </Link>
+          );
+        })}
+      </nav>
+
+      <div className="p-3">
+        <Link
+          href="/players/new"
+          className="btn btn-gold w-full justify-center"
+        >
+          <Plus size={16} />
+          שחקן חדש
+        </Link>
+      </div>
+
+      <div className="px-5 py-3 text-[11px] text-white/40 border-t border-white/10">
+        עובד מקומית · SQLite
+      </div>
+    </aside>
+  );
+}

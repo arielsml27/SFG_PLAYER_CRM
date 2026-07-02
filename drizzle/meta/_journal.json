@@ -1,0 +1,41 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1782904182928,
+      "tag": "0000_tan_the_hood",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1782923346827,
+      "tag": "0001_red_overlord",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1782923808395,
+      "tag": "0002_common_flatman",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1782925795296,
+      "tag": "0003_scouting_position_stars",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1782937271618,
+      "tag": "0004_redundant_mac_gargan",
+      "breakpoints": true
+    }
+  ]
+}
