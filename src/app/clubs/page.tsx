@@ -1,6 +1,8 @@
 import { getAllClubs } from "@/lib/data";
 import { createClub } from "@/lib/actions";
 
+export const dynamic = "force-dynamic";
+
 export default async function ClubsPage() {
   const clubs = await getAllClubs();
 

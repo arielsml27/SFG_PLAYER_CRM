@@ -4,6 +4,8 @@ import { formatDate, daysUntil } from "@/lib/format";
 import StatusBadge from "@/components/StatusBadge";
 import { AlertTriangle, Users, ListChecks, Briefcase, FileWarning, UserCheck } from "lucide-react";
 
+export const dynamic = "force-dynamic";
+
 export default async function DashboardPage() {
   const data = await getDashboardData();
 

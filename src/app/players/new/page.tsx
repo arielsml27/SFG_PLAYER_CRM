@@ -2,6 +2,8 @@ import PlayerForm from "@/components/PlayerForm";
 import { getAllClubs } from "@/lib/data";
 import { createPlayer } from "@/lib/actions";
 
+export const dynamic = "force-dynamic";
+
 export default async function NewPlayerPage() {
   const clubs = await getAllClubs();
   return (
