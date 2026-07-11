@@ -5,6 +5,8 @@ import { formatDate, daysUntil, calcAge } from "@/lib/format";
 import StatusBadge from "@/components/StatusBadge";
 import { Search, Download, Plus } from "lucide-react";
 
+export const dynamic = "force-dynamic";
+
 export default async function PlayersPage({
   searchParams,
 }: {

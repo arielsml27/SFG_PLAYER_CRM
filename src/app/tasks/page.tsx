@@ -8,6 +8,8 @@ import { updateTaskStatus, deleteTask, addTask } from "@/lib/actions";
 import { TASK_STATUSES, TASK_STATUS_LABELS, TASK_PRIORITIES, TASK_PRIORITY_LABELS } from "@/lib/constants";
 import { Trash2 } from "lucide-react";
 
+export const dynamic = "force-dynamic";
+
 export default async function TasksPage({ searchParams }: { searchParams: Promise<{ status?: string }> }) {
   const sp = await searchParams;
   const tasks = await getAllTasks({ status: sp.status });
