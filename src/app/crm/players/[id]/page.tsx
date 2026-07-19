@@ -2,11 +2,12 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getPlayerDetail } from "@/lib/data";
 import { formatDate, formatMoney, calcAge, daysUntil } from "@/lib/format";
-import { buildAttributeRadarData } from "@/lib/scouting";
+import { buildAttributeRadarData, buildAllAttributesData, summarizePlayerScouting } from "@/lib/scouting";
 import StatusBadge from "@/components/StatusBadge";
 import ConfirmSubmitButton from "@/components/ConfirmSubmitButton";
 import AutoSubmitSelect from "@/components/AutoSubmitSelect";
 import AttributeRadar from "@/components/AttributeRadar";
+import AttributeBarChart from "@/components/AttributeBarChart";
 import {
   addClubContract,
   deleteClubContract,
@@ -90,10 +91,10 @@ export default async function PlayerProfilePage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ tab?: string }>;
+  searchParams: Promise<{ tab?: string; saved?: string }>;
 }) {
   const { id } = await params;
-  const { tab = "overview" } = await searchParams;
+  const { tab = "overview", saved } = await searchParams;
   const detail = await getPlayerDetail(id);
   if (!detail) notFound();
 
@@ -149,11 +150,11 @@ export default async function PlayerProfilePage({
             </div>
           </div>
           <div className="flex gap-2 shrink-0">
-            <Link href={`/players/${id}/export`} target="_blank" className="btn btn-outline">
+            <Link href={`/crm/players/${id}/export`} target="_blank" className="btn btn-outline">
               <FileOutput size={14} />
               ייצוא דוח
             </Link>
-            <Link href={`/players/${id}/edit`} className="btn btn-outline">
+            <Link href={`/crm/players/${id}/edit`} className="btn btn-outline">
               <Pencil size={14} />
               עריכה
             </Link>
@@ -173,7 +174,7 @@ export default async function PlayerProfilePage({
       {/* Tabs */}
       <div className="flex gap-1 overflow-x-auto border-b" style={{ borderColor: "var(--border)" }}>
         {TABS.map((t) => (
-          <Link key={t.key} href={`/players/${id}?tab=${t.key}`} className={`tab-link ${tab === t.key ? "active" : ""}`}>
+          <Link key={t.key} href={`/crm/players/${id}?tab=${t.key}`} className={`tab-link ${tab === t.key ? "active" : ""}`}>
             {t.label}
           </Link>
         ))}
@@ -184,7 +185,7 @@ export default async function PlayerProfilePage({
         {tab === "contract" && <ContractTab id={id} detail={detail} />}
         {tab === "representation" && <RepresentationTab id={id} detail={detail} />}
         {tab === "professional" && <ProfessionalTab player={player} />}
-        {tab === "scouting" && <ScoutingReportTab id={id} player={player} report={detail.scoutingReport} />}
+        {tab === "scouting" && <ScoutingReportTab id={id} player={player} report={detail.scoutingReport} saved={saved === "1"} />}
         {tab === "links" && <LinksTab id={id} detail={detail} />}
         {tab === "videos" && <VideosTab id={id} detail={detail} />}
         {tab === "documents" && <DocumentsTab id={id} detail={detail} />}
@@ -200,6 +201,10 @@ export default async function PlayerProfilePage({
 // ---------------- Tabs ----------------
 
 function OverviewTab({ id, player, club, report }: any) {
+  const positionGroup = report?.positionGroup ?? guessPositionGroup(player.mainPosition);
+  const allAttributes = report ? buildAllAttributesData(report, positionGroup) : [];
+  const { strengths, improvements } = summarizePlayerScouting(allAttributes);
+
   const rows: [string, any][] = [
     ["שם עברית", player.fullNameHebrew],
     ["שם אנגלית", player.fullNameEnglish],
@@ -238,7 +243,7 @@ function OverviewTab({ id, player, club, report }: any) {
           <h3 className="font-bold text-sm" style={{ color: "var(--navy)" }}>
             ניתוח יכולות (לפי דוח הסקאוטינג)
           </h3>
-          <Link href={`/players/${id}?tab=scouting`} className="text-xs hover:underline" style={{ color: "var(--gold)" }}>
+          <Link href={`/crm/players/${id}?tab=scouting`} className="text-xs hover:underline" style={{ color: "var(--gold)" }}>
             לצפייה בדוח המלא ←
           </Link>
         </div>
@@ -248,6 +253,54 @@ function OverviewTab({ id, player, club, report }: any) {
           <Empty text="אין עדיין דוח סקאוטינג לשחקן זה" />
         )}
       </div>
+
+      {report && allAttributes.length > 0 && (
+        <div className="mt-6 card p-4">
+          <h3 className="font-bold text-sm mb-3" style={{ color: "var(--navy)" }}>
+            כל היכולות (דוח סקאוטינג מלא)
+          </h3>
+          <AttributeBarChart items={allAttributes} />
+        </div>
+      )}
+
+      {report && (strengths.length > 0 || improvements.length > 0) && (
+        <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="card p-4">
+            <h3 className="font-bold text-sm mb-3" style={{ color: "var(--gold)" }}>
+              יכולות חזקות
+            </h3>
+            {strengths.length === 0 ? (
+              <Empty text="אין עדיין דירוגים גבוהים מספיק" />
+            ) : (
+              <ul className="space-y-1.5 text-sm">
+                {strengths.map((s) => (
+                  <li key={s.key} className="flex items-center justify-between gap-3 border-b pb-1" style={{ borderColor: "var(--border)" }}>
+                    <span>{s.label}</span>
+                    <span className="font-medium" style={{ color: "var(--gold)" }}>{s.value.toFixed(1)} / 5</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+          <div className="card p-4">
+            <h3 className="font-bold text-sm mb-3" style={{ color: "var(--navy)" }}>
+              נקודות לשיפור
+            </h3>
+            {improvements.length === 0 ? (
+              <Empty text="אין עדיין דירוגים נמוכים" />
+            ) : (
+              <ul className="space-y-1.5 text-sm">
+                {improvements.map((s) => (
+                  <li key={s.key} className="flex items-center justify-between gap-3 border-b pb-1" style={{ borderColor: "var(--border)" }}>
+                    <span>{s.label}</span>
+                    <span className="font-medium" style={{ color: "var(--muted)" }}>{s.value.toFixed(1)} / 5</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -269,13 +322,38 @@ function ProfessionalTab({ player }: any) {
   return <DL rows={rows} />;
 }
 
-function ScoutingReportTab({ id, player, report }: { id: string; player: any; report: any }) {
+function ScoutingReportTab({
+  id,
+  player,
+  report,
+  saved,
+}: {
+  id: string;
+  player: any;
+  report: any;
+  saved?: boolean;
+}) {
   const action = upsertScoutingReport.bind(null, id);
   const defaultGroup = report?.positionGroup ?? guessPositionGroup(player.mainPosition);
   const technicalRatings: Record<string, number> = report?.technicalRatings ? JSON.parse(report.technicalRatings) : {};
 
   return (
     <form action={action} className="space-y-4">
+      {saved && (
+        <div
+          className="rounded-md px-4 py-2.5 text-sm font-medium"
+          style={{ background: "rgba(95, 224, 95, 0.14)", color: "var(--gold)" }}
+        >
+          הדוח נשמר בהצלחה
+        </div>
+      )}
+
+      <div className="flex justify-end">
+        <button type="submit" className="btn btn-gold btn-sm">
+          שמור דוח סקאוטינג
+        </button>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         <div>
           <label className="field-label">דווח על ידי</label>

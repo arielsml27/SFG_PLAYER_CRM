@@ -1,10 +1,9 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import AppShell from "@/components/AppShell";
 
 export const metadata: Metadata = {
-  title: "SFG Player CRM",
-  description: "מערכת CRM פנימית לסוכנות שחקנים",
+  title: "SFG OS — Football Career Operating System",
+  description: "Manage your football career. All in one place.",
 };
 
 export default function RootLayout({
@@ -13,10 +12,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="he" dir="rtl" className="h-full antialiased">
-      <body className="min-h-full flex">
-        <AppShell>{children}</AppShell>
-      </body>
+    <html lang="en" dir="ltr" className="h-full antialiased">
+      <body className="min-h-full">{children}</body>
     </html>
   );
 }

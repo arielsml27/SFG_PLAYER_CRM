@@ -22,11 +22,11 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
       </div>
 
       <div className="flex gap-2">
-        <Link href="/tasks" className={`btn btn-sm ${!sp.status ? "btn-primary" : "btn-outline"}`}>
+        <Link href="/crm/tasks" className={`btn btn-sm ${!sp.status ? "btn-primary" : "btn-outline"}`}>
           הכל
         </Link>
         {TASK_STATUSES.map((s) => (
-          <Link key={s} href={`/tasks?status=${s}`} className={`btn btn-sm ${sp.status === s ? "btn-primary" : "btn-outline"}`}>
+          <Link key={s} href={`/crm/tasks?status=${s}`} className={`btn btn-sm ${sp.status === s ? "btn-primary" : "btn-outline"}`}>
             {TASK_STATUS_LABELS[s]}
           </Link>
         ))}
@@ -90,7 +90,7 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
                 <td className="font-medium">{t.title}</td>
                 <td>
                   {t.player ? (
-                    <Link href={`/players/${t.playerId}`} className="hover:underline">
+                    <Link href={`/crm/players/${t.playerId}`} className="hover:underline">
                       {t.player.firstName} {t.player.lastName}
                     </Link>
                   ) : (

@@ -105,9 +105,9 @@ export async function createPlayer(formData: FormData) {
     })
     .returning();
 
-  revalidatePath("/players");
-  revalidatePath("/");
-  redirect(`/players/${player.id}`);
+  revalidatePath("/crm/players");
+  revalidatePath("/crm");
+  redirect(`/crm/players/${player.id}`);
 }
 
 export async function updatePlayer(playerId: string, formData: FormData) {
@@ -134,6 +134,8 @@ export async function updatePlayer(playerId: string, formData: FormData) {
       lastName: str(formData, "lastName") ?? "",
       fullNameHebrew: str(formData, "fullNameHebrew"),
       fullNameEnglish: str(formData, "fullNameEnglish"),
+      email: str(formData, "email"),
+      phone: str(formData, "phone"),
       ...(photoPath !== undefined ? { photoPath } : {}),
       dateOfBirth: str(formData, "dateOfBirth") ?? "",
       nationality: str(formData, "nationality"),
@@ -173,17 +175,17 @@ export async function updatePlayer(playerId: string, formData: FormData) {
     })
     .where(eq(players.id, playerId));
 
-  revalidatePath(`/players/${playerId}`);
-  revalidatePath("/players");
-  revalidatePath("/");
-  redirect(`/players/${playerId}`);
+  revalidatePath(`/crm/players/${playerId}`);
+  revalidatePath("/crm/players");
+  revalidatePath("/crm");
+  redirect(`/crm/players/${playerId}`);
 }
 
 export async function deletePlayer(playerId: string) {
   await db.delete(players).where(eq(players.id, playerId));
-  revalidatePath("/players");
-  revalidatePath("/");
-  redirect("/players");
+  revalidatePath("/crm/players");
+  revalidatePath("/crm");
+  redirect("/crm/players");
 }
 
 // ---------- Club contract ----------
@@ -203,14 +205,14 @@ export async function addClubContract(playerId: string, formData: FormData) {
     status: str(formData, "status") ?? "ACTIVE",
     notes: str(formData, "notes"),
   });
-  revalidatePath(`/players/${playerId}`);
-  revalidatePath("/");
+  revalidatePath(`/crm/players/${playerId}`);
+  revalidatePath("/crm");
 }
 
 export async function deleteClubContract(playerId: string, contractId: string) {
   await db.delete(clubContracts).where(eq(clubContracts.id, contractId));
-  revalidatePath(`/players/${playerId}`);
-  revalidatePath("/");
+  revalidatePath(`/crm/players/${playerId}`);
+  revalidatePath("/crm");
 }
 
 // ---------- Representation ----------
@@ -228,14 +230,14 @@ export async function addRepresentation(playerId: string, formData: FormData) {
     status: str(formData, "status") ?? "ACTIVE",
     notes: str(formData, "notes"),
   });
-  revalidatePath(`/players/${playerId}`);
-  revalidatePath("/");
+  revalidatePath(`/crm/players/${playerId}`);
+  revalidatePath("/crm");
 }
 
 export async function deleteRepresentation(playerId: string, repId: string) {
   await db.delete(representationAgreements).where(eq(representationAgreements.id, repId));
-  revalidatePath(`/players/${playerId}`);
-  revalidatePath("/");
+  revalidatePath(`/crm/players/${playerId}`);
+  revalidatePath("/crm");
 }
 
 // ---------- Links ----------
@@ -248,13 +250,13 @@ export async function addLink(playerId: string, formData: FormData) {
     url: str(formData, "url") ?? "",
     notes: str(formData, "notes"),
   });
-  revalidatePath(`/players/${playerId}`);
-  revalidatePath("/");
+  revalidatePath(`/crm/players/${playerId}`);
+  revalidatePath("/crm");
 }
 
 export async function deleteLink(playerId: string, linkId: string) {
   await db.delete(playerLinks).where(eq(playerLinks.id, linkId));
-  revalidatePath(`/players/${playerId}`);
+  revalidatePath(`/crm/players/${playerId}`);
 }
 
 // ---------- Videos ----------
@@ -269,13 +271,13 @@ export async function addVideo(playerId: string, formData: FormData) {
     readyToSend: bool(formData, "readyToSend"),
     notes: str(formData, "notes"),
   });
-  revalidatePath(`/players/${playerId}`);
-  revalidatePath("/");
+  revalidatePath(`/crm/players/${playerId}`);
+  revalidatePath("/crm");
 }
 
 export async function deleteVideo(playerId: string, videoId: string) {
   await db.delete(videos).where(eq(videos.id, videoId));
-  revalidatePath(`/players/${playerId}`);
+  revalidatePath(`/crm/players/${playerId}`);
 }
 
 // ---------- Documents ----------
@@ -289,13 +291,13 @@ export async function addDocument(playerId: string, formData: FormData) {
     expiryDate: str(formData, "expiryDate"),
     notes: str(formData, "notes"),
   });
-  revalidatePath(`/players/${playerId}`);
-  revalidatePath("/");
+  revalidatePath(`/crm/players/${playerId}`);
+  revalidatePath("/crm");
 }
 
 export async function deleteDocument(playerId: string, documentId: string) {
   await db.delete(documents).where(eq(documents.id, documentId));
-  revalidatePath(`/players/${playerId}`);
+  revalidatePath(`/crm/players/${playerId}`);
 }
 
 // ---------- Contacts ----------
@@ -311,13 +313,13 @@ export async function addContact(playerId: string, formData: FormData) {
     relation: str(formData, "relation"),
     notes: str(formData, "notes"),
   });
-  revalidatePath(`/players/${playerId}`);
-  revalidatePath("/");
+  revalidatePath(`/crm/players/${playerId}`);
+  revalidatePath("/crm");
 }
 
 export async function deleteContact(playerId: string, contactId: string) {
   await db.delete(contacts).where(eq(contacts.id, contactId));
-  revalidatePath(`/players/${playerId}`);
+  revalidatePath(`/crm/players/${playerId}`);
 }
 
 // ---------- Timeline ----------
@@ -332,12 +334,12 @@ export async function addTimelineEvent(playerId: string, formData: FormData) {
     createdBy: str(formData, "createdBy"),
     link: str(formData, "link"),
   });
-  revalidatePath(`/players/${playerId}`);
+  revalidatePath(`/crm/players/${playerId}`);
 }
 
 export async function deleteTimelineEvent(playerId: string, eventId: string) {
   await db.delete(timelineEvents).where(eq(timelineEvents.id, eventId));
-  revalidatePath(`/players/${playerId}`);
+  revalidatePath(`/crm/players/${playerId}`);
 }
 
 // ---------- Tasks ----------
@@ -354,23 +356,23 @@ export async function addTask(formData: FormData) {
     status: str(formData, "status") ?? "OPEN",
     reminderDate: str(formData, "reminderDate"),
   });
-  if (playerId) revalidatePath(`/players/${playerId}`);
-  revalidatePath("/tasks");
-  revalidatePath("/");
+  if (playerId) revalidatePath(`/crm/players/${playerId}`);
+  revalidatePath("/crm/tasks");
+  revalidatePath("/crm");
 }
 
 export async function updateTaskStatus(taskId: string, status: string, playerId?: string | null) {
   await db.update(tasks).set({ status, updatedAt: new Date().toISOString() }).where(eq(tasks.id, taskId));
-  if (playerId) revalidatePath(`/players/${playerId}`);
-  revalidatePath("/tasks");
-  revalidatePath("/");
+  if (playerId) revalidatePath(`/crm/players/${playerId}`);
+  revalidatePath("/crm/tasks");
+  revalidatePath("/crm");
 }
 
 export async function deleteTask(taskId: string, playerId?: string | null) {
   await db.delete(tasks).where(eq(tasks.id, taskId));
-  if (playerId) revalidatePath(`/players/${playerId}`);
-  revalidatePath("/tasks");
-  revalidatePath("/");
+  if (playerId) revalidatePath(`/crm/players/${playerId}`);
+  revalidatePath("/crm/tasks");
+  revalidatePath("/crm");
 }
 
 // ---------- Deals ----------
@@ -387,14 +389,14 @@ export async function addDeal(playerId: string, formData: FormData) {
     expectedCloseDate: str(formData, "expectedCloseDate"),
     notes: str(formData, "notes"),
   });
-  revalidatePath(`/players/${playerId}`);
-  revalidatePath("/");
+  revalidatePath(`/crm/players/${playerId}`);
+  revalidatePath("/crm");
 }
 
 export async function deleteDeal(playerId: string, dealId: string) {
   await db.delete(deals).where(eq(deals.id, dealId));
-  revalidatePath(`/players/${playerId}`);
-  revalidatePath("/");
+  revalidatePath(`/crm/players/${playerId}`);
+  revalidatePath("/crm");
 }
 
 // ---------- Scouting report ----------
@@ -439,7 +441,8 @@ export async function upsertScoutingReport(playerId: string, formData: FormData)
     await db.insert(scoutingReports).values(values);
   }
 
-  revalidatePath(`/players/${playerId}`);
+  revalidatePath(`/crm/players/${playerId}`);
+  redirect(`/crm/players/${playerId}?tab=scouting&saved=1`);
 }
 
 // ---------- Clubs ----------
@@ -453,5 +456,88 @@ export async function createClub(formData: FormData) {
     website: str(formData, "website"),
     notes: str(formData, "notes"),
   });
-  revalidatePath("/clubs");
+  revalidatePath("/crm/clubs");
+}
+
+// ---------- Public player self-registration ----------
+
+const PLAYER_VIDEO_DIR = path.join(process.cwd(), "public", "uploads", "players", "videos");
+
+async function savePlayerVideo(file: File): Promise<string> {
+  await mkdir(PLAYER_VIDEO_DIR, { recursive: true });
+  const ext = path.extname(file.name) || ".mp4";
+  const filename = `${crypto.randomUUID()}${ext}`;
+  await writeFile(path.join(PLAYER_VIDEO_DIR, filename), Buffer.from(await file.arrayBuffer()));
+  return `/uploads/players/videos/${filename}`;
+}
+
+export async function registerPlayerPublic(formData: FormData): Promise<{ playerId: string }> {
+  const noClub = bool(formData, "noClub");
+  const clubName = str(formData, "clubName");
+  let clubId: string | null = null;
+  if (!noClub && clubName) {
+    const existing = await db.select({ id: clubs.id }).from(clubs).where(eq(clubs.name, clubName));
+    clubId = existing.length ? existing[0].id : (await db.insert(clubs).values({ name: clubName }).returning())[0].id;
+  }
+
+  const photoFile = formData.get("photo");
+  const photoPath = photoFile instanceof File && photoFile.size > 0 ? await savePlayerPhoto(photoFile) : null;
+
+  const [player] = await db
+    .insert(players)
+    .values({
+      firstName: str(formData, "firstName") ?? "",
+      lastName: str(formData, "lastName") ?? "",
+      email: str(formData, "email"),
+      phone: str(formData, "phone"),
+      photoPath,
+      dateOfBirth: str(formData, "dateOfBirth") ?? "",
+      nationality: str(formData, "nationality"),
+      secondNationality: str(formData, "secondNationality"),
+      height: num(formData, "height"),
+      weight: num(formData, "weight"),
+      mainPosition: str(formData, "mainPosition") ?? "",
+      secondaryPositions: str(formData, "secondaryPositions"),
+      strongFoot: str(formData, "strongFoot"),
+      currentClubId: clubId,
+      currentLeague: str(formData, "currentLeague"),
+      currentCountry: str(formData, "currentCountry"),
+      status: "PROSPECT",
+      representationStatus: "UNKNOWN",
+      priorityLevel: 0,
+      shortDescription: str(formData, "shortDescription"),
+      strengths: str(formData, "strengths"),
+      weaknesses: str(formData, "weaknesses"),
+      playingStyle: str(formData, "playingStyle"),
+      idealRole: str(formData, "idealRole"),
+      targetLevel: str(formData, "targetLevel"),
+      familyContactName: str(formData, "familyContactName"),
+      familyContactPhone: str(formData, "familyContactPhone"),
+      familyContactEmail: str(formData, "familyContactEmail"),
+      address: str(formData, "address"),
+      tags: str(formData, "goals"),
+      notes: "נרשם באופן עצמאי דרך אתר ההרשמה הציבורי (SFG OS)",
+    })
+    .returning();
+
+  const statsLink = str(formData, "statsLink");
+  if (statsLink) {
+    await db.insert(playerLinks).values({ playerId: player.id, type: "OTHER", title: "קישור סטטיסטיקה", url: statsLink });
+  }
+
+  const socialLink = str(formData, "socialLink");
+  if (socialLink) {
+    await db.insert(playerLinks).values({ playerId: player.id, type: "OTHER", title: "רשת חברתית", url: socialLink });
+  }
+
+  const videoFile = formData.get("video");
+  if (videoFile instanceof File && videoFile.size > 0) {
+    const videoPath = await savePlayerVideo(videoFile);
+    await db.insert(videos).values({ playerId: player.id, title: "סרטון היילייטס", type: "HIGHLIGHTS", url: videoPath, readyToSend: false });
+  }
+
+  revalidatePath("/crm/players");
+  revalidatePath("/crm");
+
+  return { playerId: player.id };
 }

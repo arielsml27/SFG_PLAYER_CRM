@@ -17,6 +17,102 @@
   --warn-bg: rgba(244, 183, 64, 0.14);
   --ok: #4ade80;
   --ok-bg: rgba(74, 222, 128, 0.14);
+
+  --lp-bg: #08090c;
+  --lp-gold: #e3b563;
+  --lp-gold-soft: #f5dca4;
+  --lp-fg: #f5f6f8;
+  --lp-muted: #9a9ca6;
+  --lp-glass-bg: rgba(255, 255, 255, 0.045);
+  --lp-glass-border: rgba(255, 255, 255, 0.09);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+@keyframes lp-fade-up {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes lp-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-16px); }
+}
+
+@keyframes lp-glow {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 0.7; }
+}
+
+.lp-page {
+  background: var(--lp-bg);
+  color: var(--lp-fg);
+}
+
+.lp-glass {
+  background: var(--lp-glass-bg);
+  border: 1px solid var(--lp-glass-border);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.lp-gold-text {
+  background: linear-gradient(135deg, var(--lp-gold-soft), var(--lp-gold) 60%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.lp-btn-gold {
+  background: linear-gradient(135deg, var(--lp-gold-soft), var(--lp-gold));
+  color: #1c1404;
+  font-weight: 600;
+  box-shadow: 0 8px 30px -8px rgba(227, 181, 99, 0.55);
+}
+.lp-btn-gold:hover {
+  box-shadow: 0 10px 36px -6px rgba(227, 181, 99, 0.7);
+}
+
+.lp-btn-glass {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: var(--lp-fg);
+}
+.lp-btn-glass:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.lp-input {
+  background: var(--lp-glass-bg);
+  border: 1px solid var(--lp-glass-border);
+  color: var(--lp-fg);
+  border-radius: 999px;
+  padding: 0.75rem 1.25rem;
+  font-size: 0.875rem;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+.lp-input::placeholder {
+  color: var(--lp-muted);
+}
+.lp-input:focus {
+  outline: 2px solid var(--lp-gold);
+  outline-offset: 0;
+  border-color: var(--lp-gold);
+}
+
+.lp-fade-up {
+  animation: lp-fade-up 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.lp-float {
+  animation: lp-float 7s ease-in-out infinite;
+}
+
+.lp-glow {
+  animation: lp-glow 5s ease-in-out infinite;
 }
 
 @theme inline {

@@ -31,6 +31,8 @@ export const players = sqliteTable("players", {
   lastName: text("last_name").notNull(),
   fullNameHebrew: text("full_name_hebrew"),
   fullNameEnglish: text("full_name_english"),
+  email: text("email"),
+  phone: text("phone"),
   photoPath: text("photo_path"),
   dateOfBirth: text("date_of_birth").notNull(), // ISO date
   nationality: text("nationality"),
