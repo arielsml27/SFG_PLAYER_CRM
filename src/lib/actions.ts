@@ -442,6 +442,7 @@ export async function upsertScoutingReport(playerId: string, formData: FormData)
   }
 
   revalidatePath(`/crm/players/${playerId}`);
+  redirect(`/crm/players/${playerId}?tab=scouting&saved=1`);
 }
 
 // ---------- Clubs ----------
