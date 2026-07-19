@@ -149,11 +149,11 @@ export default async function PlayerProfilePage({
             </div>
           </div>
           <div className="flex gap-2 shrink-0">
-            <Link href={`/players/${id}/export`} target="_blank" className="btn btn-outline">
+            <Link href={`/crm/players/${id}/export`} target="_blank" className="btn btn-outline">
               <FileOutput size={14} />
               ייצוא דוח
             </Link>
-            <Link href={`/players/${id}/edit`} className="btn btn-outline">
+            <Link href={`/crm/players/${id}/edit`} className="btn btn-outline">
               <Pencil size={14} />
               עריכה
             </Link>
@@ -173,7 +173,7 @@ export default async function PlayerProfilePage({
       {/* Tabs */}
       <div className="flex gap-1 overflow-x-auto border-b" style={{ borderColor: "var(--border)" }}>
         {TABS.map((t) => (
-          <Link key={t.key} href={`/players/${id}?tab=${t.key}`} className={`tab-link ${tab === t.key ? "active" : ""}`}>
+          <Link key={t.key} href={`/crm/players/${id}?tab=${t.key}`} className={`tab-link ${tab === t.key ? "active" : ""}`}>
             {t.label}
           </Link>
         ))}
@@ -238,7 +238,7 @@ function OverviewTab({ id, player, club, report }: any) {
           <h3 className="font-bold text-sm" style={{ color: "var(--navy)" }}>
             ניתוח יכולות (לפי דוח הסקאוטינג)
           </h3>
-          <Link href={`/players/${id}?tab=scouting`} className="text-xs hover:underline" style={{ color: "var(--gold)" }}>
+          <Link href={`/crm/players/${id}?tab=scouting`} className="text-xs hover:underline" style={{ color: "var(--gold)" }}>
             לצפייה בדוח המלא ←
           </Link>
         </div>

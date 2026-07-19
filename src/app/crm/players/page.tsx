@@ -34,7 +34,7 @@ export default async function PlayersPage({
             <Download size={15} />
             ייצוא CSV
           </a>
-          <Link href="/players/new" className="btn btn-gold">
+          <Link href="/crm/players/new" className="btn btn-gold">
             <Plus size={15} />
             שחקן חדש
           </Link>
@@ -81,7 +81,7 @@ export default async function PlayersPage({
           סנן
         </button>
         {(sp.q || sp.status || sp.position) && (
-          <Link href="/players" className="btn btn-outline">
+          <Link href="/crm/players" className="btn btn-outline">
             נקה
           </Link>
         )}
@@ -111,7 +111,7 @@ export default async function PlayersPage({
               return (
                 <tr key={p.id}>
                   <td>
-                    <Link href={`/players/${p.id}`} className="flex items-center gap-2.5">
+                    <Link href={`/crm/players/${p.id}`} className="flex items-center gap-2.5">
                       <span
                         className="w-8 h-8 rounded-full overflow-hidden shrink-0 flex items-center justify-center border"
                         style={{ borderColor: "var(--border)", background: "var(--surface-2)" }}

@@ -90,6 +90,12 @@ export default function PlayerForm({
         <Field label="שם מלא באנגלית">
           <input name="fullNameEnglish" defaultValue={player?.fullNameEnglish ?? ""} className="input" />
         </Field>
+        <Field label="אימייל">
+          <input type="email" name="email" defaultValue={player?.email ?? ""} className="input" />
+        </Field>
+        <Field label="טלפון">
+          <input type="tel" name="phone" defaultValue={player?.phone ?? ""} className="input" />
+        </Field>
         <Field label="תאריך לידה *">
           <input
             type="date"

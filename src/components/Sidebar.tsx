@@ -6,10 +6,10 @@ import { usePathname } from "next/navigation";
 import { Users, LayoutDashboard, ListChecks, Building2, Plus } from "lucide-react";
 
 const NAV = [
-  { href: "/", label: "דשבורד", icon: LayoutDashboard },
-  { href: "/players", label: "שחקנים", icon: Users },
-  { href: "/tasks", label: "משימות", icon: ListChecks },
-  { href: "/clubs", label: "מועדונים", icon: Building2 },
+  { href: "/crm", label: "דשבורד", icon: LayoutDashboard },
+  { href: "/crm/players", label: "שחקנים", icon: Users },
+  { href: "/crm/tasks", label: "משימות", icon: ListChecks },
+  { href: "/crm/clubs", label: "מועדונים", icon: Building2 },
 ];
 
 export default function Sidebar() {
@@ -39,7 +39,7 @@ export default function Sidebar() {
       <nav className="flex-1 py-4 px-3 space-y-1">
         {NAV.map((item) => {
           const Icon = item.icon;
-          const active = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
+          const active = item.href === "/crm" ? pathname === "/crm" : pathname.startsWith(item.href);
           return (
             <Link
               key={item.href}
@@ -58,7 +58,7 @@ export default function Sidebar() {
 
       <div className="p-3">
         <Link
-          href="/players/new"
+          href="/crm/players/new"
           className="btn btn-gold w-full justify-center"
         >
           <Plus size={16} />
