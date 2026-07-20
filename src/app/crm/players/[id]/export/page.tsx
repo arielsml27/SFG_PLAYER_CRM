@@ -1,7 +1,10 @@
 import { notFound } from "next/navigation";
 import { getPlayerDetail } from "@/lib/data";
 import { formatDate, calcAge } from "@/lib/format";
+import { buildAllAttributesData, summarizePlayerScouting } from "@/lib/scouting";
+import { guessPositionGroup } from "@/lib/constants";
 import PrintButton from "@/components/PrintButton";
+import AttributeBarChart from "@/components/AttributeBarChart";
 import { ExternalLink } from "lucide-react";
 
 const CONTRACT_STATUS_LABELS_EN: Record<string, string> = {
@@ -52,6 +55,11 @@ export default async function PlayerExportPage({ params }: { params: Promise<{ i
   const latestContract = detail.contracts[0];
   const statsLink = pickStatsLink(detail.links);
   const clip = pickClipVideo(detail.videos, detail.links);
+
+  const report = detail.scoutingReport;
+  const positionGroup = report?.positionGroup ?? guessPositionGroup(player.mainPosition);
+  const attributes = report ? buildAllAttributesData(report, positionGroup, "en") : [];
+  const { strengths, improvements } = summarizePlayerScouting(attributes);
 
   const rows: [string, string | null][] = [
     ["Date of Birth", formatDate(player.dateOfBirth)],
@@ -143,6 +151,47 @@ export default async function PlayerExportPage({ params }: { params: Promise<{ i
             </p>
           )}
         </div>
+
+        {/* Scouting attributes */}
+        {attributes.length > 0 && (
+          <div className="card p-5">
+            <h2 className="text-sm font-bold mb-3" style={{ color: "var(--navy)" }}>
+              Scouting Attributes
+            </h2>
+            <AttributeBarChart items={attributes} />
+          </div>
+        )}
+
+        {(strengths.length > 0 || improvements.length > 0) && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="card p-5">
+              <h2 className="text-sm font-bold mb-3" style={{ color: "var(--gold)" }}>
+                Strengths
+              </h2>
+              <ul className="space-y-1.5 text-sm">
+                {strengths.map((s) => (
+                  <li key={s.key} className="flex items-center justify-between gap-3 border-b pb-1" style={{ borderColor: "var(--border)" }}>
+                    <span>{s.label}</span>
+                    <span className="font-medium" style={{ color: "var(--gold)" }}>{s.value.toFixed(1)} / 5</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="card p-5">
+              <h2 className="text-sm font-bold mb-3" style={{ color: "var(--navy)" }}>
+                Development Areas
+              </h2>
+              <ul className="space-y-1.5 text-sm">
+                {improvements.map((s) => (
+                  <li key={s.key} className="flex items-center justify-between gap-3 border-b pb-1" style={{ borderColor: "var(--border)" }}>
+                    <span>{s.label}</span>
+                    <span className="font-medium" style={{ color: "var(--muted)" }}>{s.value.toFixed(1)} / 5</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        )}
 
         {/* Links */}
         <div className="card p-5">

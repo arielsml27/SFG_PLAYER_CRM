@@ -5,6 +5,8 @@ import {
   BODY_LANGUAGE_SKILLS,
   OVERALL_RATING_SKILLS,
   TECHNICAL_SKILLS_BY_POSITION,
+  ATTRIBUTE_LABELS_EN,
+  CATEGORY_LABELS_EN,
 } from "@/lib/constants";
 
 function avgOf(report: any, keys: string[]): number | null {
@@ -36,7 +38,11 @@ export type AttributeItem = { key: string; label: string; value: number; categor
 // used for the full attribute breakdown chart and the strengths/improvements
 // summary. Position-specific technical skills come from technicalRatings
 // (a JSON map) since the parameter set depends on the player's position group.
-export function buildAllAttributesData(report: any, positionGroup: string): AttributeItem[] {
+export function buildAllAttributesData(
+  report: any,
+  positionGroup: string,
+  lang: "he" | "en" = "he"
+): AttributeItem[] {
   const technicalRatings: Record<string, number> = report?.technicalRatings ? JSON.parse(report.technicalRatings) : {};
   const technicalSkills = TECHNICAL_SKILLS_BY_POSITION[positionGroup] ?? [];
 
@@ -50,9 +56,11 @@ export function buildAllAttributesData(report: any, positionGroup: string): Attr
   ];
 
   const items: AttributeItem[] = [];
-  for (const [category, skills, source] of groups) {
-    for (const [key, label] of skills) {
+  for (const [categoryHe, skills, source] of groups) {
+    const category = lang === "en" ? CATEGORY_LABELS_EN[categoryHe] ?? categoryHe : categoryHe;
+    for (const [key, labelHe] of skills) {
       const value = source?.[key];
+      const label = lang === "en" ? ATTRIBUTE_LABELS_EN[key] ?? labelHe : labelHe;
       if (typeof value === "number") items.push({ key, label, value, category });
     }
   }

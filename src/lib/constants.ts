@@ -329,3 +329,94 @@ export const MENTAL_SKILLS: [string, string][] = [
   ["leadership", "מנהיגות"],
   ["composure", "קור רוח"],
 ];
+
+// English labels for the same attribute keys, used by the (English) player
+// export report. Family-assessment keys are omitted on purpose: that group
+// scores the parents, not the player, and never appears in external reports.
+export const ATTRIBUTE_LABELS_EN: Record<string, string> = {
+  // Technical — Goalkeeper
+  shotStopping: "Shot Stopping",
+  distribution: "Distribution / Footwork",
+  commandOfArea: "Command of Area",
+  oneOnOnes: "One-on-One Situations",
+  aerialCommand: "Aerial Command",
+  reflexes: "Reflexes",
+  gkCommunication: "Communication with Defense",
+  // Technical — Defender
+  tackling: "Tackling",
+  marking: "Marking",
+  aerialDuels: "Aerial Duels",
+  positioning: "Defensive Positioning",
+  buildUpPlay: "Build-Up Play",
+  recoveryPace: "Recovery Pace",
+  oneVOneDefending: "1v1 Defending",
+  // Technical — Midfielder
+  passingRange: "Passing Range",
+  vision: "Vision",
+  pressingWork: "Pressing Work Rate",
+  ballControl: "Ball Control",
+  boxToBox: "Box-to-Box Play",
+  midDribbling: "Dribbling",
+  setPieces: "Set Pieces",
+  creativity: "Creativity",
+  // Technical — Forward
+  finishing: "Finishing",
+  movementInBox: "Movement in the Box",
+  fwdDribbling: "Dribbling",
+  holdUpPlay: "Hold-Up Play",
+  crossingCutting: "Crossing / Cutting Inside",
+  headingInBox: "Heading in the Box",
+  composureInBox: "Composure in Front of Goal",
+  pressingFromFront: "Pressing from the Front",
+  // On-field behavior
+  workRateOffBall: "Off-the-Ball Work Rate",
+  tacklingPressDefense: "Tackling, Pressing, Defensive Recovery",
+  dribblingShootingCreating: "Dribbling, Shooting, Creating Chances",
+  passingRangeUnderPressure: "Passing Under Pressure",
+  firstTouchTightSpace: "First Touch in Tight Spaces",
+  spaceAwareness: "Space Awareness / Off-Ball Movement",
+  teamCommunication: "Team Communication",
+  selfControlAfterFoul: "Self-Control After Being Fouled",
+  gameReadingAnticipation: "Game Reading / Anticipation",
+  // Body language
+  postureConfidence: "Posture & Confidence",
+  reactionToTeamLoss: "Reaction to Team Losing Ball",
+  reactionToOwnLoss: "Reaction to Own Mistakes",
+  concentrationWhenUninvolved: "Concentration When Not Involved",
+  composureUnderPressure: "Composure Under Pressure",
+  teamOrganisationEncouragement: "Team Organisation & Encouragement",
+  endGameEffort: "End-of-Game Effort",
+  respectForReferee: "Respect for the Referee",
+  attitudeDuringSubstitution: "Attitude During Substitution",
+  coachBenchInteraction: "Interaction with Coach/Bench",
+  recoveryFromTackles: "Recovery from Tackles / Toughness",
+  // Overall rating
+  generalTechnicalAbility: "Overall Technical Ability",
+  mentalResilience: "Mental Resilience",
+  overallPotential: "Overall Potential",
+  // Physical
+  speed: "Speed",
+  pace: "Pace",
+  stamina: "Stamina",
+  explosiveness: "Explosiveness",
+  supportPlay: "Support Play",
+  crossing: "Crossing",
+  strength: "Strength",
+  durability: "Durability / Injury Resistance",
+  // Mental
+  concentration: "Concentration",
+  attitude: "Attitude",
+  motivation: "Motivation",
+  workRate: "Work Rate",
+  leadership: "Leadership",
+  composure: "Composure",
+};
+
+export const CATEGORY_LABELS_EN: Record<string, string> = {
+  "טכני-טקטי": "Technical / Tactical",
+  פיזי: "Physical",
+  מנטלי: "Mental",
+  "התנהגות במגרש": "On-Field Behavior",
+  "שפת גוף": "Body Language",
+  "הערכה כללית": "Overall Rating",
+};
