@@ -4,6 +4,7 @@ import { formatDate, calcAge } from "@/lib/format";
 import { buildAllAttributesData, summarizePlayerScouting } from "@/lib/scouting";
 import { guessPositionGroup } from "@/lib/constants";
 import PrintButton from "@/components/PrintButton";
+import CopyLinkButton from "@/components/CopyLinkButton";
 import AttributeBarChart from "@/components/AttributeBarChart";
 import { ExternalLink } from "lucide-react";
 
@@ -79,7 +80,8 @@ export default async function PlayerExportPage({ params }: { params: Promise<{ i
   return (
     <div dir="ltr" className="min-h-screen py-10 px-4" style={{ background: "var(--background)" }}>
       <div className="max-w-2xl mx-auto space-y-4">
-        <div className="flex justify-end print:hidden">
+        <div className="flex justify-end gap-2 print:hidden">
+          <CopyLinkButton />
           <PrintButton />
         </div>
 
