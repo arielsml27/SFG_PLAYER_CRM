@@ -66,10 +66,12 @@ import {
   POSITION_GROUP_LABELS,
   TECHNICAL_SKILLS_BY_POSITION,
   guessPositionGroup,
+  RELOCATE_LABELS,
 } from "@/lib/constants";
 import { Pencil, Trash2, Plus, ExternalLink, FileOutput } from "lucide-react";
 import StarRating from "@/components/StarRating";
 import TechnicalSkillsSection from "@/components/TechnicalSkillsSection";
+import { QUESTIONNAIRE_SECTIONS, TOTAL_QUESTION_COUNT } from "@/lib/extended-questionnaire";
 
 const TABS = [
   { key: "overview", label: "פרטים כלליים" },
@@ -84,6 +86,7 @@ const TABS = [
   { key: "timeline", label: "יומן אירועים" },
   { key: "tasks", label: "משימות" },
   { key: "deals", label: "עסקאות" },
+  { key: "questionnaire", label: "שאלון מורחב" },
 ] as const;
 
 export default async function PlayerProfilePage({
@@ -193,6 +196,7 @@ export default async function PlayerProfilePage({
         {tab === "timeline" && <TimelineTab id={id} detail={detail} />}
         {tab === "tasks" && <TasksTab id={id} detail={detail} />}
         {tab === "deals" && <DealsTab id={id} detail={detail} />}
+        {tab === "questionnaire" && <QuestionnaireTab id={id} responses={detail.questionnaireResponses} />}
       </div>
     </div>
   );
@@ -208,6 +212,8 @@ function OverviewTab({ id, player, club, report }: any) {
   const rows: [string, any][] = [
     ["שם עברית", player.fullNameHebrew],
     ["שם אנגלית", player.fullNameEnglish],
+    ["אימייל", player.email],
+    ["טלפון", player.phone],
     ["תאריך לידה", formatDate(player.dateOfBirth)],
     ["גיל", calcAge(player.dateOfBirth)],
     ["לאום", player.nationality],
@@ -223,9 +229,14 @@ function OverviewTab({ id, player, club, report }: any) {
     ["מדינה", player.currentCountry],
     ["סוכן אחראי", player.agentInCharge],
     ["איש קשר משפחתי", player.familyContactName],
-    ["טלפון", player.familyContactPhone],
-    ["אימייל", player.familyContactEmail],
+    ["טלפון איש קשר משפחתי", player.familyContactPhone],
+    ["אימייל איש קשר משפחתי", player.familyContactEmail],
     ["כתובת", player.address],
+    ["רקע כדורגל מקצועני במשפחה", player.familyFootballBackground],
+    ["מצב לימודים", player.educationStatus],
+    ["שפות מדוברות", player.languagesSpoken],
+    ["היסטוריית פציעות", player.injuryHistory],
+    ["פתוח לעבור למדינה אחרת", player.willingToRelocate ? RELOCATE_LABELS[player.willingToRelocate] ?? player.willingToRelocate : null],
     ["תגיות", player.tags],
   ];
   return (
@@ -318,6 +329,14 @@ function ProfessionalTab({ player }: any) {
     ["דירוג פנימי", player.internalRating ? `${player.internalRating}/10` : null],
     ["פוטנציאל", player.potentialRating ? `${player.potentialRating}/10` : null],
     ["רמת דחיפות", player.priorityLevel],
+    ["היכן התחיל לשחק כדורגל", player.startingPlace],
+    ["גיל תחילת המשחק", player.startingAge],
+    ["מועדונים קודמים", player.previousClubs],
+    ["תדירות אימונים", player.trainingFrequency],
+    ["שחקן להשוואה בסגנון המשחק", player.playerComparison],
+    ["משמעת מבחינת תזונה", player.nutritionDiscipline],
+    ["מתאמן מחוץ למסגרת הקבוצה", player.extraTraining],
+    ["נעזר באנשי מקצוע מחוץ לכדורגל", player.externalProfessionals],
   ];
   return <DL rows={rows} />;
 }
@@ -920,6 +939,52 @@ function Card({ children, deleteAction }: { children: React.ReactNode; deleteAct
           </ConfirmSubmitButton>
         </form>
       )}
+    </div>
+  );
+}
+
+function QuestionnaireTab({ id, responses }: { id: string; responses: any[] }) {
+  const questionnaireLink = (
+    <Link href={`/questionnaire/${id}`} target="_blank" className="btn btn-outline btn-sm inline-flex items-center gap-1.5">
+      <ExternalLink size={13} />
+      פתח / שלח את השאלון לשחקן
+    </Link>
+  );
+
+  if (!responses || responses.length === 0) {
+    return (
+      <div className="space-y-4">
+        <Empty text="השחקן עדיין לא מילא את השאלון המורחב" />
+        <div className="flex justify-center">{questionnaireLink}</div>
+      </div>
+    );
+  }
+
+  const valueByQuestionId = new Map(responses.map((r) => [r.questionId, r.value]));
+
+  const sectionsWithAnswers = QUESTIONNAIRE_SECTIONS.map((section) => ({
+    section,
+    rows: section.questions
+      .filter((q) => valueByQuestionId.has(q.id))
+      .map((q): [string, any] => [q.text, valueByQuestionId.get(q.id)]),
+  })).filter((s) => s.rows.length > 0);
+
+  return (
+    <div className="space-y-5">
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div className="text-sm" style={{ color: "var(--muted)" }}>
+          {responses.length} מתוך {TOTAL_QUESTION_COUNT} שאלות נענו, ב-{sectionsWithAnswers.length} חלקים.
+        </div>
+        {questionnaireLink}
+      </div>
+      {sectionsWithAnswers.map(({ section, rows }) => (
+        <div key={section.id} className="card p-4">
+          <h3 className="font-bold text-sm mb-3" style={{ color: "var(--navy)" }}>
+            {section.title}
+          </h3>
+          <DL compact rows={rows} />
+        </div>
+      ))}
     </div>
   );
 }

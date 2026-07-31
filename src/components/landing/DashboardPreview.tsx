@@ -1,7 +1,7 @@
 const RINGS: { label: string; value: number }[] = [
-  { label: "Professional", value: 82 },
-  { label: "Physical", value: 71 },
-  { label: "Media", value: 64 },
+  { label: "מקצועי", value: 82 },
+  { label: "גופני", value: 71 },
+  { label: "מדיה", value: 64 },
 ];
 
 const BARS = [38, 55, 46, 68, 60, 78, 90];
@@ -50,12 +50,12 @@ export default function DashboardPreview() {
         <div className="flex items-center justify-between mb-6">
           <div>
             <div className="text-xs" style={{ color: "var(--lp-muted)" }}>
-              Welcome back
+              ברוך שובך
             </div>
-            <div className="text-lg font-bold">Ariel Cohen</div>
+            <div className="text-lg font-bold">אריאל כהן</div>
           </div>
           <div className="lp-glass rounded-full px-4 py-1.5 text-xs font-semibold" style={{ color: "var(--lp-gold-soft)" }}>
-            Career Score · 87
+            ציון קריירה · 87
           </div>
         </div>
 
@@ -81,9 +81,9 @@ export default function DashboardPreview() {
         </div>
 
         <div className="lp-glass rounded-2xl px-4 py-3 flex items-center justify-between">
-          <div className="text-sm font-medium">Next: Physical Assessment</div>
+          <div className="text-sm font-medium">הבא בתור: בדיקה גופנית</div>
           <div className="text-xs" style={{ color: "var(--lp-muted)" }}>
-            in 3 days
+            בעוד 3 ימים
           </div>
         </div>
       </div>

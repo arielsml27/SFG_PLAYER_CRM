@@ -9,6 +9,8 @@ import {
   TARGET_LEVELS,
   TARGET_LEVEL_LABELS,
   STRONG_FOOT_OPTIONS,
+  RELOCATE_OPTIONS,
+  RELOCATE_LABELS,
 } from "@/lib/constants";
 import { toDateInputValue } from "@/lib/format";
 
@@ -158,6 +160,21 @@ export default function PlayerForm({
         <Field label="מדינה נוכחית">
           <input name="currentCountry" defaultValue={player?.currentCountry ?? ""} className="input" />
         </Field>
+        <Field label="היכן התחיל לשחק כדורגל">
+          <input name="startingPlace" defaultValue={player?.startingPlace ?? ""} className="input" />
+        </Field>
+        <Field label="גיל תחילת המשחק">
+          <input type="number" name="startingAge" defaultValue={player?.startingAge ?? ""} className="input" />
+        </Field>
+        <Field label="מועדונים קודמים">
+          <input name="previousClubs" defaultValue={player?.previousClubs ?? ""} className="input" />
+        </Field>
+        <Field label="תדירות אימונים">
+          <input name="trainingFrequency" defaultValue={player?.trainingFrequency ?? ""} className="input" />
+        </Field>
+        <Field label="שחקן להשוואה בסגנון המשחק">
+          <input name="playerComparison" defaultValue={player?.playerComparison ?? ""} className="input" />
+        </Field>
         <Field label="סטטוס שחקן *">
           <select name="status" defaultValue={player?.status ?? "PROSPECT"} required className="input">
             {PLAYER_STATUSES.map((s) => (
@@ -184,6 +201,18 @@ export default function PlayerForm({
         </Field>
         <Field label="רמת דחיפות (0-5)">
           <input type="number" min={0} max={5} name="priorityLevel" defaultValue={player?.priorityLevel ?? 0} className="input" />
+        </Field>
+      </Section>
+
+      <Section title="הרגלים">
+        <Field label="משמעת מבחינת תזונה" full>
+          <textarea name="nutritionDiscipline" defaultValue={player?.nutritionDiscipline ?? ""} className="input" rows={2} />
+        </Field>
+        <Field label="מתאמן מחוץ למסגרת הקבוצה (אם כן, במה)" full>
+          <textarea name="extraTraining" defaultValue={player?.extraTraining ?? ""} className="input" rows={2} />
+        </Field>
+        <Field label="נעזר באנשי מקצוע מחוץ לכדורגל (אם כן, אילו)" full>
+          <textarea name="externalProfessionals" defaultValue={player?.externalProfessionals ?? ""} className="input" rows={2} />
         </Field>
       </Section>
 
@@ -241,6 +270,28 @@ export default function PlayerForm({
         </Field>
         <Field label="תגיות (מופרד בפסיקים)">
           <input name="tags" defaultValue={player?.tags ?? ""} className="input" />
+        </Field>
+        <Field label="רקע כדורגל מקצועני במשפחה">
+          <input name="familyFootballBackground" defaultValue={player?.familyFootballBackground ?? ""} className="input" />
+        </Field>
+        <Field label="מצב לימודים">
+          <input name="educationStatus" defaultValue={player?.educationStatus ?? ""} className="input" />
+        </Field>
+        <Field label="שפות מדוברות">
+          <input name="languagesSpoken" defaultValue={player?.languagesSpoken ?? ""} className="input" />
+        </Field>
+        <Field label="היסטוריית פציעות">
+          <textarea name="injuryHistory" defaultValue={player?.injuryHistory ?? ""} className="input" rows={2} />
+        </Field>
+        <Field label="פתוח לעבור למדינה אחרת">
+          <select name="willingToRelocate" defaultValue={player?.willingToRelocate ?? ""} className="input">
+            <option value="">בחר</option>
+            {RELOCATE_OPTIONS.map((v) => (
+              <option key={v} value={v}>
+                {RELOCATE_LABELS[v]}
+              </option>
+            ))}
+          </select>
         </Field>
       </Section>
 

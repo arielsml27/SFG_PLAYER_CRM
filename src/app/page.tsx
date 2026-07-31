@@ -9,7 +9,7 @@ import {
   BadgeDollarSign,
   BarChart3,
   Globe2,
-  ArrowRight,
+  ArrowLeft,
   PlayCircle,
 } from "lucide-react";
 import Reveal from "@/components/landing/Reveal";
@@ -19,33 +19,33 @@ import OnboardingWizard from "@/components/landing/OnboardingWizard";
 const DEPARTMENTS = [
   {
     icon: Handshake,
-    name: "Representation",
-    description: "Contracts, negotiations and club relationships handled by dedicated advisors.",
+    name: "ייצוג",
+    description: "חוזים, משא ומתן וקשרי מועדונים בטיפול יועצים ייעודיים.",
   },
   {
     icon: Activity,
-    name: "Performance",
-    description: "Physical, mental and technical development tracked against a clear roadmap.",
+    name: "ביצועים",
+    description: "פיתוח גופני, מנטלי וטכני במעקב מול מפת דרכים ברורה.",
   },
   {
     icon: Video,
-    name: "Media",
-    description: "Highlight reels, photoshoots and a personal brand built for scouts and sponsors.",
+    name: "מדיה",
+    description: "סרטוני הייליטס, צילומים ומיתוג אישי שנבנה עבור סקאוטים וספונסרים.",
   },
   {
     icon: BadgeDollarSign,
-    name: "Commercial",
-    description: "Sponsorships and brand deals matched to the player's profile and market value.",
+    name: "מסחרי",
+    description: "חסויות ועסקאות מותג שמותאמות לפרופיל ולשווי השוק של השחקן.",
   },
   {
     icon: BarChart3,
-    name: "Analytics",
-    description: "One Career Score across every dimension of the player's development.",
+    name: "אנליטיקה",
+    description: "ציון קריירה אחד על פני כל ממד בפיתוח השחקן.",
   },
   {
     icon: Globe2,
-    name: "International",
-    description: "Trials, transfers and exposure across leagues and federations worldwide.",
+    name: "בינלאומי",
+    description: "מבחנים, מעברים וחשיפה על פני ליגות והתאחדויות ברחבי העולם.",
   },
 ];
 
@@ -61,7 +61,7 @@ export default function LandingPage() {
   }
 
   return (
-    <div className="lp-page min-h-screen">
+    <div className="lp-page min-h-screen" dir="rtl" lang="he">
       <nav className="sticky top-0 z-50 lp-glass">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
@@ -72,10 +72,10 @@ export default function LandingPage() {
           </div>
           <div className="flex items-center gap-3">
             <a href="#preview" className="lp-btn-glass rounded-full px-4 py-2 text-sm font-semibold transition-colors">
-              Watch Demo
+              צפה בהדגמה
             </a>
             <button type="button" onClick={startOnboarding} className="lp-btn-gold rounded-full px-4 py-2 text-sm font-semibold transition-shadow">
-              Join SFG
+              הצטרפות ל-SFG
             </button>
           </div>
         </div>
@@ -85,20 +85,20 @@ export default function LandingPage() {
       <section className="max-w-6xl mx-auto px-6 pt-20 pb-16 text-center">
         <Reveal>
           <div className="inline-flex items-center gap-2 lp-glass rounded-full px-4 py-1.5 text-xs font-semibold mb-8" style={{ color: "var(--lp-gold-soft)" }}>
-            Football Career Operating System
+            מערכת הפעלה לקריירת כדורגל
           </div>
         </Reveal>
         <Reveal delay={80}>
           <h1 className="text-4xl md:text-6xl font-bold tracking-tight leading-[1.1] max-w-4xl mx-auto">
-            Manage Your Football Career.
+            נהל את הקריירה שלך בכדורגל.
             <br />
-            <span className="lp-gold-text">All In One Place.</span>
+            <span className="lp-gold-text">הכל במקום אחד.</span>
           </h1>
         </Reveal>
         <Reveal delay={160}>
           <p className="mt-6 text-base md:text-lg max-w-2xl mx-auto" style={{ color: "var(--lp-muted)" }}>
-            Representation, performance, media, commercial and analytics — unified in a single
-            command center built for players, families and the professionals around them.
+            ייצוג, ביצועים, מדיה, מסחר ואנליטיקה, הכל במרכז שליטה אחד שנבנה עבור שחקנים, משפחות
+            והאנשים המקצועיים סביבם.
           </p>
         </Reveal>
         <Reveal delay={240}>
@@ -108,10 +108,10 @@ export default function LandingPage() {
               onClick={startOnboarding}
               className="lp-btn-gold rounded-full px-6 py-3 text-sm font-bold inline-flex items-center gap-2 transition-shadow"
             >
-              Join SFG as a Player <ArrowRight size={16} />
+              הצטרף ל-SFG כשחקן <ArrowLeft size={16} />
             </button>
             <a href="#preview" className="lp-btn-glass rounded-full px-6 py-3 text-sm font-semibold inline-flex items-center gap-2 transition-colors">
-              <PlayCircle size={16} /> Watch Demo
+              <PlayCircle size={16} /> צפה בהדגמה
             </a>
           </div>
         </Reveal>
@@ -128,10 +128,10 @@ export default function LandingPage() {
       <section id="departments" className="max-w-6xl mx-auto px-6 pb-28 scroll-mt-24">
         <Reveal>
           <div className="text-center mb-14">
-            <h2 className="text-3xl md:text-4xl font-bold tracking-tight">One platform. Every department.</h2>
+            <h2 className="text-3xl md:text-4xl font-bold tracking-tight">פלטפורמה אחת. כל מחלקה.</h2>
             <p className="mt-4 max-w-xl mx-auto" style={{ color: "var(--lp-muted)" }}>
-              Every part of a football career, coordinated in one place instead of scattered
-              across phone calls, spreadsheets and group chats.
+              כל חלק בקריירת כדורגל, מתואם במקום אחד במקום מפוזר בין שיחות טלפון, גיליונות אקסל
+              וקבוצות וואטסאפ.
             </p>
           </div>
         </Reveal>
@@ -162,9 +162,9 @@ export default function LandingPage() {
       <section className="max-w-4xl mx-auto px-6 pb-28 text-center">
         <Reveal>
           <p className="text-2xl md:text-3xl font-semibold leading-snug">
-            "It's not just another agency.
+            "זו לא עוד סוכנות.
             <br />
-            It's a Career Management platform that can become the new standard."
+            זו פלטפורמת ניהול קריירה שיכולה להפוך לסטנדרט החדש."
           </p>
         </Reveal>
       </section>
@@ -173,16 +173,16 @@ export default function LandingPage() {
       <section className="max-w-3xl mx-auto px-6 pb-28 text-center">
         <Reveal>
           <div className="lp-glass rounded-3xl p-10 md:p-14">
-            <h2 className="text-2xl md:text-3xl font-bold tracking-tight">Ready to take control of your career?</h2>
+            <h2 className="text-2xl md:text-3xl font-bold tracking-tight">מוכן לקחת שליטה על הקריירה שלך?</h2>
             <p className="mt-4" style={{ color: "var(--lp-muted)" }}>
-              The full platform is launching soon. Build your player profile in under two minutes.
+              הפלטפורמה המלאה משיקה בקרוב. בנה את פרופיל השחקן שלך בפחות משתי דקות.
             </p>
             <button
               type="button"
               onClick={startOnboarding}
               className="lp-btn-gold rounded-full px-7 py-3 text-sm font-bold mt-8 inline-flex items-center gap-2 transition-shadow"
             >
-              Join SFG <ArrowRight size={16} />
+              הצטרפות ל-SFG <ArrowLeft size={16} />
             </button>
           </div>
         </Reveal>
@@ -197,7 +197,7 @@ export default function LandingPage() {
             </span>
           </div>
           <div className="text-xs" style={{ color: "var(--lp-muted)" }}>
-            © {new Date().getFullYear()} SFG OS. Football Career Operating System.
+            © {new Date().getFullYear()} SFG OS. מערכת הפעלה לקריירת כדורגל.
           </div>
         </div>
       </footer>

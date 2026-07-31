@@ -103,6 +103,14 @@ html {
   border-color: var(--lp-gold);
 }
 
+select.lp-input {
+  color-scheme: dark;
+}
+select.lp-input option {
+  background: var(--lp-bg);
+  color: var(--lp-fg);
+}
+
 .lp-fade-up {
   animation: lp-fade-up 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
 }

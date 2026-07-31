@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { players, clubContracts, representationAgreements, tasks, clubs, playerLinks, videos, documents, contacts, timelineEvents, deals, scoutingReports } from "@/db/schema";
+import { players, clubContracts, representationAgreements, tasks, clubs, playerLinks, videos, documents, contacts, timelineEvents, deals, scoutingReports, questionnaireResponses } from "@/db/schema";
 import { and, asc, desc, eq, gte, isNull, lte, like, or, sql } from "drizzle-orm";
 
 function todayISO() {
@@ -169,7 +169,7 @@ export async function getPlayerDetail(id: string) {
   const player = (await db.select().from(players).where(eq(players.id, id)))[0];
   if (!player) return null;
 
-  const [club, contracts, representation, links, videoList, docList, contactList, timeline, taskList, dealList, allClubs, scoutingReportRows] =
+  const [club, contracts, representation, links, videoList, docList, contactList, timeline, taskList, dealList, allClubs, scoutingReportRows, questionnaireRows] =
     await Promise.all([
       player.currentClubId ? db.select().from(clubs).where(eq(clubs.id, player.currentClubId)) : Promise.resolve([]),
       db.select().from(clubContracts).where(eq(clubContracts.playerId, id)).orderBy(desc(clubContracts.startDate)),
@@ -183,6 +183,7 @@ export async function getPlayerDetail(id: string) {
       db.select().from(deals).where(eq(deals.playerId, id)).orderBy(desc(deals.createdAt)),
       db.select().from(clubs),
       db.select().from(scoutingReports).where(eq(scoutingReports.playerId, id)),
+      db.select().from(questionnaireResponses).where(eq(questionnaireResponses.playerId, id)),
     ]);
 
   const clubById = new Map(allClubs.map((c) => [c.id, c]));
@@ -201,7 +202,12 @@ export async function getPlayerDetail(id: string) {
     deals: dealList.map((d) => ({ ...d, club: d.clubId ? clubById.get(d.clubId) : undefined })),
     allClubs,
     scoutingReport: scoutingReportRows[0],
+    questionnaireResponses: questionnaireRows,
   };
+}
+
+export async function getQuestionnaireResponses(playerId: string) {
+  return db.select().from(questionnaireResponses).where(eq(questionnaireResponses.playerId, playerId));
 }
 
 export async function getAllClubs() {

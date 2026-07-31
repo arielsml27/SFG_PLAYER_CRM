@@ -3,7 +3,8 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { Users, LayoutDashboard, ListChecks, Building2, Plus } from "lucide-react";
+import { Users, LayoutDashboard, ListChecks, Building2, Plus, LogOut } from "lucide-react";
+import { crmLogout } from "@/lib/crm-auth-actions";
 
 const NAV = [
   { href: "/crm", label: "דשבורד", icon: LayoutDashboard },
@@ -66,6 +67,17 @@ export default function Sidebar() {
         </Link>
       </div>
 
+      <div className="px-3 py-3 border-t border-white/10">
+        <form action={crmLogout}>
+          <button
+            type="submit"
+            className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium w-full text-white/60 hover:bg-white/10 hover:text-white/90 transition-colors"
+          >
+            <LogOut size={17} />
+            <span>התנתקות</span>
+          </button>
+        </form>
+      </div>
       <div className="px-5 py-3 text-[11px] text-white/40 border-t border-white/10">
         עובד מקומית · SQLite
       </div>

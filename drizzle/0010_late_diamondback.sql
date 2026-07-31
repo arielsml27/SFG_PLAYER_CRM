@@ -1,0 +1,1 @@
+ALTER TABLE `players` ADD `gold_requested_at` text;

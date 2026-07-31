@@ -1,57 +1,48 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
   ArrowRight,
   User,
   Calendar,
-  Ruler,
   Crosshair,
   Building2,
   FileText,
   Target,
   Users,
-  Link2,
   Video,
   UploadCloud,
   FileVideo,
   ImagePlus,
   Loader2,
+  GraduationCap,
+  Dumbbell,
 } from "lucide-react";
 import { registerPlayerPublic } from "@/lib/actions";
+import { STRONG_FOOT_OPTIONS, TARGET_LEVELS, TARGET_LEVEL_LABELS, RELOCATE_OPTIONS, RELOCATE_LABELS } from "@/lib/constants";
 import { EMPTY_PLAYER_DATA, ONBOARDING_STEPS, type PlayerData } from "./onboarding-types";
+import PremiumUpsell from "./PremiumUpsell";
 
 const POSITIONS = ["GK", "CB", "LB", "RB", "DM", "CM", "AM", "LW", "RW", "ST"];
-const STRONG_FOOT_OPTIONS = ["Right", "Left", "Both"];
-const TARGET_LEVELS: [string, string][] = [
-  ["ISRAEL", "Israel"],
-  ["SERBIA", "Serbia"],
-  ["EUROPE", "Europe"],
-  ["USA", "USA"],
-  ["ACADEMY", "Academy"],
-  ["SENIOR", "Senior / first team"],
-];
 const GOAL_OPTIONS = [
-  "Get scouted by professional clubs",
-  "Secure a transfer abroad",
-  "Improve physical performance",
-  "Build my personal brand & media presence",
-  "Make the national team",
+  "להתגלות על ידי מועדונים מקצועיים",
+  "להבטיח מעבר לחו״ל",
+  "לשפר ביצועים גופניים",
+  "לבנות מותג אישי ונוכחות מדיה",
+  "להגיע לנבחרת הלאומית",
 ];
-
 const STEP_META = {
-  name: { title: "What's your name?", icon: User },
-  birth: { title: "When were you born?", icon: Calendar },
-  body: { title: "Your physical profile", icon: Ruler },
-  position: { title: "What's your position?", icon: Crosshair },
-  club: { title: "Which club are you with?", icon: Building2 },
-  bio: { title: "Tell us about your game", icon: FileText },
-  goals: { title: "What are your goals?", icon: Target },
-  family: { title: "Family / guardian contact", icon: Users },
-  links: { title: "Add your links", icon: Link2 },
-  video: { title: "Show us what you've got", icon: Video },
+  name: { title: "מה השם שלך?", icon: User },
+  birthBody: { title: "תאריך לידה, גובה ומשקל", icon: Calendar },
+  position: { title: "מה העמדה שלך?", icon: Crosshair },
+  clubBackground: { title: "המועדון והרקע הכדורגלני שלך", icon: Building2 },
+  bio: { title: "ספר לנו על המשחק שלך", icon: FileText },
+  habits: { title: "ההרגלים שלך", icon: Dumbbell },
+  lifeBackground: { title: "קצת יותר עליך", icon: GraduationCap },
+  goals: { title: "מה המטרות שלך?", icon: Target },
+  familyLinks: { title: "משפחה וקישורים", icon: Users },
+  video: { title: "תראה לנו מה יש לך", icon: Video },
 };
 
 function chipStyle(active: boolean): React.CSSProperties {
@@ -61,13 +52,13 @@ function chipStyle(active: boolean): React.CSSProperties {
 }
 
 export default function OnboardingWizard({ onCancel }: { onCancel: () => void }) {
-  const router = useRouter();
   const [step, setStep] = useState(0);
   const [data, setData] = useState<PlayerData>(EMPTY_PLAYER_DATA);
   const [dragOver, setDragOver] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [videoError, setVideoError] = useState<string | null>(null);
+  const [registeredPlayer, setRegisteredPlayer] = useState<{ id: string; firstName: string } | null>(null);
 
   const photoInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
@@ -92,14 +83,14 @@ export default function OnboardingWizard({ onCancel }: { onCancel: () => void })
     probe.onloadedmetadata = () => {
       URL.revokeObjectURL(url);
       if (probe.duration > MAX_VIDEO_SECONDS + 0.5) {
-        setVideoError(`Video is ${Math.round(probe.duration)}s — please upload a clip of ${MAX_VIDEO_SECONDS} seconds or less.`);
+        setVideoError(`הסרטון באורך ${Math.round(probe.duration)} שניות, אנא העלה קליפ של עד ${MAX_VIDEO_SECONDS} שניות.`);
         return;
       }
       update("video", file);
     };
     probe.onerror = () => {
       URL.revokeObjectURL(url);
-      setVideoError("Couldn't read that video file. Try a different one.");
+      setVideoError("לא הצלחנו לקרוא את קובץ הווידאו. נסה קובץ אחר.");
     };
     probe.src = url;
   }
@@ -111,11 +102,11 @@ export default function OnboardingWizard({ onCancel }: { onCancel: () => void })
     switch (stepKey) {
       case "name":
         return data.firstName.trim() !== "" && data.lastName.trim() !== "" && data.email.trim() !== "" && data.phone.trim() !== "";
-      case "birth":
+      case "birthBody":
         return data.dob !== "";
       case "position":
         return data.position !== null;
-      case "club":
+      case "clubBackground":
         return data.noClub || data.clubName.trim() !== "";
       case "goals":
         return data.goals.length > 0;
@@ -148,6 +139,19 @@ export default function OnboardingWizard({ onCancel }: { onCancel: () => void })
       fd.set("noClub", data.noClub ? "on" : "");
       fd.set("currentLeague", data.currentLeague);
       fd.set("currentCountry", data.currentCountry);
+      fd.set("startingPlace", data.startingPlace);
+      fd.set("startingAge", data.startingAge);
+      fd.set("previousClubs", data.previousClubs);
+      fd.set("trainingFrequency", data.trainingFrequency);
+      fd.set("playerComparison", data.playerComparison);
+      fd.set("nutritionDiscipline", data.nutritionDiscipline);
+      fd.set("extraTraining", data.extraTraining);
+      fd.set("externalProfessionals", data.externalProfessionals);
+      fd.set("familyFootballBackground", data.familyFootballBackground);
+      fd.set("educationStatus", data.educationStatus);
+      fd.set("languagesSpoken", data.languagesSpoken);
+      fd.set("injuryHistory", data.injuryHistory);
+      fd.set("willingToRelocate", data.willingToRelocate ?? "");
       fd.set("shortDescription", data.shortDescription);
       fd.set("strengths", data.strengths);
       fd.set("weaknesses", data.weaknesses);
@@ -164,17 +168,21 @@ export default function OnboardingWizard({ onCancel }: { onCancel: () => void })
       if (data.video) fd.set("video", data.video);
 
       const { playerId } = await registerPlayerPublic(fd);
-      router.push(`/crm/players/${playerId}`);
+      setRegisteredPlayer({ id: playerId, firstName: data.firstName });
     } catch (e) {
       console.error(e);
-      setError("Something went wrong creating your profile. Please try again.");
+      setError("משהו השתבש ביצירת הפרופיל. נסה שוב.");
       setSubmitting(false);
     }
   }
 
+  if (registeredPlayer) {
+    return <PremiumUpsell playerId={registeredPlayer.id} firstName={registeredPlayer.firstName} />;
+  }
+
   return (
-    <div className="lp-page min-h-screen flex items-center justify-center px-6 py-16">
-      <div className="w-full max-w-lg">
+    <div className="lp-page min-h-screen flex items-center justify-center px-6 py-16" dir="rtl" lang="he">
+      <div className="w-full max-w-2xl">
         <div className="flex items-center justify-between mb-6">
           <button
             type="button"
@@ -182,10 +190,10 @@ export default function OnboardingWizard({ onCancel }: { onCancel: () => void })
             className="text-sm inline-flex items-center gap-1.5 hover:opacity-80 transition-opacity"
             style={{ color: "var(--lp-muted)" }}
           >
-            <ArrowLeft size={14} /> Back to home
+            <ArrowRight size={14} /> חזרה לדף הבית
           </button>
           <div className="text-xs font-semibold" style={{ color: "var(--lp-muted)" }}>
-            Step {step + 1} of {ONBOARDING_STEPS.length}
+            שלב {step + 1} מתוך {ONBOARDING_STEPS.length}
           </div>
         </div>
 
@@ -215,14 +223,14 @@ export default function OnboardingWizard({ onCancel }: { onCancel: () => void })
               <div className="flex flex-col sm:flex-row gap-3">
                 <input
                   type="text"
-                  placeholder="First name"
+                  placeholder="שם פרטי"
                   value={data.firstName}
                   onChange={(e) => update("firstName", e.target.value)}
                   className="lp-input flex-1"
                 />
                 <input
                   type="text"
-                  placeholder="Last name"
+                  placeholder="שם משפחה"
                   value={data.lastName}
                   onChange={(e) => update("lastName", e.target.value)}
                   className="lp-input flex-1"
@@ -231,14 +239,14 @@ export default function OnboardingWizard({ onCancel }: { onCancel: () => void })
               <div className="flex flex-col sm:flex-row gap-3">
                 <input
                   type="email"
-                  placeholder="Email"
+                  placeholder="אימייל"
                   value={data.email}
                   onChange={(e) => update("email", e.target.value)}
                   className="lp-input flex-1"
                 />
                 <input
                   type="tel"
-                  placeholder="Phone"
+                  placeholder="טלפון"
                   value={data.phone}
                   onChange={(e) => update("phone", e.target.value)}
                   className="lp-input flex-1"
@@ -257,54 +265,47 @@ export default function OnboardingWizard({ onCancel }: { onCancel: () => void })
                 className="lp-btn-glass rounded-full px-4 py-2 text-xs font-semibold inline-flex items-center gap-2"
               >
                 <ImagePlus size={14} />
-                {data.photo ? data.photo.name : "Add a profile photo (optional)"}
+                {data.photo ? data.photo.name : "הוסף תמונת פרופיל (אופציונלי)"}
               </button>
             </div>
           )}
 
-          {stepKey === "birth" && (
-            <div className="space-y-3">
+          {stepKey === "birthBody" && (
+            <div className="space-y-4">
               <input type="date" value={data.dob} onChange={(e) => update("dob", e.target.value)} className="lp-input w-full" />
-              <div className="flex flex-col sm:flex-row gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <input
                   type="text"
-                  placeholder="Nationality (optional)"
+                  placeholder="אזרחות (אופציונלי)"
                   value={data.nationality}
                   onChange={(e) => update("nationality", e.target.value)}
-                  className="lp-input flex-1"
+                  className="lp-input"
                 />
                 <input
                   type="text"
-                  placeholder="Second nationality (optional)"
+                  placeholder="אזרחות נוספת (אופציונלי)"
                   value={data.secondNationality}
                   onChange={(e) => update("secondNationality", e.target.value)}
-                  className="lp-input flex-1"
+                  className="lp-input"
                 />
-              </div>
-            </div>
-          )}
-
-          {stepKey === "body" && (
-            <div className="space-y-4">
-              <div className="flex gap-3">
                 <input
                   type="number"
-                  placeholder="Height (cm)"
+                  placeholder="גובה (ס״מ)"
                   value={data.height}
                   onChange={(e) => update("height", e.target.value)}
-                  className="lp-input flex-1"
+                  className="lp-input"
                 />
                 <input
                   type="number"
-                  placeholder="Weight (kg)"
+                  placeholder="משקל (ק״ג)"
                   value={data.weight}
                   onChange={(e) => update("weight", e.target.value)}
-                  className="lp-input flex-1"
+                  className="lp-input"
                 />
               </div>
               <div>
                 <div className="text-xs font-semibold mb-2" style={{ color: "var(--lp-muted)" }}>
-                  Strong foot
+                  רגל חזקה
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {STRONG_FOOT_OPTIONS.map((f) => (
@@ -327,7 +328,7 @@ export default function OnboardingWizard({ onCancel }: { onCancel: () => void })
             <div className="space-y-5">
               <div>
                 <div className="text-xs font-semibold mb-2" style={{ color: "var(--lp-muted)" }}>
-                  Main position
+                  עמדה ראשית
                 </div>
                 <div className="grid grid-cols-5 gap-2">
                   {POSITIONS.map((p) => (
@@ -345,7 +346,7 @@ export default function OnboardingWizard({ onCancel }: { onCancel: () => void })
               </div>
               <div>
                 <div className="text-xs font-semibold mb-2" style={{ color: "var(--lp-muted)" }}>
-                  Also comfortable at (optional)
+                  נוח גם בעמדות הבאות (אופציונלי)
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {POSITIONS.filter((p) => p !== data.position).map((p) => (
@@ -364,11 +365,11 @@ export default function OnboardingWizard({ onCancel }: { onCancel: () => void })
             </div>
           )}
 
-          {stepKey === "club" && (
+          {stepKey === "clubBackground" && (
             <div className="space-y-3">
               <input
                 type="text"
-                placeholder="Current club"
+                placeholder="מועדון נוכחי"
                 value={data.clubName}
                 disabled={data.noClub}
                 onChange={(e) => update("clubName", e.target.value)}
@@ -383,31 +384,85 @@ export default function OnboardingWizard({ onCancel }: { onCancel: () => void })
                     if (e.target.checked) update("clubName", "");
                   }}
                 />
-                I'm not currently registered with a club
+                אני לא רשום כרגע במועדון
               </label>
-              <div className="flex flex-col sm:flex-row gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <input
                   type="text"
-                  placeholder="League (optional)"
+                  placeholder="ליגה (אופציונלי)"
                   value={data.currentLeague}
                   onChange={(e) => update("currentLeague", e.target.value)}
-                  className="lp-input flex-1"
+                  className="lp-input"
                 />
                 <input
                   type="text"
-                  placeholder="Country (optional)"
+                  placeholder="מדינה (אופציונלי)"
                   value={data.currentCountry}
                   onChange={(e) => update("currentCountry", e.target.value)}
-                  className="lp-input flex-1"
+                  className="lp-input"
+                />
+                <input
+                  type="text"
+                  placeholder="היכן התחלת לשחק כדורגל (מועדון / מקום)"
+                  value={data.startingPlace}
+                  onChange={(e) => update("startingPlace", e.target.value)}
+                  className="lp-input"
+                />
+                <input
+                  type="number"
+                  placeholder="באיזה גיל התחלת לשחק"
+                  value={data.startingAge}
+                  onChange={(e) => update("startingAge", e.target.value)}
+                  className="lp-input"
                 />
               </div>
+              <input
+                type="text"
+                placeholder="מועדונים קודמים (אם יש, אופציונלי)"
+                value={data.previousClubs}
+                onChange={(e) => update("previousClubs", e.target.value)}
+                className="lp-input w-full"
+              />
+            </div>
+          )}
+
+          {stepKey === "habits" && (
+            <div className="space-y-3">
+              <textarea
+                placeholder="משמעת מבחינת תזונה"
+                value={data.nutritionDiscipline}
+                onChange={(e) => update("nutritionDiscipline", e.target.value)}
+                className="lp-input w-full"
+                rows={2}
+              />
+              <input
+                type="text"
+                placeholder="מספר יחידות אימון בשבוע"
+                value={data.trainingFrequency}
+                onChange={(e) => update("trainingFrequency", e.target.value)}
+                className="lp-input w-full"
+              />
+              <textarea
+                placeholder="האם אתה מתאמן מחוץ למסגרת הקבוצה? אם כן, במה"
+                value={data.extraTraining}
+                onChange={(e) => update("extraTraining", e.target.value)}
+                className="lp-input w-full"
+                rows={2}
+              />
+              <textarea
+                placeholder="האם אתה נעזר באנשי מקצוע מחוץ למסגרת הכדורגל (תזונאי, מאמן מנטלי, פיזיותרפיסט וכו')? אם כן, אילו"
+                value={data.externalProfessionals}
+                onChange={(e) => update("externalProfessionals", e.target.value)}
+                className="lp-input w-full"
+                rows={2}
+              />
             </div>
           )}
 
           {stepKey === "bio" && (
             <div className="space-y-3">
               <textarea
-                placeholder="Short description of you as a player (optional)"
+                placeholder="תיאור קצר שלך כשחקן (אופציונלי)"
                 value={data.shortDescription}
                 onChange={(e) => update("shortDescription", e.target.value)}
                 className="lp-input w-full"
@@ -415,14 +470,14 @@ export default function OnboardingWizard({ onCancel }: { onCancel: () => void })
               />
               <div className="flex flex-col sm:flex-row gap-3">
                 <textarea
-                  placeholder="Your strengths (optional)"
+                  placeholder="החוזקות שלך (אופציונלי)"
                   value={data.strengths}
                   onChange={(e) => update("strengths", e.target.value)}
                   className="lp-input flex-1"
                   rows={2}
                 />
                 <textarea
-                  placeholder="What you're working on (optional)"
+                  placeholder="על מה אתה עובד לשיפור (אופציונלי)"
                   value={data.weaknesses}
                   onChange={(e) => update("weaknesses", e.target.value)}
                   className="lp-input flex-1"
@@ -432,25 +487,32 @@ export default function OnboardingWizard({ onCancel }: { onCancel: () => void })
               <div className="flex flex-col sm:flex-row gap-3">
                 <input
                   type="text"
-                  placeholder="Playing style (optional)"
+                  placeholder="סגנון משחק (אופציונלי)"
                   value={data.playingStyle}
                   onChange={(e) => update("playingStyle", e.target.value)}
                   className="lp-input flex-1"
                 />
                 <input
                   type="text"
-                  placeholder="Ideal role (optional)"
+                  placeholder="התפקיד האידיאלי (אופציונלי)"
                   value={data.idealRole}
                   onChange={(e) => update("idealRole", e.target.value)}
                   className="lp-input flex-1"
                 />
               </div>
+              <input
+                type="text"
+                placeholder="לאיזה שחקן אתה הכי דומה בסגנון המשחק שלך (אופציונלי)"
+                value={data.playerComparison}
+                onChange={(e) => update("playerComparison", e.target.value)}
+                className="lp-input w-full"
+              />
               <div>
                 <div className="text-xs font-semibold mb-2" style={{ color: "var(--lp-muted)" }}>
-                  Target level (optional)
+                  רמת יעד (אופציונלי)
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  {TARGET_LEVELS.map(([value, label]) => (
+                  {TARGET_LEVELS.map((value) => (
                     <button
                       key={value}
                       type="button"
@@ -458,7 +520,58 @@ export default function OnboardingWizard({ onCancel }: { onCancel: () => void })
                       className="rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors"
                       style={chipStyle(data.targetLevel === value)}
                     >
-                      {label}
+                      {TARGET_LEVEL_LABELS[value]}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {stepKey === "lifeBackground" && (
+            <div className="space-y-3">
+              <input
+                type="text"
+                placeholder="האם מישהו מהמשפחה שלך שיחק כדורגל ברמה מקצועית? (אופציונלי)"
+                value={data.familyFootballBackground}
+                onChange={(e) => update("familyFootballBackground", e.target.value)}
+                className="lp-input w-full"
+              />
+              <input
+                type="text"
+                placeholder="איך אתה בלימודים? (למשל: תיכון כיתה יא, סטודנט, סיים לימודים)"
+                value={data.educationStatus}
+                onChange={(e) => update("educationStatus", e.target.value)}
+                className="lp-input w-full"
+              />
+              <input
+                type="text"
+                placeholder="אילו שפות אתה דובר? (אופציונלי)"
+                value={data.languagesSpoken}
+                onChange={(e) => update("languagesSpoken", e.target.value)}
+                className="lp-input w-full"
+              />
+              <textarea
+                placeholder="האם היו לך פציעות משמעותיות בעבר? (אופציונלי)"
+                value={data.injuryHistory}
+                onChange={(e) => update("injuryHistory", e.target.value)}
+                className="lp-input w-full"
+                rows={2}
+              />
+              <div>
+                <div className="text-xs font-semibold mb-2" style={{ color: "var(--lp-muted)" }}>
+                  פתוח לעבור למדינה אחרת למען הקריירה? (אופציונלי)
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {RELOCATE_OPTIONS.map((value) => (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => update("willingToRelocate", data.willingToRelocate === value ? null : value)}
+                      className="rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors"
+                      style={chipStyle(data.willingToRelocate === value)}
+                    >
+                      {RELOCATE_LABELS[value]}
                     </button>
                   ))}
                 </div>
@@ -473,7 +586,7 @@ export default function OnboardingWizard({ onCancel }: { onCancel: () => void })
                   key={g}
                   type="button"
                   onClick={() => toggleFrom("goals", g)}
-                  className="rounded-full px-4 py-2 text-xs font-semibold transition-colors text-left"
+                  className="rounded-full px-4 py-2 text-xs font-semibold transition-colors text-right"
                   style={chipStyle(data.goals.includes(g))}
                 >
                   {g}
@@ -482,63 +595,60 @@ export default function OnboardingWizard({ onCancel }: { onCancel: () => void })
             </div>
           )}
 
-          {stepKey === "family" && (
+          {stepKey === "familyLinks" && (
             <div className="space-y-3">
               <div className="text-xs" style={{ color: "var(--lp-muted)" }}>
-                Optional — add a parent or guardian if you're under 18.
+                אופציונלי: הוסף הורה או אפוטרופוס אם אתה מתחת לגיל 18.
               </div>
               <input
                 type="text"
-                placeholder="Contact name"
+                placeholder="שם איש הקשר"
                 value={data.familyContactName}
                 onChange={(e) => update("familyContactName", e.target.value)}
                 className="lp-input w-full"
               />
-              <div className="flex flex-col sm:flex-row gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <input
                   type="tel"
-                  placeholder="Phone"
+                  placeholder="טלפון"
                   value={data.familyContactPhone}
                   onChange={(e) => update("familyContactPhone", e.target.value)}
-                  className="lp-input flex-1"
+                  className="lp-input"
                 />
                 <input
                   type="email"
-                  placeholder="Email"
+                  placeholder="אימייל"
                   value={data.familyContactEmail}
                   onChange={(e) => update("familyContactEmail", e.target.value)}
-                  className="lp-input flex-1"
+                  className="lp-input"
                 />
               </div>
               <input
                 type="text"
-                placeholder="Home address (optional)"
+                placeholder="כתובת מגורים (אופציונלי)"
                 value={data.address}
                 onChange={(e) => update("address", e.target.value)}
                 className="lp-input w-full"
               />
-            </div>
-          )}
-
-          {stepKey === "links" && (
-            <div className="space-y-3">
-              <div className="text-xs" style={{ color: "var(--lp-muted)" }}>
-                Optional — a stats profile (Transfermarkt, SofaScore, Wyscout...) or a social account.
+              <div className="text-xs pt-1" style={{ color: "var(--lp-muted)" }}>
+                אופציונלי: פרופיל סטטיסטיקות (Transfermarkt, SofaScore, Wyscout...) או חשבון רשת חברתית.
               </div>
-              <input
-                type="url"
-                placeholder="Stats profile link"
-                value={data.statsLink}
-                onChange={(e) => update("statsLink", e.target.value)}
-                className="lp-input w-full"
-              />
-              <input
-                type="url"
-                placeholder="Social media link"
-                value={data.socialLink}
-                onChange={(e) => update("socialLink", e.target.value)}
-                className="lp-input w-full"
-              />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <input
+                  type="url"
+                  placeholder="קישור לפרופיל סטטיסטיקות"
+                  value={data.statsLink}
+                  onChange={(e) => update("statsLink", e.target.value)}
+                  className="lp-input"
+                />
+                <input
+                  type="url"
+                  placeholder="קישור לרשת חברתית"
+                  value={data.socialLink}
+                  onChange={(e) => update("socialLink", e.target.value)}
+                  className="lp-input"
+                />
+              </div>
             </div>
           )}
 
@@ -578,15 +688,15 @@ export default function OnboardingWizard({ onCancel }: { onCancel: () => void })
                     <FileVideo size={28} style={{ color: "var(--lp-gold)" }} />
                     <div className="text-sm font-semibold">{data.video.name}</div>
                     <div className="text-xs" style={{ color: "var(--lp-muted)" }}>
-                      click to replace
+                      לחץ להחלפה
                     </div>
                   </div>
                 ) : (
                   <div className="flex flex-col items-center gap-2">
                     <UploadCloud size={28} style={{ color: "var(--lp-muted)" }} />
-                    <div className="text-sm font-semibold">Drag & drop your highlight video</div>
+                    <div className="text-sm font-semibold">גרור ושחרר את סרטון ההייליטס שלך</div>
                     <div className="text-xs" style={{ color: "var(--lp-muted)" }}>
-                      or click to browse — up to {MAX_VIDEO_SECONDS} seconds
+                      או לחץ לבחירה, עד {MAX_VIDEO_SECONDS} שניות
                     </div>
                   </div>
                 )}
@@ -597,7 +707,7 @@ export default function OnboardingWizard({ onCancel }: { onCancel: () => void })
                 </div>
               )}
               <div className="text-xs text-center mt-3" style={{ color: "var(--lp-muted)" }}>
-                You can add this later — it won't stop you from finishing. Clips must be {MAX_VIDEO_SECONDS} seconds or less.
+                תוכל להוסיף זאת גם מאוחר יותר, זה לא ימנע ממך לסיים. הסרטון חייב להיות עד {MAX_VIDEO_SECONDS} שניות.
               </div>
             </div>
           )}
@@ -615,7 +725,7 @@ export default function OnboardingWizard({ onCancel }: { onCancel: () => void })
                 onClick={() => setStep((s) => s - 1)}
                 className="lp-btn-glass rounded-full px-5 py-2.5 text-sm font-semibold transition-colors"
               >
-                Back
+                חזרה
               </button>
             )}
             <button
@@ -626,11 +736,11 @@ export default function OnboardingWizard({ onCancel }: { onCancel: () => void })
             >
               {submitting ? (
                 <>
-                  <Loader2 size={15} className="animate-spin" /> Creating your profile...
+                  <Loader2 size={15} className="animate-spin" /> יוצר את הפרופיל שלך...
                 </>
               ) : (
                 <>
-                  {isLast ? "Finish" : "Continue"} <ArrowRight size={15} />
+                  {isLast ? "סיום" : "המשך"} <ArrowLeft size={15} />
                 </>
               )}
             </button>

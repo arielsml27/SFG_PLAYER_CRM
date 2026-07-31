@@ -154,6 +154,8 @@ export const TIMELINE_EVENT_TYPE_LABELS: Record<string, string> = {
   MEETING: "פגישה",
   NEGOTIATION: "מו״מ",
   INTERNAL_NOTE: "הערה פנימית",
+  SUBSCRIPTION: "שדרוג מנוי",
+  QUESTIONNAIRE: "שאלון מורחב",
 };
 
 export const TASK_PRIORITIES = ["LOW", "NORMAL", "HIGH", "CRITICAL"] as const;
@@ -187,6 +189,13 @@ export const YES_NO_NA_LABELS: Record<string, string> = {
   YES: "כן",
   NO: "לא",
   NA: "לא רלוונטי",
+};
+
+export const RELOCATE_OPTIONS = ["YES", "NO", "MAYBE"] as const;
+export const RELOCATE_LABELS: Record<string, string> = {
+  YES: "כן",
+  NO: "לא",
+  MAYBE: "אולי",
 };
 
 export const DEAL_TYPES = ["TRANSFER", "LOAN", "CONTRACT_RENEWAL", "REPRESENTATION", "OTHER"] as const;

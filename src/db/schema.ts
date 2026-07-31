@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer, real } from "drizzle-orm/sqlite-core";
+import { sqliteTable, text, integer, real, uniqueIndex } from "drizzle-orm/sqlite-core";
 import { relations, sql } from "drizzle-orm";
 
 // ---------- Helpers ----------
@@ -48,6 +48,25 @@ export const players = sqliteTable("players", {
   currentLeague: text("current_league"),
   currentCountry: text("current_country"),
 
+  // Football background
+  startingPlace: text("starting_place"),
+  startingAge: integer("starting_age"),
+  previousClubs: text("previous_clubs"),
+  trainingFrequency: text("training_frequency"),
+  playerComparison: text("player_comparison"),
+
+  // Habits
+  nutritionDiscipline: text("nutrition_discipline"),
+  extraTraining: text("extra_training"),
+  externalProfessionals: text("external_professionals"),
+
+  // Family / education / health background
+  familyFootballBackground: text("family_football_background"),
+  educationStatus: text("education_status"),
+  languagesSpoken: text("languages_spoken"),
+  injuryHistory: text("injury_history"),
+  willingToRelocate: text("willing_to_relocate"),
+
   status: text("status").notNull().default("PROSPECT"),
   internalRating: integer("internal_rating"),
   potentialRating: integer("potential_rating"),
@@ -64,6 +83,12 @@ export const players = sqliteTable("players", {
 
   representationStatus: text("representation_status").notNull().default("UNKNOWN"),
 
+  // BASIC (free self-registration), PREMIUM (paid monthly subscription), or GOLD (one-time paid package).
+  // PREMIUM_ACTIVE is reserved for when real billing exists; nothing sets it yet.
+  subscriptionTier: text("subscription_tier").notNull().default("BASIC"),
+  premiumRequestedAt: text("premium_requested_at"),
+  goldRequestedAt: text("gold_requested_at"),
+
   agentInCharge: text("agent_in_charge"),
   familyContactName: text("family_contact_name"),
   familyContactPhone: text("family_contact_phone"),
@@ -74,6 +99,10 @@ export const players = sqliteTable("players", {
   tags: text("tags"),
   nextAction: text("next_action"),
   nextActionDate: text("next_action_date"),
+
+  // AI-generated professional summary (web-search-backed), shown on the export report.
+  aiSummary: text("ai_summary"),
+  aiSummaryGeneratedAt: text("ai_summary_generated_at"),
 
   ...timestamps,
 });
@@ -310,6 +339,22 @@ export const deals = sqliteTable("deals", {
   ...timestamps,
 });
 
+// ---------- Extended questionnaire responses (one row per question answered) ----------
+export const questionnaireResponses = sqliteTable(
+  "questionnaire_responses",
+  {
+    id: id(),
+    playerId: text("player_id")
+      .notNull()
+      .references(() => players.id, { onDelete: "cascade" }),
+    sectionId: text("section_id").notNull(),
+    questionId: text("question_id").notNull(),
+    value: text("value"),
+    ...timestamps,
+  },
+  (table) => [uniqueIndex("questionnaire_responses_player_question_idx").on(table.playerId, table.questionId)]
+);
+
 // ---------- Relations ----------
 export const playersRelations = relations(players, ({ one, many }) => ({
   currentClub: one(clubs, { fields: [players.currentClubId], references: [clubs.id] }),
@@ -322,6 +367,7 @@ export const playersRelations = relations(players, ({ one, many }) => ({
   timelineEvents: many(timelineEvents),
   tasks: many(tasks),
   deals: many(deals),
+  questionnaireResponses: many(questionnaireResponses),
   scoutingReport: one(scoutingReports, { fields: [players.id], references: [scoutingReports.playerId] }),
 }));
 
@@ -371,4 +417,8 @@ export const tasksRelations = relations(tasks, ({ one }) => ({
 export const dealsRelations = relations(deals, ({ one }) => ({
   player: one(players, { fields: [deals.playerId], references: [players.id] }),
   club: one(clubs, { fields: [deals.clubId], references: [clubs.id] }),
+}));
+
+export const questionnaireResponsesRelations = relations(questionnaireResponses, ({ one }) => ({
+  player: one(players, { fields: [questionnaireResponses.playerId], references: [players.id] }),
 }));

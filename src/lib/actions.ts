@@ -14,6 +14,7 @@ import {
   tasks,
   deals,
   scoutingReports,
+  questionnaireResponses,
 } from "@/db/schema";
 import {
   PHYSICAL_SKILLS,
@@ -25,11 +26,12 @@ import {
   POSITION_GROUPS,
   TECHNICAL_SKILLS_BY_POSITION,
 } from "@/lib/constants";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { generatePlayerAiSummaryText } from "@/lib/ai-summary";
 
 const PLAYER_PHOTO_DIR = path.join(process.cwd(), "public", "uploads", "players");
 
@@ -88,6 +90,19 @@ export async function createPlayer(formData: FormData) {
       currentClubId: clubId,
       currentLeague: str(formData, "currentLeague"),
       currentCountry: str(formData, "currentCountry"),
+      startingPlace: str(formData, "startingPlace"),
+      startingAge: num(formData, "startingAge"),
+      previousClubs: str(formData, "previousClubs"),
+      trainingFrequency: str(formData, "trainingFrequency"),
+      playerComparison: str(formData, "playerComparison"),
+      nutritionDiscipline: str(formData, "nutritionDiscipline"),
+      extraTraining: str(formData, "extraTraining"),
+      externalProfessionals: str(formData, "externalProfessionals"),
+      familyFootballBackground: str(formData, "familyFootballBackground"),
+      educationStatus: str(formData, "educationStatus"),
+      languagesSpoken: str(formData, "languagesSpoken"),
+      injuryHistory: str(formData, "injuryHistory"),
+      willingToRelocate: str(formData, "willingToRelocate"),
       status: str(formData, "status") ?? "PROSPECT",
       internalRating: num(formData, "internalRating"),
       potentialRating: num(formData, "potentialRating"),
@@ -149,6 +164,19 @@ export async function updatePlayer(playerId: string, formData: FormData) {
       currentClubId: clubId,
       currentLeague: str(formData, "currentLeague"),
       currentCountry: str(formData, "currentCountry"),
+      startingPlace: str(formData, "startingPlace"),
+      startingAge: num(formData, "startingAge"),
+      previousClubs: str(formData, "previousClubs"),
+      trainingFrequency: str(formData, "trainingFrequency"),
+      playerComparison: str(formData, "playerComparison"),
+      nutritionDiscipline: str(formData, "nutritionDiscipline"),
+      extraTraining: str(formData, "extraTraining"),
+      externalProfessionals: str(formData, "externalProfessionals"),
+      familyFootballBackground: str(formData, "familyFootballBackground"),
+      educationStatus: str(formData, "educationStatus"),
+      languagesSpoken: str(formData, "languagesSpoken"),
+      injuryHistory: str(formData, "injuryHistory"),
+      willingToRelocate: str(formData, "willingToRelocate"),
       status: str(formData, "status") ?? "PROSPECT",
       internalRating: num(formData, "internalRating"),
       potentialRating: num(formData, "potentialRating"),
@@ -445,6 +473,31 @@ export async function upsertScoutingReport(playerId: string, formData: FormData)
   redirect(`/crm/players/${playerId}?tab=scouting&saved=1`);
 }
 
+// ---------- AI player summary ----------
+
+export async function generatePlayerAiSummary(playerId: string) {
+  const player = (await db.select().from(players).where(eq(players.id, playerId)))[0];
+  if (!player) return;
+
+  const club = player.currentClubId
+    ? (await db.select().from(clubs).where(eq(clubs.id, player.currentClubId)))[0]
+    : undefined;
+
+  try {
+    const summary = await generatePlayerAiSummaryText(player, club?.name ?? null);
+    await db
+      .update(players)
+      .set({ aiSummary: summary, aiSummaryGeneratedAt: new Date().toISOString() })
+      .where(eq(players.id, playerId));
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Failed to generate summary.";
+    revalidatePath(`/crm/players/${playerId}/export`);
+    redirect(`/crm/players/${playerId}/export?summaryError=${encodeURIComponent(message)}`);
+  }
+
+  revalidatePath(`/crm/players/${playerId}/export`);
+}
+
 // ---------- Clubs ----------
 
 export async function createClub(formData: FormData) {
@@ -502,6 +555,19 @@ export async function registerPlayerPublic(formData: FormData): Promise<{ player
       currentClubId: clubId,
       currentLeague: str(formData, "currentLeague"),
       currentCountry: str(formData, "currentCountry"),
+      startingPlace: str(formData, "startingPlace"),
+      startingAge: num(formData, "startingAge"),
+      previousClubs: str(formData, "previousClubs"),
+      trainingFrequency: str(formData, "trainingFrequency"),
+      playerComparison: str(formData, "playerComparison"),
+      nutritionDiscipline: str(formData, "nutritionDiscipline"),
+      extraTraining: str(formData, "extraTraining"),
+      externalProfessionals: str(formData, "externalProfessionals"),
+      familyFootballBackground: str(formData, "familyFootballBackground"),
+      educationStatus: str(formData, "educationStatus"),
+      languagesSpoken: str(formData, "languagesSpoken"),
+      injuryHistory: str(formData, "injuryHistory"),
+      willingToRelocate: str(formData, "willingToRelocate"),
       status: "PROSPECT",
       representationStatus: "UNKNOWN",
       priorityLevel: 0,
@@ -540,4 +606,116 @@ export async function registerPlayerPublic(formData: FormData): Promise<{ player
   revalidatePath("/crm");
 
   return { playerId: player.id };
+}
+
+export async function requestPremiumUpgrade(playerId: string, playerName: string) {
+  await db
+    .update(players)
+    .set({ subscriptionTier: "PREMIUM_REQUESTED", premiumRequestedAt: new Date().toISOString() })
+    .where(eq(players.id, playerId));
+
+  await db.insert(tasks).values({
+    playerId,
+    title: `${playerName} ביקש/ה שדרוג לפרימיום (₪1,800 לשנה, ₪150 לחודש)`,
+    description:
+      "השחקן/ית ביקש/ה לשדרג לפרימיום דרך האתר הציבורי. מה שצריך לספק: פגישת ייעוץ אישית חד-פעמית של שעה " +
+      "(זום או פרונטלית) עם מנהל מקצועי מטעמנו, דוח סקאוטינג מפורט עם יעדים ל-3 החודשים הקרובים ולעונה הקרובה, " +
+      "דף מלא בפלטפורמה שלנו עם אפשרות מעקב והעלאת תכנים, והמלצות ממוקדות לאנשי מקצוע רלוונטיים לפי הנקודות שהפרופיל צריך לחזק.",
+    priority: "HIGH",
+    status: "OPEN",
+  });
+
+  await db.insert(timelineEvents).values({
+    playerId,
+    type: "SUBSCRIPTION",
+    title: "ביקש/ה שדרוג לפרימיום",
+    description: "₪1,800 לשנה (₪150 לחודש). התבקש דרך תהליך ההרשמה הציבורי.",
+    eventDate: new Date().toISOString().slice(0, 10),
+  });
+
+  revalidatePath(`/crm/players/${playerId}`);
+  revalidatePath("/crm/tasks");
+  revalidatePath("/crm");
+}
+
+export async function requestGoldUpgrade(playerId: string, playerName: string) {
+  await db
+    .update(players)
+    .set({ subscriptionTier: "GOLD_REQUESTED", goldRequestedAt: new Date().toISOString() })
+    .where(eq(players.id, playerId));
+
+  await db.insert(tasks).values({
+    playerId,
+    title: `${playerName} ביקש/ה חבילת GOLD (₪6,600 לשנה, ₪550 לחודש)`,
+    description:
+      "השחקן/ית ביקש/ה את חבילת GOLD דרך האתר הציבורי. מה שצריך לספק: 3 פגישות פרונטליות או בזום של שעה, " +
+      "דוח סקאוטינג מפורט עם חוזקות, חולשות ודברים שהשחקן צריך לשפר לשלושת החודשים הקרובים, ניתוח אנליסטי אישי 1:1 " +
+      "של 5 משחקים, ניתוח מלא של הקבוצה הבאה על בסיס המצב הקיים מול מה שצפוי לשחקן, הכוונה במשא ומתן וייעוץ בבחירת " +
+      "ייצוג רלוונטי, גישה למאגר אנשי מקצוע, בחירת סוכן נכון עבור המטרות, הכוונה לכל שירות שהשחקן צריך ממוקד למטרותיו, " +
+      "ודף מלא בפלטפורמה שלנו עם הכוונות ופיצ'רים נוספים כמו בניית מותג ברשתות חברתיות והתנהלות פיננסית.",
+    priority: "HIGH",
+    status: "OPEN",
+  });
+
+  await db.insert(timelineEvents).values({
+    playerId,
+    type: "SUBSCRIPTION",
+    title: "ביקש/ה חבילת GOLD",
+    description: "₪6,600 לשנה (₪550 לחודש). התבקש דרך תהליך ההרשמה הציבורי.",
+    eventDate: new Date().toISOString().slice(0, 10),
+  });
+
+  revalidatePath(`/crm/players/${playerId}`);
+  revalidatePath("/crm/tasks");
+  revalidatePath("/crm");
+}
+
+export async function saveQuestionnaireResponses(
+  playerId: string,
+  responses: { sectionId: string; questionId: string; value: string }[]
+) {
+  const rows = responses
+    .filter((r) => r.value != null && r.value.trim() !== "")
+    .map((r) => ({ playerId, sectionId: r.sectionId, questionId: r.questionId, value: r.value }));
+
+  if (rows.length === 0) return;
+
+  await db
+    .insert(questionnaireResponses)
+    .values(rows)
+    .onConflictDoUpdate({
+      target: [questionnaireResponses.playerId, questionnaireResponses.questionId],
+      set: { value: sql`excluded.value`, updatedAt: sql`(current_timestamp)` },
+    });
+
+  await db.insert(timelineEvents).values({
+    playerId,
+    type: "QUESTIONNAIRE",
+    title: "מילא/ה תשובות בשאלון המורחב",
+    description: `${rows.length} תשובות נשלחו דרך השאלון המורחב.`,
+    eventDate: new Date().toISOString().slice(0, 10),
+  });
+
+  revalidatePath(`/crm/players/${playerId}`);
+}
+
+export async function requestProfessionalReferral(playerId: string, playerName: string) {
+  await db.insert(tasks).values({
+    playerId,
+    title: `${playerName} ביקש/ה חיבור לאיש מקצוע`,
+    description: "השחקן/ית ביקש/ה מהפרופיל הציבורי חיבור לאיש מקצוע רלוונטי ממאגר SFG (סוכן, תזונאי, מאמן מנטלי וכו').",
+    priority: "NORMAL",
+    status: "OPEN",
+  });
+
+  await db.insert(timelineEvents).values({
+    playerId,
+    type: "INTERNAL_NOTE",
+    title: "ביקש/ה חיבור לאיש מקצוע",
+    description: "התבקש דרך הפרופיל הציבורי.",
+    eventDate: new Date().toISOString().slice(0, 10),
+  });
+
+  revalidatePath(`/crm/players/${playerId}`);
+  revalidatePath("/crm/tasks");
 }

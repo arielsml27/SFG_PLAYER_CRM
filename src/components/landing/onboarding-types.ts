@@ -21,6 +21,22 @@ export type PlayerData = {
   currentLeague: string;
   currentCountry: string;
 
+  startingPlace: string;
+  startingAge: string;
+  previousClubs: string;
+  trainingFrequency: string;
+  playerComparison: string;
+
+  nutritionDiscipline: string;
+  extraTraining: string;
+  externalProfessionals: string;
+
+  familyFootballBackground: string;
+  educationStatus: string;
+  languagesSpoken: string;
+  injuryHistory: string;
+  willingToRelocate: string | null;
+
   shortDescription: string;
   strengths: string;
   weaknesses: string;
@@ -59,6 +75,19 @@ export const EMPTY_PLAYER_DATA: PlayerData = {
   noClub: false,
   currentLeague: "",
   currentCountry: "",
+  startingPlace: "",
+  startingAge: "",
+  previousClubs: "",
+  trainingFrequency: "",
+  playerComparison: "",
+  nutritionDiscipline: "",
+  extraTraining: "",
+  externalProfessionals: "",
+  familyFootballBackground: "",
+  educationStatus: "",
+  languagesSpoken: "",
+  injuryHistory: "",
+  willingToRelocate: null,
   shortDescription: "",
   strengths: "",
   weaknesses: "",
@@ -77,13 +106,13 @@ export const EMPTY_PLAYER_DATA: PlayerData = {
 
 export const ONBOARDING_STEPS = [
   "name",
-  "birth",
-  "body",
+  "birthBody",
   "position",
-  "club",
+  "clubBackground",
   "bio",
+  "habits",
+  "lifeBackground",
   "goals",
-  "family",
-  "links",
+  "familyLinks",
   "video",
 ] as const;

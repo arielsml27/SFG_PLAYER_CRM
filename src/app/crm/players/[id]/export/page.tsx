@@ -6,6 +6,8 @@ import { guessPositionGroup } from "@/lib/constants";
 import PrintButton from "@/components/PrintButton";
 import CopyLinkButton from "@/components/CopyLinkButton";
 import AttributeBarChart from "@/components/AttributeBarChart";
+import GenerateSummaryButton from "@/components/GenerateSummaryButton";
+import { generatePlayerAiSummary } from "@/lib/actions";
 import { ExternalLink } from "lucide-react";
 
 const CONTRACT_STATUS_LABELS_EN: Record<string, string> = {
@@ -45,8 +47,15 @@ function pickClipVideo(videos: any[], links: any[]) {
   return undefined;
 }
 
-export default async function PlayerExportPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function PlayerExportPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ summaryError?: string }>;
+}) {
   const { id } = await params;
+  const { summaryError } = await searchParams;
   const detail = await getPlayerDetail(id);
   if (!detail) notFound();
 
@@ -131,6 +140,38 @@ export default async function PlayerExportPage({ params }: { params: Promise<{ i
             Player Information
           </h2>
           <ExportDL rows={rows} />
+        </div>
+
+        {/* Professional summary (AI-generated, web-search-backed) */}
+        <div className="card p-5">
+          <div className="flex items-center justify-between gap-3 mb-3">
+            <h2 className="text-sm font-bold" style={{ color: "var(--navy)" }}>
+              Professional Summary
+            </h2>
+            <form action={generatePlayerAiSummary.bind(null, id)} className="print:hidden">
+              <GenerateSummaryButton hasSummary={!!player.aiSummary} />
+            </form>
+          </div>
+          {summaryError && (
+            <div
+              className="rounded-md px-4 py-2.5 text-sm font-medium mb-3 print:hidden"
+              style={{ background: "var(--danger-bg)", color: "var(--danger)" }}
+            >
+              {summaryError}
+            </div>
+          )}
+          {player.aiSummary ? (
+            <>
+              <p className="text-sm whitespace-pre-wrap">{player.aiSummary}</p>
+              <p className="text-xs mt-2 print:hidden" style={{ color: "var(--muted)" }}>
+                Generated {formatDate(player.aiSummaryGeneratedAt)}
+              </p>
+            </>
+          ) : (
+            <p className="text-sm" style={{ color: "var(--muted)" }}>
+              No summary generated yet.
+            </p>
+          )}
         </div>
 
         {/* Contract status */}
