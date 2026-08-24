@@ -2,18 +2,25 @@
 
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { CRM_AUTH_COOKIE, expectedCrmAuthToken } from "@/lib/crm-auth";
+import { eq } from "drizzle-orm";
+import { db } from "@/db";
+import { crmUsers } from "@/db/schema";
+import { CRM_AUTH_COOKIE, signSessionToken } from "@/lib/crm-auth";
+import { verifyPassword } from "@/lib/password";
 
 export async function crmLogin(formData: FormData) {
+  const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const password = String(formData.get("password") ?? "");
   const next = String(formData.get("next") ?? "/crm");
-  const configuredPassword = process.env.CRM_PASSWORD ?? "";
 
-  if (!configuredPassword || password !== configuredPassword) {
+  const rows = await db.select().from(crmUsers).where(eq(crmUsers.email, email));
+  const user = rows[0];
+
+  if (!user || !verifyPassword(password, user.passwordHash, user.passwordSalt)) {
     redirect(`/crm-login?error=1&next=${encodeURIComponent(next)}`);
   }
 
-  const token = await expectedCrmAuthToken();
+  const token = await signSessionToken(user.id);
   const cookieStore = await cookies();
   cookieStore.set(CRM_AUTH_COOKIE, token, {
     httpOnly: true,

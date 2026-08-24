@@ -3,7 +3,15 @@
 import { usePathname } from "next/navigation";
 import Sidebar from "./Sidebar";
 
-export default function AppShell({ children }: { children: React.ReactNode }) {
+type CurrentUserInfo = { name: string | null; email: string; role: string } | null;
+
+export default function AppShell({
+  children,
+  currentUser,
+}: {
+  children: React.ReactNode;
+  currentUser?: CurrentUserInfo;
+}) {
   const pathname = usePathname();
   const isPrintable = pathname?.endsWith("/export");
 
@@ -13,7 +21,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <>
-      <Sidebar />
+      <Sidebar currentUser={currentUser} />
       <main className="flex-1 min-w-0 p-6 md:p-8">{children}</main>
     </>
   );

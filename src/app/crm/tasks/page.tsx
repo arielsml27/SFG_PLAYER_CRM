@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { getAllTasks } from "@/lib/data";
+import { getCurrentCrmUser } from "@/lib/current-user";
+import { getVisiblePlayerIds } from "@/lib/permissions";
 import { formatDate } from "@/lib/format";
 import StatusBadge from "@/components/StatusBadge";
 import ConfirmSubmitButton from "@/components/ConfirmSubmitButton";
@@ -10,7 +12,9 @@ import { Trash2 } from "lucide-react";
 
 export default async function TasksPage({ searchParams }: { searchParams: Promise<{ status?: string }> }) {
   const sp = await searchParams;
-  const tasks = await getAllTasks({ status: sp.status });
+  const currentUser = await getCurrentCrmUser();
+  const visiblePlayerIds = currentUser ? await getVisiblePlayerIds(currentUser) : [];
+  const tasks = await getAllTasks({ status: sp.status }, visiblePlayerIds);
 
   return (
     <div className="max-w-5xl space-y-5">

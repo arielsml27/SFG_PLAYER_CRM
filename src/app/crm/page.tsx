@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { getDashboardData } from "@/lib/data";
+import { getCurrentCrmUser } from "@/lib/current-user";
+import { getVisiblePlayerIds } from "@/lib/permissions";
 import { formatDate, daysUntil } from "@/lib/format";
 import StatusBadge from "@/components/StatusBadge";
 import { AlertTriangle, Users, ListChecks, Briefcase, FileWarning, UserCheck } from "lucide-react";
@@ -7,7 +9,9 @@ import { AlertTriangle, Users, ListChecks, Briefcase, FileWarning, UserCheck } f
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
-  const data = await getDashboardData();
+  const currentUser = await getCurrentCrmUser();
+  const visiblePlayerIds = currentUser ? await getVisiblePlayerIds(currentUser) : [];
+  const data = await getDashboardData(visiblePlayerIds);
 
   const stats = [
     { label: "שחקנים פעילים", value: data.activePlayersCount, icon: UserCheck, href: "/crm/players?status=ACTIVE_CLIENT" },

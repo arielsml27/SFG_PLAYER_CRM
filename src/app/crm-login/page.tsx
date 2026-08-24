@@ -30,10 +30,11 @@ export default async function CrmLoginPage({
           אזור פנימי לצוות בלבד.
         </p>
         <input type="hidden" name="next" value={next ?? "/crm"} />
-        <input type="password" name="password" placeholder="סיסמה" required autoFocus className="input w-full mb-3" />
+        <input type="email" name="email" placeholder="אימייל" required autoFocus className="input w-full mb-3" />
+        <input type="password" name="password" placeholder="סיסמה" required className="input w-full mb-3" />
         {error && (
           <div className="text-sm mb-3" style={{ color: "var(--danger)" }}>
-            סיסמה שגויה, נסה שוב.
+            אימייל או סיסמה שגויים, נסה שוב.
           </div>
         )}
         <button type="submit" className="btn btn-gold w-full justify-center">

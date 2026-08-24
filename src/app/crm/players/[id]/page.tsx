@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getPlayerDetail } from "@/lib/data";
+import { getCurrentCrmUser } from "@/lib/current-user";
+import { getVisiblePlayerIds } from "@/lib/permissions";
 import { formatDate, formatMoney, calcAge, daysUntil } from "@/lib/format";
 import { buildAttributeRadarData, buildAllAttributesData, summarizePlayerScouting } from "@/lib/scouting";
 import StatusBadge from "@/components/StatusBadge";
@@ -98,7 +100,9 @@ export default async function PlayerProfilePage({
 }) {
   const { id } = await params;
   const { tab = "overview", saved } = await searchParams;
-  const detail = await getPlayerDetail(id);
+  const currentUser = await getCurrentCrmUser();
+  const visiblePlayerIds = currentUser ? await getVisiblePlayerIds(currentUser) : [];
+  const detail = await getPlayerDetail(id, visiblePlayerIds);
   if (!detail) notFound();
 
   const { player } = detail;

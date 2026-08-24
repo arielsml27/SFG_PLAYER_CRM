@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { getPlayersList } from "@/lib/data";
+import { getCurrentCrmUser } from "@/lib/current-user";
+import { getVisiblePlayerIds } from "@/lib/permissions";
 import { PLAYER_STATUS_LABELS, PLAYER_STATUSES } from "@/lib/constants";
 import { formatDate, daysUntil, calcAge } from "@/lib/format";
 import StatusBadge from "@/components/StatusBadge";
@@ -11,7 +13,9 @@ export default async function PlayersPage({
   searchParams: Promise<{ q?: string; status?: string; position?: string }>;
 }) {
   const sp = await searchParams;
-  const players = await getPlayersList({ q: sp.q, status: sp.status, position: sp.position });
+  const currentUser = await getCurrentCrmUser();
+  const visiblePlayerIds = currentUser ? await getVisiblePlayerIds(currentUser) : [];
+  const players = await getPlayersList({ q: sp.q, status: sp.status, position: sp.position }, visiblePlayerIds);
 
   const positions = Array.from(new Set(players.map((p) => p.mainPosition))).sort();
 

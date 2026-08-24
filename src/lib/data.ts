@@ -13,48 +13,61 @@ function plusDaysISO(days: number) {
 
 // ---------- Dashboard ----------
 
-export async function getDashboardData() {
+export async function getDashboardData(visiblePlayerIds: string[] | null = null) {
   const today = todayISO();
   const in90 = plusDaysISO(90);
+  const isVisible = (playerId: string | null | undefined) =>
+    !visiblePlayerIds || (!!playerId && visiblePlayerIds.includes(playerId));
 
-  const allPlayers = await db.select().from(players);
+  const allPlayersRaw = await db.select().from(players);
+  const allPlayers = visiblePlayerIds ? allPlayersRaw.filter((p) => visiblePlayerIds.includes(p.id)) : allPlayersRaw;
   const activePlayers = allPlayers.filter((p) => p.status === "ACTIVE_CLIENT");
 
-  const expiringContracts = await db
-    .select({
-      id: clubContracts.id,
-      playerId: clubContracts.playerId,
-      endDate: clubContracts.endDate,
-      clubId: clubContracts.clubId,
-      status: clubContracts.status,
-    })
-    .from(clubContracts)
-    .where(and(gte(clubContracts.endDate, today), lte(clubContracts.endDate, in90), eq(clubContracts.status, "ACTIVE")))
-    .orderBy(asc(clubContracts.endDate));
+  const expiringContracts = (
+    await db
+      .select({
+        id: clubContracts.id,
+        playerId: clubContracts.playerId,
+        endDate: clubContracts.endDate,
+        clubId: clubContracts.clubId,
+        status: clubContracts.status,
+      })
+      .from(clubContracts)
+      .where(and(gte(clubContracts.endDate, today), lte(clubContracts.endDate, in90), eq(clubContracts.status, "ACTIVE")))
+      .orderBy(asc(clubContracts.endDate))
+  ).filter((c) => isVisible(c.playerId));
 
-  const expiringRepresentation = await db
-    .select()
-    .from(representationAgreements)
-    .where(
-      and(
-        gte(representationAgreements.endDate, today),
-        lte(representationAgreements.endDate, in90),
-        eq(representationAgreements.status, "ACTIVE")
+  const expiringRepresentation = (
+    await db
+      .select()
+      .from(representationAgreements)
+      .where(
+        and(
+          gte(representationAgreements.endDate, today),
+          lte(representationAgreements.endDate, in90),
+          eq(representationAgreements.status, "ACTIVE")
+        )
       )
-    )
-    .orderBy(asc(representationAgreements.endDate));
+      .orderBy(asc(representationAgreements.endDate))
+  ).filter((r) => isVisible(r.playerId));
 
-  const criticalTasks = await db
-    .select()
-    .from(tasks)
-    .where(and(or(eq(tasks.priority, "CRITICAL"), eq(tasks.priority, "HIGH")), or(eq(tasks.status, "OPEN"), eq(tasks.status, "IN_PROGRESS"))))
-    .orderBy(asc(tasks.dueDate));
+  const criticalTasks = (
+    await db
+      .select()
+      .from(tasks)
+      .where(and(or(eq(tasks.priority, "CRITICAL"), eq(tasks.priority, "HIGH")), or(eq(tasks.status, "OPEN"), eq(tasks.status, "IN_PROGRESS"))))
+      .orderBy(asc(tasks.dueDate))
+  ).filter((t) => isVisible(t.playerId));
 
-  const openTasksCount = (await db.select().from(tasks).where(or(eq(tasks.status, "OPEN"), eq(tasks.status, "IN_PROGRESS")))).length;
+  const openTasksCount = (
+    await db.select().from(tasks).where(or(eq(tasks.status, "OPEN"), eq(tasks.status, "IN_PROGRESS")))
+  ).filter((t) => isVisible(t.playerId)).length;
 
   const criticalPlayers = allPlayers.filter((p) => (p.priorityLevel ?? 0) >= 4);
 
-  const openDeals = await db.select().from(deals).where(or(eq(deals.status, "OPEN"), eq(deals.status, "IN_NEGOTIATION")));
+  const openDeals = (
+    await db.select().from(deals).where(or(eq(deals.status, "OPEN"), eq(deals.status, "IN_NEGOTIATION")))
+  ).filter((d) => isVisible(d.playerId));
 
   const allClubs = await db.select().from(clubs);
   const clubById = new Map(allClubs.map((c) => [c.id, c]));
@@ -124,8 +137,12 @@ function groupBy<T, K>(items: T[], keyFn: (item: T) => K): Map<K, T[]> {
 
 // ---------- Players list ----------
 
-export async function getPlayersList(params: { q?: string; status?: string; position?: string }) {
-  const allPlayers = await db.select().from(players).orderBy(desc(players.updatedAt));
+export async function getPlayersList(
+  params: { q?: string; status?: string; position?: string },
+  visiblePlayerIds: string[] | null = null
+) {
+  const allPlayersRaw = await db.select().from(players).orderBy(desc(players.updatedAt));
+  const allPlayers = visiblePlayerIds ? allPlayersRaw.filter((p) => visiblePlayerIds.includes(p.id)) : allPlayersRaw;
   const allClubs = await db.select().from(clubs);
   const clubById = new Map(allClubs.map((c) => [c.id, c]));
 
@@ -165,7 +182,9 @@ export async function getPlayersList(params: { q?: string; status?: string; posi
 
 // ---------- Player detail ----------
 
-export async function getPlayerDetail(id: string) {
+export async function getPlayerDetail(id: string, visiblePlayerIds: string[] | null = null) {
+  if (visiblePlayerIds && !visiblePlayerIds.includes(id)) return null;
+
   const player = (await db.select().from(players).where(eq(players.id, id)))[0];
   if (!player) return null;
 
@@ -214,11 +233,12 @@ export async function getAllClubs() {
   return db.select().from(clubs).orderBy(asc(clubs.name));
 }
 
-export async function getAllTasks(params: { status?: string } = {}) {
+export async function getAllTasks(params: { status?: string } = {}, visiblePlayerIds: string[] | null = null) {
   const list = await db.select().from(tasks).orderBy(asc(tasks.dueDate));
   const allPlayers = await db.select().from(players);
   const playerById = new Map(allPlayers.map((p) => [p.id, p]));
   return list
     .filter((t) => !params.status || t.status === params.status)
+    .filter((t) => !visiblePlayerIds || (!!t.playerId && visiblePlayerIds.includes(t.playerId)))
     .map((t) => ({ ...t, player: t.playerId ? playerById.get(t.playerId) : undefined }));
 }

@@ -1,16 +1,14 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { CRM_AUTH_COOKIE, expectedCrmAuthToken } from "@/lib/crm-auth";
+import { CRM_AUTH_COOKIE, verifySessionToken } from "@/lib/crm-auth";
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   if (!pathname.startsWith("/crm")) return NextResponse.next();
 
   const cookieValue = request.cookies.get(CRM_AUTH_COOKIE)?.value;
-  const expected = await expectedCrmAuthToken();
+  const userId = await verifySessionToken(cookieValue);
 
-  if (cookieValue && cookieValue === expected) {
-    return NextResponse.next();
-  }
+  if (userId) return NextResponse.next();
 
   const loginUrl = new URL("/crm-login", request.url);
   loginUrl.searchParams.set("next", pathname);

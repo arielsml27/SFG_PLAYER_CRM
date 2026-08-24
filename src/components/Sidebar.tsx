@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { Users, LayoutDashboard, ListChecks, Building2, Plus, LogOut } from "lucide-react";
+import { Users, LayoutDashboard, ListChecks, Building2, Plus, LogOut, ShieldCheck } from "lucide-react";
 import { crmLogout } from "@/lib/crm-auth-actions";
 
 const NAV = [
@@ -13,8 +13,11 @@ const NAV = [
   { href: "/crm/clubs", label: "מועדונים", icon: Building2 },
 ];
 
-export default function Sidebar() {
+type CurrentUserInfo = { name: string | null; email: string; role: string } | null;
+
+export default function Sidebar({ currentUser }: { currentUser?: CurrentUserInfo }) {
   const pathname = usePathname();
+  const nav = currentUser?.role === "ADMIN" ? [...NAV, { href: "/crm/admin/users", label: "משתמשים", icon: ShieldCheck }] : NAV;
 
   return (
     <aside
@@ -38,7 +41,7 @@ export default function Sidebar() {
       </div>
 
       <nav className="flex-1 py-4 px-3 space-y-1">
-        {NAV.map((item) => {
+        {nav.map((item) => {
           const Icon = item.icon;
           const active = item.href === "/crm" ? pathname === "/crm" : pathname.startsWith(item.href);
           return (
@@ -67,6 +70,12 @@ export default function Sidebar() {
         </Link>
       </div>
 
+      {currentUser && (
+        <div className="px-5 py-2 border-t border-white/10">
+          <div className="text-sm font-medium text-white truncate">{currentUser.name || currentUser.email}</div>
+          <div className="text-[11px] text-white/40">{currentUser.role === "ADMIN" ? "מנהל" : "סוכן"}</div>
+        </div>
+      )}
       <div className="px-3 py-3 border-t border-white/10">
         <form action={crmLogout}>
           <button

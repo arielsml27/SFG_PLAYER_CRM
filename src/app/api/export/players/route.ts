@@ -1,5 +1,7 @@
 import { NextRequest } from "next/server";
 import { getPlayersList } from "@/lib/data";
+import { getCurrentCrmUser } from "@/lib/current-user";
+import { getVisiblePlayerIds } from "@/lib/permissions";
 import { PLAYER_STATUS_LABELS } from "@/lib/constants";
 import { formatDate, calcAge } from "@/lib/format";
 
@@ -10,12 +12,21 @@ function csvEscape(value: unknown): string {
 }
 
 export async function GET(req: NextRequest) {
+  const currentUser = await getCurrentCrmUser();
+  if (!currentUser) {
+    return new Response("Unauthorized", { status: 401 });
+  }
+  const visiblePlayerIds = await getVisiblePlayerIds(currentUser);
+
   const { searchParams } = new URL(req.url);
-  const players = await getPlayersList({
-    q: searchParams.get("q") ?? undefined,
-    status: searchParams.get("status") ?? undefined,
-    position: searchParams.get("position") ?? undefined,
-  });
+  const players = await getPlayersList(
+    {
+      q: searchParams.get("q") ?? undefined,
+      status: searchParams.get("status") ?? undefined,
+      position: searchParams.get("position") ?? undefined,
+    },
+    visiblePlayerIds
+  );
 
   const headers = [
     "שם פרטי",

@@ -1,5 +1,7 @@
 import { notFound } from "next/navigation";
 import { getPlayerDetail } from "@/lib/data";
+import { getCurrentCrmUser } from "@/lib/current-user";
+import { getVisiblePlayerIds } from "@/lib/permissions";
 import { formatDate, calcAge } from "@/lib/format";
 import { buildAllAttributesData, summarizePlayerScouting } from "@/lib/scouting";
 import { guessPositionGroup } from "@/lib/constants";
@@ -56,7 +58,9 @@ export default async function PlayerExportPage({
 }) {
   const { id } = await params;
   const { summaryError } = await searchParams;
-  const detail = await getPlayerDetail(id);
+  const currentUser = await getCurrentCrmUser();
+  const visiblePlayerIds = currentUser ? await getVisiblePlayerIds(currentUser) : [];
+  const detail = await getPlayerDetail(id, visiblePlayerIds);
   if (!detail) notFound();
 
   const { player } = detail;

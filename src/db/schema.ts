@@ -355,6 +355,33 @@ export const questionnaireResponses = sqliteTable(
   (table) => [uniqueIndex("questionnaire_responses_player_question_idx").on(table.playerId, table.questionId)]
 );
 
+// ---------- CRM users (per-user login + player-level permissions) ----------
+export const crmUsers = sqliteTable("crm_users", {
+  id: id(),
+  email: text("email").notNull().unique(),
+  name: text("name"),
+  passwordHash: text("password_hash").notNull(),
+  passwordSalt: text("password_salt").notNull(),
+  // ADMIN sees every player; AGENT sees only players assigned via userPlayerAssignments.
+  role: text("role").notNull().default("AGENT"),
+  ...timestamps,
+});
+
+export const userPlayerAssignments = sqliteTable(
+  "user_player_assignments",
+  {
+    id: id(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => crmUsers.id, { onDelete: "cascade" }),
+    playerId: text("player_id")
+      .notNull()
+      .references(() => players.id, { onDelete: "cascade" }),
+    ...timestamps,
+  },
+  (table) => [uniqueIndex("user_player_assignments_user_player_idx").on(table.userId, table.playerId)]
+);
+
 // ---------- Relations ----------
 export const playersRelations = relations(players, ({ one, many }) => ({
   currentClub: one(clubs, { fields: [players.currentClubId], references: [clubs.id] }),
@@ -421,4 +448,13 @@ export const dealsRelations = relations(deals, ({ one }) => ({
 
 export const questionnaireResponsesRelations = relations(questionnaireResponses, ({ one }) => ({
   player: one(players, { fields: [questionnaireResponses.playerId], references: [players.id] }),
+}));
+
+export const crmUsersRelations = relations(crmUsers, ({ many }) => ({
+  assignments: many(userPlayerAssignments),
+}));
+
+export const userPlayerAssignmentsRelations = relations(userPlayerAssignments, ({ one }) => ({
+  user: one(crmUsers, { fields: [userPlayerAssignments.userId], references: [crmUsers.id] }),
+  player: one(players, { fields: [userPlayerAssignments.playerId], references: [players.id] }),
 }));
