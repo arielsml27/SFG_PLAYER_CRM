@@ -407,9 +407,7 @@ export const prospects = sqliteTable("prospects", {
 // ---------- Club requests (בקשות — incoming mandates from clubs/agents) ----------
 export const clubRequests = sqliteTable("club_requests", {
   id: id(),
-  country: text("country"),
-  league: text("league"),
-  club: text("club"),
+  clubId: text("club_id").references(() => clubs.id, { onDelete: "set null" }),
   positionSought: text("position_sought"),
   transferBudget: text("transfer_budget"),
   salaryBudget: text("salary_budget"),
@@ -438,6 +436,7 @@ export const requestProposedPlayers = sqliteTable(
 
 export const clubRequestsRelations = relations(clubRequests, ({ one, many }) => ({
   handledBy: one(crmUsers, { fields: [clubRequests.handledByUserId], references: [crmUsers.id] }),
+  club: one(clubs, { fields: [clubRequests.clubId], references: [clubs.id] }),
   proposedPlayers: many(requestProposedPlayers),
 }));
 

@@ -193,20 +193,23 @@ export async function getAllCrmUsers() {
 // ---------- Club requests (בקשות) ----------
 
 export async function getRequests() {
-  const [requestList, allUsers, proposedRows, allPlayers] = await Promise.all([
+  const [requestList, allUsers, proposedRows, allPlayers, allClubs] = await Promise.all([
     db.select().from(clubRequests).orderBy(desc(clubRequests.createdAt)),
     db.select().from(crmUsers),
     db.select().from(requestProposedPlayers),
     db.select().from(players),
+    db.select().from(clubs),
   ]);
 
   const userById = new Map(allUsers.map((u) => [u.id, u]));
   const playerById = new Map(allPlayers.map((p) => [p.id, p]));
+  const clubById = new Map(allClubs.map((c) => [c.id, c]));
   const proposedByRequest = groupBy(proposedRows, (r) => r.requestId);
 
   return requestList.map((r) => ({
     ...r,
     handledBy: r.handledByUserId ? userById.get(r.handledByUserId) : undefined,
+    club: r.clubId ? clubById.get(r.clubId) : undefined,
     proposedPlayers: (proposedByRequest.get(r.id) ?? [])
       .map((link) => ({ linkId: link.id, player: playerById.get(link.playerId) }))
       .filter((x) => !!x.player),

@@ -1,0 +1,1 @@
+ALTER TABLE `club_requests` ADD `club_id` text REFERENCES clubs(id);

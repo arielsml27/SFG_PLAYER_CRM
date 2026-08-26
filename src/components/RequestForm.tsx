@@ -1,13 +1,14 @@
 "use client";
 
+import { useMemo, useState } from "react";
+import Link from "next/link";
 import { REQUEST_STATUSES, REQUEST_STATUS_LABELS } from "@/lib/constants";
 
 type CrmUserOption = { id: string; name: string | null; email: string };
+type ClubOption = { id: string; name: string; country: string | null; league: string | null };
 
 type RequestDefaults = {
-  country?: string | null;
-  league?: string | null;
-  club?: string | null;
+  clubId?: string | null;
   positionSought?: string | null;
   transferBudget?: string | null;
   salaryBudget?: string | null;
@@ -20,28 +21,95 @@ type RequestDefaults = {
 export default function RequestForm({
   action,
   users,
+  clubOptions,
   defaultValues,
   submitLabel,
 }: {
   action: (formData: FormData) => void;
   users: CrmUserOption[];
+  clubOptions: ClubOption[];
   defaultValues?: RequestDefaults;
   submitLabel: string;
 }) {
+  const initialClub = clubOptions.find((c) => c.id === defaultValues?.clubId);
+  const [country, setCountry] = useState(initialClub?.country ?? "");
+  const [league, setLeague] = useState(initialClub?.league ?? "");
+  const [clubId, setClubId] = useState(defaultValues?.clubId ?? "");
+
+  const countries = useMemo(
+    () => Array.from(new Set(clubOptions.map((c) => c.country).filter((v): v is string => !!v))).sort(),
+    [clubOptions]
+  );
+  const leagues = useMemo(
+    () =>
+      Array.from(
+        new Set(clubOptions.filter((c) => !country || c.country === country).map((c) => c.league).filter((v): v is string => !!v))
+      ).sort(),
+    [clubOptions, country]
+  );
+  const filteredClubs = useMemo(
+    () => clubOptions.filter((c) => (!country || c.country === country) && (!league || c.league === league)),
+    [clubOptions, country, league]
+  );
+
   return (
     <form action={action} className="grid grid-cols-1 md:grid-cols-2 gap-3">
       <div>
         <label className="field-label">מדינה</label>
-        <input name="country" defaultValue={defaultValues?.country ?? ""} className="input" />
+        <select
+          value={country}
+          onChange={(e) => {
+            setCountry(e.target.value);
+            setLeague("");
+            setClubId("");
+          }}
+          className="input"
+        >
+          <option value="">הכל</option>
+          {countries.map((c) => (
+            <option key={c} value={c}>
+              {c}
+            </option>
+          ))}
+        </select>
       </div>
       <div>
         <label className="field-label">ליגה</label>
-        <input name="league" defaultValue={defaultValues?.league ?? ""} className="input" />
+        <select
+          value={league}
+          onChange={(e) => {
+            setLeague(e.target.value);
+            setClubId("");
+          }}
+          className="input"
+        >
+          <option value="">הכל</option>
+          {leagues.map((l) => (
+            <option key={l} value={l}>
+              {l}
+            </option>
+          ))}
+        </select>
       </div>
-      <div>
+      <div className="md:col-span-2">
         <label className="field-label">קבוצה</label>
-        <input name="club" defaultValue={defaultValues?.club ?? ""} className="input" />
+        <select name="clubId" value={clubId} onChange={(e) => setClubId(e.target.value)} className="input">
+          <option value="">בחר קבוצה</option>
+          {filteredClubs.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.name}
+            </option>
+          ))}
+        </select>
+        <p className="text-xs mt-1" style={{ color: "var(--muted)" }}>
+          הקבוצה לא ברשימה?{" "}
+          <Link href="/crm/clubs" className="hover:underline" style={{ color: "var(--gold)" }}>
+            הוסיפו אותה דרך לשונית מועדונים
+          </Link>
+          .
+        </p>
       </div>
+
       <div>
         <label className="field-label">תפקיד שמחפשים</label>
         <input name="positionSought" defaultValue={defaultValues?.positionSought ?? ""} className="input" />

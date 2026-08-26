@@ -14,9 +14,7 @@ function str(fd: FormData, key: string): string | null {
 
 function valuesFromForm(formData: FormData) {
   return {
-    country: str(formData, "country"),
-    league: str(formData, "league"),
-    club: str(formData, "club"),
+    clubId: str(formData, "clubId"),
     positionSought: str(formData, "positionSought"),
     transferBudget: str(formData, "transferBudget"),
     salaryBudget: str(formData, "salaryBudget"),

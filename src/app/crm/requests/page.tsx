@@ -1,4 +1,4 @@
-import { getRequests, getAllCrmUsers, getPlayerPickerList } from "@/lib/data";
+import { getRequests, getAllCrmUsers, getPlayerPickerList, getAllClubs } from "@/lib/data";
 import { createRequest, updateRequest, deleteRequest, addProposedPlayer, removeProposedPlayer } from "@/lib/request-actions";
 import { REQUEST_STATUS_LABELS } from "@/lib/constants";
 import RequestForm from "@/components/RequestForm";
@@ -15,7 +15,12 @@ function playerName(p: { firstName: string | null; lastName: string | null; full
 }
 
 export default async function RequestsPage() {
-  const [requestList, users, playerOptions] = await Promise.all([getRequests(), getAllCrmUsers(), getPlayerPickerList()]);
+  const [requestList, users, playerOptions, clubOptions] = await Promise.all([
+    getRequests(),
+    getAllCrmUsers(),
+    getPlayerPickerList(),
+    getAllClubs(),
+  ]);
 
   return (
     <div className="max-w-5xl space-y-5">
@@ -32,7 +37,7 @@ export default async function RequestsPage() {
           בקשה חדשה
         </summary>
         <div className="mt-4">
-          <RequestForm action={createRequest} users={users} submitLabel="הוסף" />
+          <RequestForm action={createRequest} users={users} clubOptions={clubOptions} submitLabel="הוסף" />
         </div>
       </details>
 
@@ -45,7 +50,7 @@ export default async function RequestsPage() {
               <div className="flex items-center justify-between gap-3 flex-wrap">
                 <div>
                   <div className="font-semibold">
-                    {[r.club, r.league, r.country].filter(Boolean).join(" · ") || "בקשה ללא פרטי קבוצה"}
+                    {[r.club?.name, r.club?.league, r.club?.country].filter(Boolean).join(" · ") || "בקשה ללא קבוצה"}
                   </div>
                   <div className="text-xs" style={{ color: "var(--muted)" }}>
                     {r.positionSought ? `מחפשים: ${r.positionSought}` : "—"}
@@ -127,7 +132,13 @@ export default async function RequestsPage() {
                     עריכה
                   </summary>
                   <div className="mt-3">
-                    <RequestForm action={updateRequest.bind(null, r.id)} users={users} defaultValues={r} submitLabel="שמור שינויים" />
+                    <RequestForm
+                      action={updateRequest.bind(null, r.id)}
+                      users={users}
+                      clubOptions={clubOptions}
+                      defaultValues={r}
+                      submitLabel="שמור שינויים"
+                    />
                   </div>
                 </details>
                 <form action={deleteRequest.bind(null, r.id)}>
