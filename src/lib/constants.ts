@@ -137,6 +137,12 @@ export const PROSPECT_STATUS_LABELS: Record<string, string> = {
   MEETING_HELD: "הייתה פגישה",
 };
 
+export const REQUEST_STATUSES = ["OPEN", "CLOSED"] as const;
+export const REQUEST_STATUS_LABELS: Record<string, string> = {
+  OPEN: "פתוחה",
+  CLOSED: "סגורה",
+};
+
 export const TIMELINE_EVENT_TYPES = [
   "FAMILY_CALL",
   "CLUB_CALL",

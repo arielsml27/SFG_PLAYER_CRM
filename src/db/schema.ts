@@ -404,6 +404,48 @@ export const prospects = sqliteTable("prospects", {
   ...timestamps,
 });
 
+// ---------- Club requests (בקשות — incoming mandates from clubs/agents) ----------
+export const clubRequests = sqliteTable("club_requests", {
+  id: id(),
+  country: text("country"),
+  league: text("league"),
+  club: text("club"),
+  positionSought: text("position_sought"),
+  transferBudget: text("transfer_budget"),
+  salaryBudget: text("salary_budget"),
+  notes: text("notes"),
+  handledByUserId: text("handled_by_user_id").references(() => crmUsers.id, { onDelete: "set null" }),
+  dealPartner: text("deal_partner"),
+  // OPEN | CLOSED
+  status: text("status").notNull().default("OPEN"),
+  ...timestamps,
+});
+
+export const requestProposedPlayers = sqliteTable(
+  "request_proposed_players",
+  {
+    id: id(),
+    requestId: text("request_id")
+      .notNull()
+      .references(() => clubRequests.id, { onDelete: "cascade" }),
+    playerId: text("player_id")
+      .notNull()
+      .references(() => players.id, { onDelete: "cascade" }),
+    ...timestamps,
+  },
+  (table) => [uniqueIndex("request_proposed_players_idx").on(table.requestId, table.playerId)]
+);
+
+export const clubRequestsRelations = relations(clubRequests, ({ one, many }) => ({
+  handledBy: one(crmUsers, { fields: [clubRequests.handledByUserId], references: [crmUsers.id] }),
+  proposedPlayers: many(requestProposedPlayers),
+}));
+
+export const requestProposedPlayersRelations = relations(requestProposedPlayers, ({ one }) => ({
+  request: one(clubRequests, { fields: [requestProposedPlayers.requestId], references: [clubRequests.id] }),
+  player: one(players, { fields: [requestProposedPlayers.playerId], references: [players.id] }),
+}));
+
 // ---------- Relations ----------
 export const playersRelations = relations(players, ({ one, many }) => ({
   currentClub: one(clubs, { fields: [players.currentClubId], references: [clubs.id] }),

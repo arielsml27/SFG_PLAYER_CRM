@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { players, clubContracts, representationAgreements, tasks, clubs, playerLinks, videos, documents, contacts, timelineEvents, deals, scoutingReports, questionnaireResponses, prospects, crmUsers } from "@/db/schema";
+import { players, clubContracts, representationAgreements, tasks, clubs, playerLinks, videos, documents, contacts, timelineEvents, deals, scoutingReports, questionnaireResponses, prospects, crmUsers, clubRequests, requestProposedPlayers } from "@/db/schema";
 import { and, asc, desc, eq, gte, isNull, lte, like, or, sql } from "drizzle-orm";
 
 function todayISO() {
@@ -188,6 +188,36 @@ export async function getProspects() {
 
 export async function getAllCrmUsers() {
   return db.select().from(crmUsers).orderBy(crmUsers.email);
+}
+
+// ---------- Club requests (בקשות) ----------
+
+export async function getRequests() {
+  const [requestList, allUsers, proposedRows, allPlayers] = await Promise.all([
+    db.select().from(clubRequests).orderBy(desc(clubRequests.createdAt)),
+    db.select().from(crmUsers),
+    db.select().from(requestProposedPlayers),
+    db.select().from(players),
+  ]);
+
+  const userById = new Map(allUsers.map((u) => [u.id, u]));
+  const playerById = new Map(allPlayers.map((p) => [p.id, p]));
+  const proposedByRequest = groupBy(proposedRows, (r) => r.requestId);
+
+  return requestList.map((r) => ({
+    ...r,
+    handledBy: r.handledByUserId ? userById.get(r.handledByUserId) : undefined,
+    proposedPlayers: (proposedByRequest.get(r.id) ?? [])
+      .map((link) => ({ linkId: link.id, player: playerById.get(link.playerId) }))
+      .filter((x) => !!x.player),
+  }));
+}
+
+export async function getPlayerPickerList() {
+  return db
+    .select({ id: players.id, firstName: players.firstName, lastName: players.lastName, fullNameHebrew: players.fullNameHebrew })
+    .from(players)
+    .orderBy(players.firstName);
 }
 
 // ---------- Player detail ----------
