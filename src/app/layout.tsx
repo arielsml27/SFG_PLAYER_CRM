@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "SFG OS — Football Career Operating System",
-  description: "Manage your football career. All in one place.",
+  title: "SFG Player CRM",
+  description: "מערכת CRM פנימית לסוכנות שחקנים",
 };
 
 export default function RootLayout({
