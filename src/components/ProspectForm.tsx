@@ -16,6 +16,8 @@ type ProspectDefaults = {
   meetingDate?: string | null;
   meetingTime?: string | null;
   meetingLocation?: string | null;
+  followUpDate?: string | null;
+  notes?: string | null;
 };
 
 export default function ProspectForm({
@@ -94,6 +96,19 @@ export default function ProspectForm({
           <div className="md:col-span-2">
             <label className="field-label">מיקום</label>
             <input name="meetingLocation" defaultValue={defaultValues?.meetingLocation ?? ""} className="input" />
+          </div>
+        </>
+      )}
+
+      {status === "MEETING_HELD" && (
+        <>
+          <div>
+            <label className="field-label">תאריך פולואפ</label>
+            <input type="date" name="followUpDate" defaultValue={defaultValues?.followUpDate ?? ""} className="input" />
+          </div>
+          <div className="md:col-span-2">
+            <label className="field-label">הערות</label>
+            <textarea name="notes" defaultValue={defaultValues?.notes ?? ""} className="input" rows={3} />
           </div>
         </>
       )}

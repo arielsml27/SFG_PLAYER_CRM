@@ -7,7 +7,7 @@ import ConfirmSubmitButton from "@/components/ConfirmSubmitButton";
 import { Plus, Trash2 } from "lucide-react";
 
 function toneFor(status: string): string {
-  if (status === "MEETING_SCHEDULED") return "badge-ok";
+  if (status === "MEETING_SCHEDULED" || status === "MEETING_HELD") return "badge-ok";
   if (status === "CONTACTED_NO_MEETING") return "badge-warn";
   return "badge-neutral";
 }
@@ -70,6 +70,18 @@ export default async function WatchlistPage() {
                     <div className="flex justify-between gap-3 border-b pb-1" style={{ borderColor: "var(--border)" }}>
                       <dt style={{ color: "var(--muted)" }}>מיקום</dt>
                       <dd className="font-medium">{p.meetingLocation ?? "—"}</dd>
+                    </div>
+                  </>
+                )}
+                {p.status === "MEETING_HELD" && (
+                  <>
+                    <div className="flex justify-between gap-3 border-b pb-1" style={{ borderColor: "var(--border)" }}>
+                      <dt style={{ color: "var(--muted)" }}>תאריך פולואפ</dt>
+                      <dd className="font-medium">{p.followUpDate ? formatDate(p.followUpDate) : "—"}</dd>
+                    </div>
+                    <div className="flex justify-between gap-3 border-b pb-1 md:col-span-2" style={{ borderColor: "var(--border)" }}>
+                      <dt style={{ color: "var(--muted)" }}>הערות</dt>
+                      <dd className="font-medium whitespace-pre-wrap text-right">{p.notes ?? "—"}</dd>
                     </div>
                   </>
                 )}

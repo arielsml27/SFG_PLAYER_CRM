@@ -393,11 +393,13 @@ export const prospects = sqliteTable("prospects", {
   age: integer("age"),
   parentPhone: text("parent_phone"),
   contactedByUserId: text("contacted_by_user_id").references(() => crmUsers.id, { onDelete: "set null" }),
-  // NOT_CONTACTED | CONTACTED_NO_MEETING | MEETING_SCHEDULED
+  // NOT_CONTACTED | CONTACTED_NO_MEETING | MEETING_SCHEDULED | MEETING_HELD
   status: text("status").notNull().default("NOT_CONTACTED"),
   meetingDate: text("meeting_date"),
   meetingTime: text("meeting_time"),
   meetingLocation: text("meeting_location"),
+  followUpDate: text("follow_up_date"),
+  notes: text("notes"),
   ...timestamps,
 });
 

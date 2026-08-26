@@ -19,6 +19,7 @@ function num(fd: FormData, key: string): number | null {
 function valuesFromForm(formData: FormData) {
   const status = str(formData, "status") ?? "NOT_CONTACTED";
   const hasMeeting = status === "MEETING_SCHEDULED";
+  const meetingHeld = status === "MEETING_HELD";
   return {
     name: str(formData, "name") ?? "",
     club: str(formData, "club"),
@@ -30,6 +31,8 @@ function valuesFromForm(formData: FormData) {
     meetingDate: hasMeeting ? str(formData, "meetingDate") : null,
     meetingTime: hasMeeting ? str(formData, "meetingTime") : null,
     meetingLocation: hasMeeting ? str(formData, "meetingLocation") : null,
+    followUpDate: meetingHeld ? str(formData, "followUpDate") : null,
+    notes: meetingHeld ? str(formData, "notes") : null,
   };
 }
 

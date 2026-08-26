@@ -129,11 +129,12 @@ export const CONTACT_ROLE_LABELS: Record<string, string> = {
   OTHER: "אחר",
 };
 
-export const PROSPECT_STATUSES = ["NOT_CONTACTED", "CONTACTED_NO_MEETING", "MEETING_SCHEDULED"] as const;
+export const PROSPECT_STATUSES = ["NOT_CONTACTED", "CONTACTED_NO_MEETING", "MEETING_SCHEDULED", "MEETING_HELD"] as const;
 export const PROSPECT_STATUS_LABELS: Record<string, string> = {
   NOT_CONTACTED: "לא נעשתה פניה",
   CONTACTED_NO_MEETING: "נעשתה פניה ולא נקבעה פגישה",
   MEETING_SCHEDULED: "נקבעה פגישה",
+  MEETING_HELD: "הייתה פגישה",
 };
 
 export const TIMELINE_EVENT_TYPES = [
