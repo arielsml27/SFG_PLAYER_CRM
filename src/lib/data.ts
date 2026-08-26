@@ -180,6 +180,41 @@ export async function getPlayersList(
   return list;
 }
 
+// ---------- Watchlist (שחקנים למעקב) ----------
+
+export async function getWatchlistPlayers(status: string | undefined, visiblePlayerIds: string[] | null = null) {
+  const allPlayersRaw = await db.select().from(players).orderBy(desc(players.updatedAt));
+  let list = visiblePlayerIds ? allPlayersRaw.filter((p) => visiblePlayerIds.includes(p.id)) : allPlayersRaw;
+  if (status) list = list.filter((p) => p.status === status);
+
+  const allClubs = await db.select().from(clubs);
+  const clubById = new Map(allClubs.map((c) => [c.id, c]));
+
+  const allContractsList = await db.select().from(clubContracts);
+  const contractsByPlayer = groupBy(allContractsList, (c) => c.playerId);
+
+  const allLinks = await db.select().from(playerLinks);
+  const linksByPlayer = groupBy(allLinks, (l) => l.playerId);
+
+  const allContacts = await db.select().from(contacts);
+  const contactsByPlayer = groupBy(allContacts, (c) => c.playerId);
+
+  return list.map((p) => {
+    const playerContracts = (contractsByPlayer.get(p.id) ?? []).slice().sort((a, b) => (a.endDate < b.endDate ? 1 : -1));
+    const playerLinksList = linksByPlayer.get(p.id) ?? [];
+    const playerContacts = contactsByPlayer.get(p.id) ?? [];
+    const father = playerContacts.find((c) => c.role === "FATHER");
+    const instagram = playerLinksList.find((l) => l.type === "INSTAGRAM");
+    return {
+      ...p,
+      club: p.currentClubId ? clubById.get(p.currentClubId) : undefined,
+      latestContract: playerContracts[0],
+      fatherPhone: father?.phone ?? p.familyContactPhone ?? null,
+      instagramUrl: instagram?.url ?? null,
+    };
+  });
+}
+
 // ---------- Player detail ----------
 
 export async function getPlayerDetail(id: string, visiblePlayerIds: string[] | null = null) {

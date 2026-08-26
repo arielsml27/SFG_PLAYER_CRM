@@ -1,0 +1,1 @@
+ALTER TABLE `players` ADD `meeting_scheduled` integer DEFAULT false;

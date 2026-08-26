@@ -3,12 +3,13 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { Users, LayoutDashboard, ListChecks, Building2, Plus, LogOut, ShieldCheck } from "lucide-react";
+import { Users, LayoutDashboard, ListChecks, Building2, Plus, LogOut, ShieldCheck, Eye } from "lucide-react";
 import { crmLogout } from "@/lib/crm-auth-actions";
 
 const NAV = [
   { href: "/crm", label: "דשבורד", icon: LayoutDashboard },
   { href: "/crm/players", label: "שחקנים", icon: Users },
+  { href: "/crm/watchlist", label: "שחקנים למעקב", icon: Eye },
   { href: "/crm/tasks", label: "משימות", icon: ListChecks },
   { href: "/crm/clubs", label: "מועדונים", icon: Building2 },
 ];

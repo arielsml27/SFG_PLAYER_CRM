@@ -104,6 +104,9 @@ export const players = sqliteTable("players", {
   aiSummary: text("ai_summary"),
   aiSummaryGeneratedAt: text("ai_summary_generated_at"),
 
+  // Watchlist tracking (שחקנים למעקב tab) — has an intro meeting been set up?
+  meetingScheduled: integer("meeting_scheduled", { mode: "boolean" }).default(false),
+
   ...timestamps,
 });
 
