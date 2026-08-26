@@ -99,6 +99,20 @@
       "when": 1787755688910,
       "tag": "0013_good_dracula",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "6",
+      "when": 1787757151999,
+      "tag": "0014_friendly_white_queen",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "6",
+      "when": 1787757256923,
+      "tag": "0015_good_agent_brand",
+      "breakpoints": true
     }
   ]
 }

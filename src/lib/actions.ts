@@ -216,18 +216,6 @@ export async function deletePlayer(playerId: string) {
   redirect("/crm/players");
 }
 
-export async function updatePlayerWatchlist(playerId: string, formData: FormData) {
-  await db
-    .update(players)
-    .set({
-      meetingScheduled: bool(formData, "meetingScheduled"),
-      agentInCharge: str(formData, "agentInCharge"),
-    })
-    .where(eq(players.id, playerId));
-
-  revalidatePath("/crm/watchlist");
-}
-
 // ---------- Club contract ----------
 
 export async function addClubContract(playerId: string, formData: FormData) {

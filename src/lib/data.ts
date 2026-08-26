@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { players, clubContracts, representationAgreements, tasks, clubs, playerLinks, videos, documents, contacts, timelineEvents, deals, scoutingReports, questionnaireResponses } from "@/db/schema";
+import { players, clubContracts, representationAgreements, tasks, clubs, playerLinks, videos, documents, contacts, timelineEvents, deals, scoutingReports, questionnaireResponses, prospects, crmUsers } from "@/db/schema";
 import { and, asc, desc, eq, gte, isNull, lte, like, or, sql } from "drizzle-orm";
 
 function todayISO() {
@@ -180,39 +180,14 @@ export async function getPlayersList(
   return list;
 }
 
-// ---------- Watchlist (שחקנים למעקב) ----------
+// ---------- Prospects (שחקנים למעקב) ----------
 
-export async function getWatchlistPlayers(status: string | undefined, visiblePlayerIds: string[] | null = null) {
-  const allPlayersRaw = await db.select().from(players).orderBy(desc(players.updatedAt));
-  let list = visiblePlayerIds ? allPlayersRaw.filter((p) => visiblePlayerIds.includes(p.id)) : allPlayersRaw;
-  if (status) list = list.filter((p) => p.status === status);
+export async function getProspects() {
+  return db.select().from(prospects).orderBy(desc(prospects.createdAt));
+}
 
-  const allClubs = await db.select().from(clubs);
-  const clubById = new Map(allClubs.map((c) => [c.id, c]));
-
-  const allContractsList = await db.select().from(clubContracts);
-  const contractsByPlayer = groupBy(allContractsList, (c) => c.playerId);
-
-  const allLinks = await db.select().from(playerLinks);
-  const linksByPlayer = groupBy(allLinks, (l) => l.playerId);
-
-  const allContacts = await db.select().from(contacts);
-  const contactsByPlayer = groupBy(allContacts, (c) => c.playerId);
-
-  return list.map((p) => {
-    const playerContracts = (contractsByPlayer.get(p.id) ?? []).slice().sort((a, b) => (a.endDate < b.endDate ? 1 : -1));
-    const playerLinksList = linksByPlayer.get(p.id) ?? [];
-    const playerContacts = contactsByPlayer.get(p.id) ?? [];
-    const father = playerContacts.find((c) => c.role === "FATHER");
-    const instagram = playerLinksList.find((l) => l.type === "INSTAGRAM");
-    return {
-      ...p,
-      club: p.currentClubId ? clubById.get(p.currentClubId) : undefined,
-      latestContract: playerContracts[0],
-      fatherPhone: father?.phone ?? p.familyContactPhone ?? null,
-      instagramUrl: instagram?.url ?? null,
-    };
-  });
+export async function getAllCrmUsers() {
+  return db.select().from(crmUsers).orderBy(crmUsers.email);
 }
 
 // ---------- Player detail ----------

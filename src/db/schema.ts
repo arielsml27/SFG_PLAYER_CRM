@@ -104,9 +104,6 @@ export const players = sqliteTable("players", {
   aiSummary: text("ai_summary"),
   aiSummaryGeneratedAt: text("ai_summary_generated_at"),
 
-  // Watchlist tracking (שחקנים למעקב tab) — has an intro meeting been set up?
-  meetingScheduled: integer("meeting_scheduled", { mode: "boolean" }).default(false),
-
   ...timestamps,
 });
 
@@ -385,6 +382,25 @@ export const userPlayerAssignments = sqliteTable(
   (table) => [uniqueIndex("user_player_assignments_user_player_idx").on(table.userId, table.playerId)]
 );
 
+// ---------- Prospects (שחקנים למעקב — pre-signing scouting leads) ----------
+// Lighter-weight than `players`: no DOB/status/etc, just enough to track
+// initial outreach before a lead becomes a full player record.
+export const prospects = sqliteTable("prospects", {
+  id: id(),
+  name: text("name").notNull(),
+  club: text("club"),
+  position: text("position"),
+  age: integer("age"),
+  parentPhone: text("parent_phone"),
+  contactedByUserId: text("contacted_by_user_id").references(() => crmUsers.id, { onDelete: "set null" }),
+  // NOT_CONTACTED | CONTACTED_NO_MEETING | MEETING_SCHEDULED
+  status: text("status").notNull().default("NOT_CONTACTED"),
+  meetingDate: text("meeting_date"),
+  meetingTime: text("meeting_time"),
+  meetingLocation: text("meeting_location"),
+  ...timestamps,
+});
+
 // ---------- Relations ----------
 export const playersRelations = relations(players, ({ one, many }) => ({
   currentClub: one(clubs, { fields: [players.currentClubId], references: [clubs.id] }),
@@ -460,4 +476,8 @@ export const crmUsersRelations = relations(crmUsers, ({ many }) => ({
 export const userPlayerAssignmentsRelations = relations(userPlayerAssignments, ({ one }) => ({
   user: one(crmUsers, { fields: [userPlayerAssignments.userId], references: [crmUsers.id] }),
   player: one(players, { fields: [userPlayerAssignments.playerId], references: [players.id] }),
+}));
+
+export const prospectsRelations = relations(prospects, ({ one }) => ({
+  contactedBy: one(crmUsers, { fields: [prospects.contactedByUserId], references: [crmUsers.id] }),
 }));
