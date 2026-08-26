@@ -1,5 +1,7 @@
+import Link from "next/link";
 import { getAllClubs } from "@/lib/data";
-import { createClub } from "@/lib/actions";
+import { createClub } from "@/lib/club-actions";
+import ClubForm from "@/components/ClubForm";
 
 export const dynamic = "force-dynamic";
 
@@ -14,37 +16,9 @@ export default async function ClubsPage() {
         <summary className="cursor-pointer font-semibold text-sm" style={{ color: "var(--navy)" }}>
           + מועדון חדש
         </summary>
-        <form action={createClub} className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
-          <div>
-            <label className="field-label">שם *</label>
-            <input name="name" required className="input" />
-          </div>
-          <div>
-            <label className="field-label">מדינה</label>
-            <input name="country" className="input" />
-          </div>
-          <div>
-            <label className="field-label">ליגה</label>
-            <input name="league" className="input" />
-          </div>
-          <div>
-            <label className="field-label">עיר</label>
-            <input name="city" className="input" />
-          </div>
-          <div>
-            <label className="field-label">אתר</label>
-            <input name="website" className="input" />
-          </div>
-          <div className="md:col-span-2">
-            <label className="field-label">הערות</label>
-            <textarea name="notes" className="input" rows={2} />
-          </div>
-          <div className="md:col-span-2">
-            <button type="submit" className="btn btn-gold btn-sm">
-              הוסף מועדון
-            </button>
-          </div>
-        </form>
+        <div className="mt-4">
+          <ClubForm action={createClub} submitLabel="הוסף מועדון" />
+        </div>
       </details>
 
       <div className="card overflow-x-auto">
@@ -60,7 +34,11 @@ export default async function ClubsPage() {
           <tbody>
             {clubs.map((c) => (
               <tr key={c.id}>
-                <td className="font-medium">{c.name}</td>
+                <td className="font-medium">
+                  <Link href={`/crm/clubs/${c.id}`} className="hover:underline" style={{ color: "var(--gold)" }}>
+                    {c.name}
+                  </Link>
+                </td>
                 <td>{c.country ?? "—"}</td>
                 <td>{c.league ?? "—"}</td>
                 <td>{c.city ?? "—"}</td>

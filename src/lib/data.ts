@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { players, clubContracts, representationAgreements, tasks, clubs, playerLinks, videos, documents, contacts, timelineEvents, deals, scoutingReports, questionnaireResponses, prospects, crmUsers, clubRequests, requestProposedPlayers } from "@/db/schema";
+import { players, clubContracts, representationAgreements, tasks, clubs, clubContacts, playerLinks, videos, documents, contacts, timelineEvents, deals, scoutingReports, questionnaireResponses, prospects, crmUsers, clubRequests, requestProposedPlayers } from "@/db/schema";
 import { and, asc, desc, eq, gte, isNull, lte, like, or, sql } from "drizzle-orm";
 
 function todayISO() {
@@ -274,6 +274,35 @@ export async function getQuestionnaireResponses(playerId: string) {
 
 export async function getAllClubs() {
   return db.select().from(clubs).orderBy(asc(clubs.name));
+}
+
+export async function getClubDetail(id: string) {
+  const club = (await db.select().from(clubs).where(eq(clubs.id, id)))[0];
+  if (!club) return null;
+
+  const [contactList, requestRows, proposedRows, allPlayers, allUsers] = await Promise.all([
+    db.select().from(clubContacts).where(eq(clubContacts.clubId, id)).orderBy(desc(clubContacts.createdAt)),
+    db.select().from(clubRequests).where(eq(clubRequests.clubId, id)).orderBy(desc(clubRequests.createdAt)),
+    db.select().from(requestProposedPlayers),
+    db.select().from(players),
+    db.select().from(crmUsers),
+  ]);
+
+  const playerById = new Map(allPlayers.map((p) => [p.id, p]));
+  const userById = new Map(allUsers.map((u) => [u.id, u]));
+  const proposedByRequest = groupBy(proposedRows, (r) => r.requestId);
+
+  return {
+    club,
+    contacts: contactList,
+    requests: requestRows.map((r) => ({
+      ...r,
+      handledBy: r.handledByUserId ? userById.get(r.handledByUserId) : undefined,
+      proposedPlayers: (proposedByRequest.get(r.id) ?? [])
+        .map((link) => ({ linkId: link.id, player: playerById.get(link.playerId) }))
+        .filter((x) => !!x.player),
+    })),
+  };
 }
 
 export async function getAllTasks(params: { status?: string } = {}, visiblePlayerIds: string[] | null = null) {

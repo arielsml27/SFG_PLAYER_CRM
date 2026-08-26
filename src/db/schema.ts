@@ -20,8 +20,22 @@ export const clubs = sqliteTable("clubs", {
   league: text("league"),
   city: text("city"),
   website: text("website"),
+  transfermarktLink: text("transfermarkt_link"),
+  logoPath: text("logo_path"),
   notes: text("notes"),
   ...timestamps,
+});
+
+export const clubContacts = sqliteTable("club_contacts", {
+  id: id(),
+  clubId: text("club_id")
+    .notNull()
+    .references(() => clubs.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  role: text("role"),
+  phone: text("phone"),
+  email: text("email"),
+  createdAt: text("created_at").notNull().default(sql`(current_timestamp)`),
 });
 
 // ---------- Players ----------
@@ -469,6 +483,12 @@ export const clubsRelations = relations(clubs, ({ many }) => ({
   players: many(players),
   clubContracts: many(clubContracts),
   deals: many(deals),
+  contacts: many(clubContacts),
+  requests: many(clubRequests),
+}));
+
+export const clubContactsRelations = relations(clubContacts, ({ one }) => ({
+  club: one(clubs, { fields: [clubContacts.clubId], references: [clubs.id] }),
 }));
 
 export const clubContractsRelations = relations(clubContracts, ({ one }) => ({

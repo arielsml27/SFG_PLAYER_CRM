@@ -24,12 +24,14 @@ export default function RequestForm({
   clubOptions,
   defaultValues,
   submitLabel,
+  lockedClub,
 }: {
   action: (formData: FormData) => void;
   users: CrmUserOption[];
   clubOptions: ClubOption[];
   defaultValues?: RequestDefaults;
   submitLabel: string;
+  lockedClub?: { id: string; name: string };
 }) {
   const initialClub = clubOptions.find((c) => c.id === defaultValues?.clubId);
   const [country, setCountry] = useState(initialClub?.country ?? "");
@@ -54,61 +56,73 @@ export default function RequestForm({
 
   return (
     <form action={action} className="grid grid-cols-1 md:grid-cols-2 gap-3">
-      <div>
-        <label className="field-label">מדינה</label>
-        <select
-          value={country}
-          onChange={(e) => {
-            setCountry(e.target.value);
-            setLeague("");
-            setClubId("");
-          }}
-          className="input"
-        >
-          <option value="">הכל</option>
-          {countries.map((c) => (
-            <option key={c} value={c}>
-              {c}
-            </option>
-          ))}
-        </select>
-      </div>
-      <div>
-        <label className="field-label">ליגה</label>
-        <select
-          value={league}
-          onChange={(e) => {
-            setLeague(e.target.value);
-            setClubId("");
-          }}
-          className="input"
-        >
-          <option value="">הכל</option>
-          {leagues.map((l) => (
-            <option key={l} value={l}>
-              {l}
-            </option>
-          ))}
-        </select>
-      </div>
-      <div className="md:col-span-2">
-        <label className="field-label">קבוצה</label>
-        <select name="clubId" value={clubId} onChange={(e) => setClubId(e.target.value)} className="input">
-          <option value="">בחר קבוצה</option>
-          {filteredClubs.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name}
-            </option>
-          ))}
-        </select>
-        <p className="text-xs mt-1" style={{ color: "var(--muted)" }}>
-          הקבוצה לא ברשימה?{" "}
-          <Link href="/crm/clubs" className="hover:underline" style={{ color: "var(--gold)" }}>
-            הוסיפו אותה דרך לשונית מועדונים
-          </Link>
-          .
-        </p>
-      </div>
+      {lockedClub ? (
+        <div className="md:col-span-2">
+          <label className="field-label">קבוצה</label>
+          <input type="hidden" name="clubId" value={lockedClub.id} />
+          <div className="input" style={{ background: "var(--surface-2)" }}>
+            {lockedClub.name}
+          </div>
+        </div>
+      ) : (
+        <>
+          <div>
+            <label className="field-label">מדינה</label>
+            <select
+              value={country}
+              onChange={(e) => {
+                setCountry(e.target.value);
+                setLeague("");
+                setClubId("");
+              }}
+              className="input"
+            >
+              <option value="">הכל</option>
+              {countries.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="field-label">ליגה</label>
+            <select
+              value={league}
+              onChange={(e) => {
+                setLeague(e.target.value);
+                setClubId("");
+              }}
+              className="input"
+            >
+              <option value="">הכל</option>
+              {leagues.map((l) => (
+                <option key={l} value={l}>
+                  {l}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="md:col-span-2">
+            <label className="field-label">קבוצה</label>
+            <select name="clubId" required value={clubId} onChange={(e) => setClubId(e.target.value)} className="input">
+              <option value="">בחר קבוצה</option>
+              {filteredClubs.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs mt-1" style={{ color: "var(--muted)" }}>
+              הקבוצה לא ברשימה?{" "}
+              <Link href="/crm/clubs" className="hover:underline" style={{ color: "var(--gold)" }}>
+                הוסיפו אותה דרך לשונית מועדונים
+              </Link>
+              .
+            </p>
+          </div>
+        </>
+      )}
 
       <div>
         <label className="field-label">תפקיד שמחפשים</label>

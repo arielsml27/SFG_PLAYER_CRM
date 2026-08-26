@@ -500,18 +500,6 @@ export async function generatePlayerAiSummary(playerId: string) {
 
 // ---------- Clubs ----------
 
-export async function createClub(formData: FormData) {
-  await db.insert(clubs).values({
-    name: str(formData, "name") ?? "",
-    country: str(formData, "country"),
-    league: str(formData, "league"),
-    city: str(formData, "city"),
-    website: str(formData, "website"),
-    notes: str(formData, "notes"),
-  });
-  revalidatePath("/crm/clubs");
-}
-
 // ---------- Public player self-registration ----------
 
 const PLAYER_VIDEO_DIR = path.join(process.cwd(), "public", "uploads", "players", "videos");
