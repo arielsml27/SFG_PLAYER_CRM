@@ -1,8 +1,9 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getClubDetail, getAllClubs, getAllCrmUsers, getPlayerPickerList } from "@/lib/data";
-import { updateClub, addClubContact, deleteClubContact } from "@/lib/club-actions";
+import { updateClub, addClubContact, deleteClubContact, deleteClub } from "@/lib/club-actions";
 import { createRequest, updateRequest, deleteRequest, addProposedPlayer, removeProposedPlayer } from "@/lib/request-actions";
+import { getCurrentCrmUser } from "@/lib/current-user";
 import { REQUEST_STATUS_LABELS } from "@/lib/constants";
 import ClubForm from "@/components/ClubForm";
 import RequestForm from "@/components/RequestForm";
@@ -22,15 +23,17 @@ function playerName(p: { firstName: string | null; lastName: string | null; full
 
 export default async function ClubDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const [detail, clubOptions, users, playerOptions] = await Promise.all([
+  const [detail, clubOptions, users, playerOptions, currentUser] = await Promise.all([
     getClubDetail(id),
     getAllClubs(),
     getAllCrmUsers(),
     getPlayerPickerList(),
+    getCurrentCrmUser(),
   ]);
 
   if (!detail) notFound();
   const { club, contacts, requests } = detail;
+  const isAdmin = currentUser?.role === "ADMIN";
 
   return (
     <div className="max-w-5xl space-y-5">
@@ -66,6 +69,17 @@ export default async function ClubDetailPage({ params }: { params: Promise<{ id:
             </a>
           )}
         </div>
+        {isAdmin && (
+          <form action={deleteClub.bind(null, club.id)}>
+            <ConfirmSubmitButton
+              confirmMessage={`למחוק את ${club.name}? הפעולה תמחק גם את אנשי הקשר של המועדון ולא ניתן לבטל אותה.`}
+              className="btn btn-outline btn-sm"
+            >
+              <Trash2 size={13} />
+              מחיקת מועדון
+            </ConfirmSubmitButton>
+          </form>
+        )}
       </div>
 
       <details className="card p-4">

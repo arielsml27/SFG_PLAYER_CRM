@@ -7,6 +7,15 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { getCurrentCrmUser } from "@/lib/current-user";
+
+async function requireAdmin() {
+  const user = await getCurrentCrmUser();
+  if (!user || user.role !== "ADMIN") {
+    throw new Error("Admins only.");
+  }
+  return user;
+}
 
 const CLUB_LOGO_DIR = path.join(process.cwd(), "public", "uploads", "clubs");
 
@@ -96,4 +105,17 @@ export async function addClubContact(clubId: string, formData: FormData) {
 export async function deleteClubContact(clubId: string, contactId: string) {
   await db.delete(clubContacts).where(eq(clubContacts.id, contactId));
   revalidatePath(`/crm/clubs/${clubId}`);
+}
+
+export async function deleteClub(clubId: string) {
+  await requireAdmin();
+
+  try {
+    await db.delete(clubs).where(eq(clubs.id, clubId));
+  } catch {
+    throw new Error("אי אפשר למחוק את המועדון - יש שחקנים, חוזים או עסקאות שמקושרים אליו.");
+  }
+
+  revalidatePath("/crm/clubs");
+  redirect("/crm/clubs");
 }
