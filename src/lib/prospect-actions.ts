@@ -16,6 +16,8 @@ function num(fd: FormData, key: string): number | null {
   return v === null ? null : Number(v);
 }
 
+const UNHANDLED_STATUSES = ["NOT_CONTACTED", "CONTACTED_NO_MEETING"];
+
 function valuesFromForm(formData: FormData) {
   const status = str(formData, "status") ?? "NOT_CONTACTED";
   const hasMeeting = status === "MEETING_SCHEDULED";
@@ -33,6 +35,9 @@ function valuesFromForm(formData: FormData) {
     meetingLocation: hasMeeting ? str(formData, "meetingLocation") : null,
     followUpDate: meetingHeld ? str(formData, "followUpDate") : null,
     notes: meetingHeld ? str(formData, "notes") : null,
+    // Once handled, clear the reminder clock so a future relapse to an
+    // unhandled status starts counting fresh instead of firing immediately.
+    ...(UNHANDLED_STATUSES.includes(status) ? {} : { reminderSentAt: null }),
   };
 }
 

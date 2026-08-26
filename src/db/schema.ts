@@ -400,6 +400,7 @@ export const prospects = sqliteTable("prospects", {
   meetingLocation: text("meeting_location"),
   followUpDate: text("follow_up_date"),
   notes: text("notes"),
+  reminderSentAt: text("reminder_sent_at"),
   ...timestamps,
 });
 

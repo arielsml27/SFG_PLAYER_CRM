@@ -1,0 +1,1 @@
+ALTER TABLE `prospects` ADD `reminder_sent_at` text;
