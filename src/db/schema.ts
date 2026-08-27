@@ -418,6 +418,23 @@ export const prospects = sqliteTable("prospects", {
   ...timestamps,
 });
 
+// ---------- Meetings (פגישות) ----------
+export const meetings = sqliteTable("meetings", {
+  id: id(),
+  withWhom: text("with_whom").notNull(),
+  context: text("context"),
+  responsibleUserId: text("responsible_user_id").references(() => crmUsers.id, { onDelete: "set null" }),
+  // IN_PERSON | ZOOM
+  meetingType: text("meeting_type").notNull().default("IN_PERSON"),
+  meetingDate: text("meeting_date"),
+  meetingTime: text("meeting_time"),
+  ...timestamps,
+});
+
+export const meetingsRelations = relations(meetings, ({ one }) => ({
+  responsible: one(crmUsers, { fields: [meetings.responsibleUserId], references: [crmUsers.id] }),
+}));
+
 // ---------- Club requests (בקשות — incoming mandates from clubs/agents) ----------
 export const clubRequests = sqliteTable("club_requests", {
   id: id(),

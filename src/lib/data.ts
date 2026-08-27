@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { players, clubContracts, representationAgreements, tasks, clubs, clubContacts, playerLinks, videos, documents, contacts, timelineEvents, deals, scoutingReports, questionnaireResponses, prospects, crmUsers, clubRequests, requestProposedPlayers } from "@/db/schema";
+import { players, clubContracts, representationAgreements, tasks, clubs, clubContacts, playerLinks, videos, documents, contacts, timelineEvents, deals, scoutingReports, questionnaireResponses, prospects, crmUsers, clubRequests, requestProposedPlayers, meetings } from "@/db/schema";
 import { and, asc, desc, eq, gte, isNull, lte, like, or, sql } from "drizzle-orm";
 
 function todayISO() {
@@ -188,6 +188,20 @@ export async function getProspects() {
 
 export async function getAllCrmUsers() {
   return db.select().from(crmUsers).orderBy(crmUsers.email);
+}
+
+// ---------- Meetings (פגישות) ----------
+
+export async function getMeetings() {
+  const [meetingList, allUsers] = await Promise.all([
+    db.select().from(meetings).orderBy(desc(meetings.meetingDate), desc(meetings.meetingTime)),
+    db.select().from(crmUsers),
+  ]);
+  const userById = new Map(allUsers.map((u) => [u.id, u]));
+  return meetingList.map((m) => ({
+    ...m,
+    responsible: m.responsibleUserId ? userById.get(m.responsibleUserId) : undefined,
+  }));
 }
 
 // ---------- Club requests (בקשות) ----------

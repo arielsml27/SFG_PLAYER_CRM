@@ -137,6 +137,12 @@ export const PROSPECT_STATUS_LABELS: Record<string, string> = {
   MEETING_HELD: "הייתה פגישה",
 };
 
+export const MEETING_TYPES = ["IN_PERSON", "ZOOM"] as const;
+export const MEETING_TYPE_LABELS: Record<string, string> = {
+  IN_PERSON: "פרונטלי",
+  ZOOM: "זום",
+};
+
 export const REQUEST_STATUSES = ["OPEN", "CLOSED"] as const;
 export const REQUEST_STATUS_LABELS: Record<string, string> = {
   OPEN: "פתוחה",
