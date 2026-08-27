@@ -21,8 +21,15 @@ function playerName(p: { firstName: string | null; lastName: string | null; full
   return p.fullNameHebrew || [p.firstName, p.lastName].filter(Boolean).join(" ") || "—";
 }
 
-export default async function ClubDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function ClubDetailPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ deleteError?: string }>;
+}) {
   const { id } = await params;
+  const { deleteError } = await searchParams;
   const [detail, clubOptions, users, playerOptions, currentUser] = await Promise.all([
     getClubDetail(id),
     getAllClubs(),
@@ -37,6 +44,12 @@ export default async function ClubDetailPage({ params }: { params: Promise<{ id:
 
   return (
     <div className="max-w-5xl space-y-5">
+      {deleteError && (
+        <div className="card p-4 text-sm" style={{ background: "var(--danger-bg)", borderColor: "var(--danger)", color: "var(--danger)" }}>
+          לא ניתן למחוק את המועדון - יש שחקנים, חוזים או עסקאות שעדיין מקושרים אליו. יש להסיר או להעביר אותם למועדון אחר קודם.
+        </div>
+      )}
+
       <div className="card p-4 flex items-center gap-4">
         <div
           className="w-16 h-16 rounded-lg overflow-hidden border shrink-0 flex items-center justify-center"

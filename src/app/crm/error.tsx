@@ -2,14 +2,11 @@
 
 export default function CrmError({ error }: { error: Error & { digest?: string } }) {
   const isStaleAction = /Failed to find Server Action/i.test(error.message);
-  const isClubInUse = /אי אפשר למחוק את המועדון/.test(error.message);
 
-  const title = isStaleAction ? "יש גרסה חדשה של המערכת" : isClubInUse ? "לא ניתן למחוק" : "משהו השתבש";
+  const title = isStaleAction ? "יש גרסה חדשה של המערכת" : "משהו השתבש";
   const message = isStaleAction
     ? "המערכת עודכנה מאז שפתחת את הדף. יש לרענן את הדף כדי לטעון את הגרסה העדכנית."
-    : isClubInUse
-      ? error.message
-      : "אירעה שגיאה בלתי צפויה. נסה לרענן את הדף.";
+    : "אירעה שגיאה בלתי צפויה. נסה לרענן את הדף.";
 
   return (
     <div className="min-h-full flex items-center justify-center p-8" dir="rtl" lang="he">

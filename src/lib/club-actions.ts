@@ -113,7 +113,10 @@ export async function deleteClub(clubId: string) {
   try {
     await db.delete(clubs).where(eq(clubs.id, clubId));
   } catch {
-    throw new Error("אי אפשר למחוק את המועדון - יש שחקנים, חוזים או עסקאות שמקושרים אליו.");
+    // Next.js redacts thrown Error messages from Server Actions in production,
+    // so a friendly message can't be delivered via throw - redirect with a
+    // query flag instead and let the page render the explanation.
+    redirect(`/crm/clubs/${clubId}?deleteError=1`);
   }
 
   revalidatePath("/crm/clubs");
