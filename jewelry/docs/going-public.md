@@ -87,32 +87,59 @@ pnpm tunnel
 הסלאג עצמו (`/p/sam-0001-68e8c72a`) לא משתנה לעולם. רק החלק של הדומיין
 מתחלף. לכן כתובת קבועה פותרת את זה סופית.
 
-### כתובת קבועה — פעם אחת
-
-1. דומיין ב-Cloudflare (אם אין, אפשר לקנות אחד בעשרות שקלים לשנה).
-2. `cloudflared tunnel login`
-3. `cloudflared tunnel create samuel`
-4. `cloudflared tunnel route dns samuel shop.הדומיין-שלך.com`
-5. בקובץ `~/.cloudflared/config.yml`:
-
-```yaml
-tunnel: samuel
-credentials-file: C:\Users\<שם>\.cloudflared\<id>.json
-ingress:
-  - hostname: shop.הדומיין-שלך.com
-    service: http://localhost:3000
-  - service: http_status:404
-```
-
-6. הרצה:
+### כתובת קבועה — פקודה אחת
 
 ```bash
-set TUNNEL_HOSTNAME=shop.הדומיין-שלך.com
-pnpm tunnel                    # שומר את הכתובת בהגדרות
-cloudflared tunnel run samuel  # בחלון נפרד
+pnpm setup:tunnel shop.הדומיין-שלך.com
 ```
 
+הסקריפט עושה הכל: מתחבר ל-Cloudflare (נפתח דפדפן פעם אחת), יוצר מנהרה,
+מפנה את הכתובת אליה, כותב את קובץ ההגדרות, ושומר את הכתובת ב-`.env.local`.
+כדי לראות מה הוא עומד לעשות בלי לבצע:
+
+```bash
+pnpm setup:tunnel shop.הדומיין-שלך.com --dry-run
+```
+
+מכאן והלאה, בכל הפעלה — שני חלונות:
+
+```bash
+pnpm build && pnpm start
+cloudflared tunnel run samuel
+```
+
+**הכתובת לא תשתנה יותר. לינק שתשלח היום יעבוד גם בעוד שנה.**
+
 ---
+
+## על הדומיין
+
+### לא צריך דומיין חדש
+
+אם כבר יש לך דומיין לעסק, **תת-דומיין מספיק** — `shop.` או `catalog.`
+לפני הדומיין הקיים. לא עולה כלום ולא נוגע באתר הקיים.
+
+### התנאי היחיד: ה-DNS מנוהל ב-Cloudflare
+
+זה הדבר היחיד שיכול לעכב. Cloudflare צריכה לנהל את רשומות ה-DNS של הדומיין
+כדי שתוכל להפנות כתובת אל המנהרה.
+
+| המצב שלך | מה עושים |
+|---|---|
+| הדומיין כבר ב-Cloudflare | כלום. מריצים את הפקודה. |
+| דומיין אצל רשם אחר | מוסיפים אותו לחשבון Cloudflare (חינם) ומחליפים nameservers אצל הרשם. לוקח כמה שעות עד שזה נתפס. |
+| אין דומיין | קונים. `.com` דרך Cloudflare Registrar בערך $10 לשנה, וה-DNS מוגדר מיד. |
+
+**`.co.il`:** Cloudflare לא מוכרת אותם, אבל אפשר לקנות אצל רשם ישראלי
+ולהעביר רק את ה-DNS ל-Cloudflare. עובד בדיוק אותו דבר.
+
+### איך לדעת אם יש לך דומיין
+
+- קיבלת פעם מייל על חידוש דומיין?
+- יש לעסק אתר או מייל בכתובת שאינה gmail?
+- חפש במייל: "domain renewal", "חידוש דומיין", "nameservers".
+
+אם התשובה לא — פשוט תקנה אחד. זו ההוצאה הקטנה ביותר בפרויקט הזה.
 
 ## מה חשוף ומה לא
 

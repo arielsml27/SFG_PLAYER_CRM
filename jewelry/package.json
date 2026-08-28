@@ -12,7 +12,8 @@
     "db:migrate": "node scripts/migrate.mjs",
     "db:seed": "node scripts/seed.mjs",
     "setup:secret": "node scripts/setup-secret.mjs",
-    "tunnel": "node scripts/tunnel.mjs"
+    "tunnel": "node scripts/tunnel.mjs",
+    "setup:tunnel": "node scripts/setup-tunnel.mjs"
   },
   "dependencies": {
     "date-fns": "^4.4.0",
