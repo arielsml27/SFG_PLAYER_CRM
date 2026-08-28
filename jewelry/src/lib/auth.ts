@@ -1,15 +1,27 @@
 /**
  * חתימת סשן — Web Crypto בלבד, כדי שירוץ גם ב-middleware (Edge).
- * הסוד מגיע מ-APP_SECRET; אם לא הוגדר, המערכת עדיין עובדת מקומית
- * אבל העוגייה אינה מוגנת מזיוף — ראה README.
+ *
+ * הסוד מגיע מ-APP_SECRET. ברגע שהמערכת נגישה מהאינטרנט, סוד ברירת מחדל
+ * שכתוב בקוד שווה לאין סוד: כל מי שקרא את הקוד יכול לחתום עוגיית סשן
+ * ולהיכנס. לכן בהרצת production חסר APP_SECRET מפיל את השרת בהודעה ברורה
+ * (ראה instrumentation.ts), ובפיתוח יש נפילה לסוד מקומי עם אזהרה.
  */
 export const AUTH_COOKIE = "samuel_auth";
 
+const DEV_FALLBACK_SECRET = "samuel-local-dev-secret";
+
+export function sessionSecret(): string {
+  return process.env.APP_SECRET || DEV_FALLBACK_SECRET;
+}
+
+export function isUsingFallbackSecret(): boolean {
+  return !process.env.APP_SECRET;
+}
+
 async function hmacHex(message: string): Promise<string> {
-  const secret = process.env.APP_SECRET ?? "samuel-local-dev-secret";
   const key = await crypto.subtle.importKey(
     "raw",
-    new TextEncoder().encode(secret),
+    new TextEncoder().encode(sessionSecret()),
     { name: "HMAC", hash: "SHA-256" },
     false,
     ["sign"]

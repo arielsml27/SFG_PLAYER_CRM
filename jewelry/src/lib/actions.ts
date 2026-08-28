@@ -3,11 +3,12 @@
 import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { desc, eq, sql } from "drizzle-orm";
 import { db, schema } from "@/db";
 import { AUTH_COOKIE, signSessionToken } from "./auth";
 import { verifyPassword } from "./password";
+import { checkLoginAllowed, clearLoginAttempts, recordFailedLogin } from "./login-guard";
 import { requireUser } from "./session";
 import { getSettings } from "./data";
 
@@ -31,14 +32,34 @@ export async function loginAction(_prev: string | null, fd: FormData): Promise<s
   const password = str(fd, "password") ?? "";
   if (!email || !password) return "יש להזין אימייל וסיסמה";
 
+  // מפתח ההגבלה הוא כתובת ה-IP של הפונה, כדי שניחוש אוטומטי ייחסם
+  // גם אם הוא מנסה כתובות מייל שונות.
+  const h = await headers();
+  const ip =
+    h.get("cf-connecting-ip") ??
+    h.get("x-forwarded-for")?.split(",")[0].trim() ??
+    "local";
+
+  const gate = checkLoginAllowed(ip);
+  if (!gate.allowed) {
+    return `יותר מדי ניסיונות כניסה. נסה שוב בעוד ${gate.retryInMinutes} דקות.`;
+  }
+
   const rows = await db.select().from(schema.users).where(eq(schema.users.email, email)).limit(1);
   const user = rows[0];
-  if (!user || !verifyPassword(password, user.passwordHash)) return "אימייל או סיסמה שגויים";
+  if (!user || !verifyPassword(password, user.passwordHash)) {
+    recordFailedLogin(ip);
+    return "אימייל או סיסמה שגויים";
+  }
+  clearLoginAttempts(ip);
 
   (await cookies()).set(AUTH_COOKIE, await signSessionToken(user.id), {
     httpOnly: true,
     sameSite: "lax",
     path: "/",
+    // כשהמערכת חשופה מבחוץ היא מוגשת ב-HTTPS, והעוגייה לא צריכה
+    // לעבור בערוץ פתוח.
+    secure: (process.env.PUBLIC_BASE_URL ?? "").startsWith("https://"),
     maxAge: 60 * 60 * 24 * 30,
   });
   redirect("/");
