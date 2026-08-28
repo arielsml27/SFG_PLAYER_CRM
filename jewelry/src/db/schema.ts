@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer, real } from "drizzle-orm/sqlite-core";
+import { sqliteTable, text, integer, real, blob } from "drizzle-orm/sqlite-core";
 
 const id = () => text("id").primaryKey();
 const now = () => text("created_at").notNull().$defaultFn(() => new Date().toISOString());
@@ -143,6 +143,9 @@ export const orderItems = sqliteTable("order_items", {
   packagingCost: real("packaging_cost").notNull().default(0),
 
   // --- מפרט ומכירה ---
+  /** הדגם שממנו נטען הפריט, אם נטען מהקטלוג */
+  productId: text("product_id"),
+
   size: text("size"),
   engraving: text("engraving"),
   quantity: integer("quantity").notNull().default(1),
@@ -194,5 +197,67 @@ export const tasks = sqliteTable("tasks", {
   orderId: text("order_id").references(() => orders.id, { onDelete: "cascade" }),
   customerId: text("customer_id").references(() => customers.id, { onDelete: "cascade" }),
   completedAt: text("completed_at"),
+  createdAt: now(),
+});
+
+/* ---------------------------------------------------------------
+   קטלוג דגמים
+   הקטלוג נבנה מהעבודה עצמה: כל פריט שתמחרת בהזמנה אפשר לשמור
+   כדגם, וכל דגם אפשר לטעון להזמנה חדשה בלחיצה.
+   --------------------------------------------------------------- */
+export const products = sqliteTable("products", {
+  id: id(),
+  sku: text("sku").notNull().unique(),
+  name: text("name").notNull(),
+  category: text("category").notNull().default("טבעת"),
+  description: text("description"),
+
+  // --- מפרט ברירת מחדל, לטעינה מהירה להזמנה ---
+  karat: text("karat").notNull().default("18K"),
+  metalColor: text("metal_color").notNull().default("צהוב"),
+  weightG: real("weight_g").notNull().default(0),
+  centerStoneType: text("center_stone_type"),
+  centerDesc: text("center_desc"),
+  centerCaratTotal: real("center_carat_total").notNull().default(0),
+  centerPricePerCt: real("center_price_per_ct").notNull().default(0),
+  sideStonesOn: integer("side_stones_on", { mode: "boolean" }).notNull().default(false),
+  sideStoneType: text("side_stone_type"),
+  sideCaratTotal: real("side_carat_total").notNull().default(0),
+  sidePricePerCt: real("side_price_per_ct").notNull().default(0),
+  goldsmithCost: real("goldsmith_cost").notNull().default(0),
+  centerSettingPrice: real("center_setting_price").notNull().default(0),
+  centerSettingQty: real("center_setting_qty").notNull().default(0),
+  sideSettingPrice: real("side_setting_price").notNull().default(0),
+  sideSettingQty: real("side_setting_qty").notNull().default(0),
+  rhodiumCost: real("rhodium_cost").notNull().default(0),
+  boxCost: real("box_cost").notNull().default(0),
+  bagCost: real("bag_cost").notNull().default(0),
+  packagingCost: real("packaging_cost").notNull().default(0),
+
+  multiplier: real("multiplier").notNull().default(2),
+  /** מחיר קבוע שדורס את המכפיל, אם יש מחירון */
+  priceRetailUsd: real("price_retail_usd"),
+  priceWholesaleUsd: real("price_wholesale_usd"),
+
+  isAvailable: integer("is_available", { mode: "boolean" }).notNull().default(true),
+  timesSold: integer("times_sold").notNull().default(0),
+  notes: text("notes"),
+  createdAt: now(),
+  updatedAt: text("updated_at").notNull().$defaultFn(() => new Date().toISOString()),
+});
+
+/** התמונות יושבות בתוך אותו קובץ SQLite — גיבוי נשאר קובץ אחד. */
+export const productPhotos = sqliteTable("product_photos", {
+  id: id(),
+  productId: text("product_id")
+    .notNull()
+    .references(() => products.id, { onDelete: "cascade" }),
+  mime: text("mime").notNull().default("image/jpeg"),
+  data: blob("data", { mode: "buffer" }).notNull(),
+  width: integer("width").notNull().default(0),
+  height: integer("height").notNull().default(0),
+  bytes: integer("bytes").notNull().default(0),
+  sortOrder: integer("sort_order").notNull().default(0),
+  caption: text("caption"),
   createdAt: now(),
 });

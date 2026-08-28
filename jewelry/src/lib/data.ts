@@ -1,4 +1,4 @@
-import { and, desc, eq, inArray, isNull, or, sql } from "drizzle-orm";
+import { desc, eq, inArray, sql } from "drizzle-orm";
 import { db, schema } from "@/db";
 import { CLOSED_STATUSES } from "./constants";
 import { orderTotals, priceItem, type ItemPricing } from "./pricing";
@@ -259,11 +259,104 @@ export async function navCounts() {
     .select({ n: sql<number>`count(*)` })
     .from(schema.tasks)
     .where(eq(schema.tasks.status, "פתוח"));
+  const products = await db.select({ n: sql<number>`count(*)` }).from(schema.products);
   return {
     orders: openOrders,
     customers: Number(customers[0]?.n ?? 0),
     tasks: Number(openTasks[0]?.n ?? 0),
+    catalog: Number(products[0]?.n ?? 0),
   };
 }
 
-export { and, or, isNull };
+
+/* ---------------------------------------------------------------
+   קטלוג
+   --------------------------------------------------------------- */
+export type Product = typeof schema.products.$inferSelect;
+export type ProductPhoto = typeof schema.productPhotos.$inferSelect;
+
+/** מזהי תמונות בלבד — לעולם לא שולפים את ה-blob לרשימות. */
+async function photoIdsByProduct(productIds: string[]) {
+  const map = new Map<string, string[]>();
+  if (productIds.length === 0) return map;
+  const rows = await db
+    .select({
+      id: schema.productPhotos.id,
+      productId: schema.productPhotos.productId,
+      sortOrder: schema.productPhotos.sortOrder,
+    })
+    .from(schema.productPhotos)
+    .orderBy(schema.productPhotos.sortOrder);
+  for (const r of rows) {
+    if (!productIds.includes(r.productId)) continue;
+    const list = map.get(r.productId) ?? [];
+    list.push(r.id);
+    map.set(r.productId, list);
+  }
+  return map;
+}
+
+export async function listProducts(filter?: { q?: string; category?: string }) {
+  const rows = await db.select().from(schema.products).orderBy(desc(schema.products.updatedAt));
+  const photos = await photoIdsByProduct(rows.map((r) => r.id));
+  const q = filter?.q?.trim().toLowerCase();
+
+  return rows
+    .filter((p) => {
+      if (filter?.category && filter.category !== "הכל" && p.category !== filter.category)
+        return false;
+      if (!q) return true;
+      return [p.name, p.sku, p.description, p.centerDesc]
+        .filter(Boolean)
+        .some((f) => String(f).toLowerCase().includes(q));
+    })
+    .map((p) => ({ ...p, photoIds: photos.get(p.id) ?? [] }));
+}
+
+export async function getProduct(id: string) {
+  const rows = await db.select().from(schema.products).where(eq(schema.products.id, id)).limit(1);
+  const product = rows[0];
+  if (!product) return null;
+  const photos = await db
+    .select({
+      id: schema.productPhotos.id,
+      bytes: schema.productPhotos.bytes,
+      caption: schema.productPhotos.caption,
+      sortOrder: schema.productPhotos.sortOrder,
+    })
+    .from(schema.productPhotos)
+    .where(eq(schema.productPhotos.productId, id))
+    .orderBy(schema.productPhotos.sortOrder);
+  return { product, photos };
+}
+
+/** באילו הזמנות הדגם הזה שימש. */
+export async function getProductUsage(productId: string) {
+  const items = await db
+    .select()
+    .from(schema.orderItems)
+    .where(eq(schema.orderItems.productId, productId));
+  if (items.length === 0) return [];
+  const allOrders = await db.select().from(schema.orders);
+  const customers = await db.select().from(schema.customers);
+  const nameById = new Map(customers.map((c) => [c.id, c.name]));
+  return items
+    .map((i) => {
+      const order = allOrders.find((o) => o.id === i.orderId);
+      if (!order) return null;
+      return {
+        orderId: order.id,
+        orderNumber: order.orderNumber,
+        status: order.status,
+        customerName: nameById.get(order.customerId) ?? "—",
+        createdAt: order.createdAt,
+      };
+    })
+    .filter((x): x is NonNullable<typeof x> => x !== null)
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+}
+
+export async function catalogCount() {
+  const rows = await db.select({ n: sql<number>`count(*)` }).from(schema.products);
+  return Number(rows[0]?.n ?? 0);
+}

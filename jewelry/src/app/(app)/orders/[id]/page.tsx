@@ -22,6 +22,7 @@ import {
 } from "@/lib/constants";
 import { marginPctFromMultiplier } from "@/lib/pricing";
 import { date, dateTime, ils, pct, relativeDays, usd } from "@/lib/format";
+import { saveItemAsProductAction } from "@/lib/product-actions";
 import { Badge, Cell, Empty, Field, PageHead, SectionHead, StatusBadge } from "@/components/ui";
 
 const TABS = [
@@ -310,6 +311,18 @@ export default async function OrderPage({
                         </div>
                       </div>
                       <div className="row" style={{ gap: 6 }}>
+                        {item.productId ? (
+                          <Link href={`/catalog/${item.productId}`} className="btn btn-sm">
+                            הדגם בקטלוג
+                          </Link>
+                        ) : (
+                          <form action={saveItemAsProductAction}>
+                            <input type="hidden" name="itemId" value={item.id} />
+                            <button className="btn btn-sm" type="submit">
+                              שמור כדגם
+                            </button>
+                          </form>
+                        )}
                         <Link href={`/orders/${order.id}/items/${item.id}`} className="btn btn-sm">
                           עריכה
                         </Link>

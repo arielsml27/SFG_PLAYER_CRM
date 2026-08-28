@@ -792,3 +792,95 @@ table.data td.name {
 .tile .n.zero {
   color: var(--ink-3);
 }
+
+/* ============================================================
+   16. תמונות מוצר
+   ============================================================ */
+.photo-strip {
+  display: flex;
+  gap: var(--space-2);
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+.photo-strip img {
+  width: 108px;
+  height: 108px;
+  object-fit: cover;
+  border: 1px solid var(--line);
+  flex: 0 0 auto;
+}
+
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(212px, 1fr));
+  gap: var(--space-4);
+}
+.product-card {
+  background: var(--surface-1);
+  border: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.product-card:hover {
+  border-color: var(--accent-dim);
+}
+.product-card .shot {
+  aspect-ratio: 1 / 1;
+  background: var(--surface-2);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border-bottom: 1px solid var(--line);
+}
+.product-card .shot img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.product-card .shot .none {
+  color: var(--ink-3);
+  font-size: 12px;
+}
+.product-card .body {
+  padding: 12px 13px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+.product-card .body .nm {
+  font-family: var(--font-display);
+  font-size: 15px;
+  overflow-wrap: anywhere;
+}
+
+.gallery {
+  display: grid;
+  /* גבול עליון לרוחב האריח, אחרת שתי תמונות נמתחות על כל הלוח */
+  grid-template-columns: repeat(auto-fill, minmax(150px, 186px));
+  gap: var(--space-3);
+}
+.gallery figure {
+  margin: 0;
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+  display: flex;
+  flex-direction: column;
+}
+.gallery img {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  display: block;
+}
+.gallery figcaption {
+  padding: 6px 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--ink-3);
+}

@@ -327,6 +327,7 @@ function itemFields(fd: FormData) {
     boxCost: num(fd, "boxCost"),
     bagCost: num(fd, "bagCost"),
     packagingCost: num(fd, "packagingCost"),
+    productId: str(fd, "productId"),
     size: str(fd, "size"),
     engraving: str(fd, "engraving"),
     quantity: Math.max(1, Math.round(num(fd, "quantity", 1))),

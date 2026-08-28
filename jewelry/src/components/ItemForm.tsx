@@ -15,9 +15,13 @@ import { ils, pct, usd } from "@/lib/format";
 import { Field, SectionHead } from "@/components/ui";
 import type { OrderItem } from "@/lib/data";
 
+/** ערכי פתיחה מדגם בקטלוג, כשמוסיפים פריט מתוך הקטלוג. */
+export type ItemSeed = Partial<OrderItem> & { productId?: string };
+
 type Props = {
   orderId: string;
   item?: OrderItem;
+  seed?: ItemSeed;
   goldSpotUsdOz: number;
   fx: number;
   defaultMultiplier: number;
@@ -37,33 +41,36 @@ const N = (v: unknown) => {
 export default function ItemForm({
   orderId,
   item,
+  seed,
   goldSpotUsdOz,
   fx,
   defaultMultiplier,
   action,
 }: Props) {
+  // הפריט הקיים גובר על הדגם; הדגם גובר על ברירות המחדל.
+  const base = { ...seed, ...item } as ItemSeed;
   const [f, setF] = useState({
-    karat: item?.karat ?? "18K",
-    weightG: item?.weightG ?? 0,
-    centerPricePerCt: item?.centerPricePerCt ?? 0,
-    centerCaratTotal: item?.centerCaratTotal ?? 0,
-    sideStonesOn: item?.sideStonesOn ?? false,
-    sidePricePerCt: item?.sidePricePerCt ?? 0,
-    sideCaratTotal: item?.sideCaratTotal ?? 0,
-    modelOn: item?.modelOn ?? false,
-    modelPrice: item?.modelPrice ?? 0,
-    goldsmithCost: item?.goldsmithCost ?? 0,
-    centerSettingPrice: item?.centerSettingPrice ?? 0,
-    centerSettingQty: item?.centerSettingQty ?? 0,
-    sideSettingPrice: item?.sideSettingPrice ?? 0,
-    sideSettingQty: item?.sideSettingQty ?? 0,
-    rhodiumCost: item?.rhodiumCost ?? 0,
-    boxCost: item?.boxCost ?? 0,
-    bagCost: item?.bagCost ?? 0,
-    packagingCost: item?.packagingCost ?? 0,
-    quantity: item?.quantity ?? 1,
-    multiplier: item?.multiplier ?? defaultMultiplier,
-    priceOverrideUsd: item?.priceOverrideUsd ?? null,
+    karat: base.karat ?? "18K",
+    weightG: base.weightG ?? 0,
+    centerPricePerCt: base.centerPricePerCt ?? 0,
+    centerCaratTotal: base.centerCaratTotal ?? 0,
+    sideStonesOn: base.sideStonesOn ?? false,
+    sidePricePerCt: base.sidePricePerCt ?? 0,
+    sideCaratTotal: base.sideCaratTotal ?? 0,
+    modelOn: base.modelOn ?? false,
+    modelPrice: base.modelPrice ?? 0,
+    goldsmithCost: base.goldsmithCost ?? 0,
+    centerSettingPrice: base.centerSettingPrice ?? 0,
+    centerSettingQty: base.centerSettingQty ?? 0,
+    sideSettingPrice: base.sideSettingPrice ?? 0,
+    sideSettingQty: base.sideSettingQty ?? 0,
+    rhodiumCost: base.rhodiumCost ?? 0,
+    boxCost: base.boxCost ?? 0,
+    bagCost: base.bagCost ?? 0,
+    packagingCost: base.packagingCost ?? 0,
+    quantity: base.quantity ?? 1,
+    multiplier: base.multiplier ?? defaultMultiplier,
+    priceOverrideUsd: base.priceOverrideUsd ?? null,
   });
 
   const set = (k: keyof typeof f) => (v: unknown) => setF((s) => ({ ...s, [k]: v }));
@@ -81,26 +88,27 @@ export default function ItemForm({
     <form action={action} className="stack">
       <input type="hidden" name="orderId" value={orderId} />
       {item ? <input type="hidden" name="itemId" value={item.id} /> : null}
+      {base.productId ? <input type="hidden" name="productId" value={base.productId} /> : null}
 
       {/* --- זהות הפריט --- */}
       <div className="panel stack">
         <SectionHead title="הפריט" latin="ITEM" />
         <div className="form-grid">
           <Field label="שם הפריט">
-            <input name="name" defaultValue={item?.name ?? ""} placeholder="תליון לב · שלוש אבנים" required />
+            <input name="name" defaultValue={base.name ?? ""} placeholder="תליון לב · שלוש אבנים" required />
           </Field>
           <Field label="קטגוריה">
-            <select name="category" defaultValue={item?.category ?? "טבעת"}>
+            <select name="category" defaultValue={base.category ?? "טבעת"}>
               {ITEM_CATEGORIES.map((c) => (
                 <option key={c}>{c}</option>
               ))}
             </select>
           </Field>
           <Field label="מידה / אורך">
-            <input name="size" defaultValue={item?.size ?? ""} />
+            <input name="size" defaultValue={base.size ?? ""} />
           </Field>
           <Field label="חריטה">
-            <input name="engraving" defaultValue={item?.engraving ?? ""} />
+            <input name="engraving" defaultValue={base.engraving ?? ""} />
           </Field>
         </div>
       </div>
@@ -117,7 +125,7 @@ export default function ItemForm({
             </select>
           </Field>
           <Field label="גוון">
-            <select name="metalColor" defaultValue={item?.metalColor ?? "צהוב"}>
+            <select name="metalColor" defaultValue={base.metalColor ?? "צהוב"}>
               {METAL_COLORS.map((c) => (
                 <option key={c}>{c}</option>
               ))}
@@ -144,7 +152,7 @@ export default function ItemForm({
         <SectionHead title="אבן מרכזית" latin="CENTER STONE" />
         <div className="form-grid">
           <Field label="סוג">
-            <select name="centerStoneType" defaultValue={item?.centerStoneType ?? ""}>
+            <select name="centerStoneType" defaultValue={base.centerStoneType ?? ""}>
               <option value="">—</option>
               {STONE_TYPES.map((s) => (
                 <option key={s}>{s}</option>
@@ -172,7 +180,7 @@ export default function ItemForm({
             />
           </Field>
           <Field label="תיאור" hint="צבע, ניקיון, חיתוך, תעודה">
-            <input name="centerDesc" defaultValue={item?.centerDesc ?? ""} />
+            <input name="centerDesc" defaultValue={base.centerDesc ?? ""} />
           </Field>
         </div>
         <div className="form-grid">
@@ -220,7 +228,7 @@ export default function ItemForm({
         >
           <div className="form-grid">
             <Field label="סוג">
-              <select name="sideStoneType" defaultValue={item?.sideStoneType ?? ""}>
+              <select name="sideStoneType" defaultValue={base.sideStoneType ?? ""}>
                 <option value="">—</option>
                 {STONE_TYPES.map((s) => (
                   <option key={s}>{s}</option>
@@ -248,7 +256,7 @@ export default function ItemForm({
               />
             </Field>
             <Field label="תיאור">
-              <input name="sideDesc" defaultValue={item?.sideDesc ?? ""} />
+              <input name="sideDesc" defaultValue={base.sideDesc ?? ""} />
             </Field>
             <Field label="שיבוץ — מחיר לאבן ($)">
               <input
@@ -445,7 +453,7 @@ export default function ItemForm({
 
       <div className="panel stack">
         <Field label="הערות לפריט">
-          <textarea name="notes" defaultValue={item?.notes ?? ""} />
+          <textarea name="notes" defaultValue={base.notes ?? ""} />
         </Field>
       </div>
 
