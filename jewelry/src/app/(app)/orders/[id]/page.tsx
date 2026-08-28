@@ -18,20 +18,33 @@ import {
   GATE_STATUSES,
   ORDER_CHANNELS,
   ORDER_STATUSES,
+  ALL_WORK_ORDER_STATUSES,
   ORDER_TYPES,
   PAYMENT_KINDS,
   PAYMENT_METHODS,
   PRIORITIES,
   TIMELINE_KINDS,
+  WORK_ORDER_SCOPES,
+  workOrderTone,
 } from "@/lib/constants";
 import { marginPctFromMultiplier } from "@/lib/pricing";
-import { date, dateTime, ils, pct, relativeDays, todayIso, usd } from "@/lib/format";
+import { date, dateTime, grams, ils, pct, relativeDays, todayIso, usd } from "@/lib/format";
 import { saveItemAsProductAction } from "@/lib/product-actions";
+import {
+  createWorkOrderAction,
+  deleteWorkOrderAction,
+  updateWorkOrderAction,
+} from "@/lib/factory-actions";
+import WorkOrderPhotoUploader from "@/components/WorkOrderPhotoUploader";
+import ShareBox from "@/components/ShareBox";
+import { shareBase, whatsappLink } from "@/lib/share";
+import { getOrderWorkOrders, listSuppliers } from "@/lib/data";
 import { Badge, Cell, Empty, Field, PageHead, SectionHead, StatusBadge } from "@/components/ui";
 
 const TABS = [
   { key: "details", label: "פרטים" },
   { key: "items", label: "פריטים ותמחור" },
+  { key: "factory", label: "מפעל" },
   { key: "payments", label: "תשלומים" },
   { key: "journal", label: "יומן" },
   { key: "tasks", label: "משימות" },
@@ -52,7 +65,13 @@ export default async function OrderPage({
   if (!full) notFound();
   const { order, customer, items, lines, totals, history, timeline, tasks, payments, balance } =
     full;
-  const [settings, customers] = await Promise.all([getSettings(), listCustomers()]);
+  const [settings, customers, suppliers, workOrders] = await Promise.all([
+    getSettings(),
+    listCustomers(),
+    listSuppliers(),
+    getOrderWorkOrders(id),
+  ]);
+  const openWorkOrders = workOrders.filter((w) => w.isOpen).length;
 
   const money = (u: number, i: number) => (order.isExport ? usd(u) : ils(i));
   const ratesStale =
@@ -130,6 +149,7 @@ export default async function OrderPage({
           >
             {t.label}
             {t.key === "items" && items.length ? ` (${items.length})` : ""}
+            {t.key === "factory" && openWorkOrders ? ` (${openWorkOrders})` : ""}
             {t.key === "tasks" && tasks.filter((x) => x.status === "פתוח").length
               ? ` (${tasks.filter((x) => x.status === "פתוח").length})`
               : ""}
@@ -454,6 +474,266 @@ export default async function OrderPage({
               </div>
             </div>
           </section>
+        </>
+      ) : null}
+
+      {/* ============================ מפעל ============================ */}
+      {tab === "factory" ? (
+        <>
+          {suppliers.length === 0 ? (
+            <Empty>
+              <p>אין עדיין ספקים במערכת.</p>
+              <p className="quiet" style={{ fontSize: 13 }}>
+                כל המפעלים חיצוניים — צריך להוסיף אחד לפני שפותחים לו עבודה.
+              </p>
+              <Link href="/suppliers/new" className="btn btn-primary btn-sm">
+                הוסף מפעל
+              </Link>
+            </Empty>
+          ) : (
+            <section>
+              <SectionHead title="הזמנת עבודה חדשה" latin="NEW JOB" />
+              <form action={createWorkOrderAction} className="panel stack">
+                <input type="hidden" name="orderId" value={order.id} />
+                <div className="form-grid">
+                  <Field label="מפעל">
+                    <select name="supplierId" required defaultValue="">
+                      <option value="" disabled>
+                        בחר
+                      </option>
+                      {suppliers
+                        .filter((s) => s.isActive)
+                        .map((s) => (
+                          <option key={s.id} value={s.id}>
+                            {s.name}
+                            {s.leadDays ? ` · ${s.leadDays} ימים` : ""}
+                          </option>
+                        ))}
+                    </select>
+                  </Field>
+                  <Field label="מה מבקשים">
+                    <select name="scope" defaultValue="ייצור מלא">
+                      {WORK_ORDER_SCOPES.map((sc) => (
+                        <option key={sc}>{sc}</option>
+                      ))}
+                    </select>
+                  </Field>
+                  <Field label="פריט">
+                    <select name="orderItemId" defaultValue={items[0]?.id ?? ""}>
+                      <option value="">— כללי —</option>
+                      {items.map((it) => (
+                        <option key={it.id} value={it.id}>
+                          {it.name}
+                        </option>
+                      ))}
+                    </select>
+                  </Field>
+                  <Field label="תאריך שליחה">
+                    <input type="date" name="sentAt" defaultValue={todayIso()} />
+                  </Field>
+                  <Field label="תאריך יעד">
+                    <input type="date" name="dueDate" defaultValue={order.internalDueDate ?? ""} />
+                  </Field>
+                  <Field label="זהב שנשלח (גרם)">
+                    <input type="number" name="metalSentG" step="0.01" min="0" defaultValue={0} />
+                  </Field>
+                  <Field label="עלות מוסכמת">
+                    <input type="number" name="cost" step="1" min="0" defaultValue={0} />
+                  </Field>
+                  <Field label="מטבע">
+                    <select name="costCurrency" defaultValue="ILS">
+                      <option value="ILS">₪</option>
+                      <option value="USD">$</option>
+                    </select>
+                  </Field>
+                </div>
+                <Field label="הוראות למפעל" hint="מה שיופיע בעמוד שהמפעל פותח">
+                  <textarea name="instructions" placeholder="יציקה לפי הסקיצה, שיבוץ ארבע ציפורניים, ליטוש מלא." />
+                </Field>
+                <div>
+                  <button className="btn btn-primary" type="submit">
+                    פתח הזמנת עבודה
+                  </button>
+                </div>
+              </form>
+            </section>
+          )}
+
+          {workOrders.length > 0 ? (
+            <section>
+              <SectionHead title="עבודות בהזמנה הזו" latin="WORK ORDERS" />
+              <div className="stack">
+                {workOrders.map((w) => {
+                  const factoryUrl = `${shareBase(settings.publicBaseUrl)}/factory/${w.accessToken}`;
+                  const supplier = suppliers.find((s) => s.id === w.supplierId);
+                  const lastFactoryUpdate = w.updates.find((u) => u.author === "מפעל");
+                  return (
+                    <div key={w.id} className="panel stack">
+                      <div className="row" style={{ justifyContent: "space-between" }}>
+                        <div>
+                          <h3 style={{ fontSize: 18 }}>
+                            {w.woNumber} · {w.supplierName}
+                          </h3>
+                          <div className="row" style={{ gap: 6, marginTop: 6 }}>
+                            <Badge tone={workOrderTone(w.status)}>{w.status}</Badge>
+                            <Badge>{w.scope}</Badge>
+                            {w.itemName ? <Badge>{w.itemName}</Badge> : null}
+                            {(w.daysOut ?? 0) >= 10 ? (
+                              <Badge tone="warn">{w.daysOut} ימים בחוץ</Badge>
+                            ) : null}
+                          </div>
+                        </div>
+                        <form action={deleteWorkOrderAction}>
+                          <input type="hidden" name="id" value={w.id} />
+                          <input type="hidden" name="orderId" value={order.id} />
+                          <button className="btn btn-sm btn-ghost btn-danger" type="submit">
+                            מחק
+                          </button>
+                        </form>
+                      </div>
+
+                      <ShareBox
+                        url={factoryUrl}
+                        whatsappHref={whatsappLink(
+                          supplier?.whatsapp ?? supplier?.phone,
+                          `הזמנת עבודה ${w.woNumber}\n${factoryUrl}`
+                        )}
+                        hint="המפעל רואה מפרט טכני בלבד — בלי שם לקוח, מחיר או רווח."
+                      />
+
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: "repeat(auto-fit, minmax(230px, 1fr))",
+                          gap: "var(--space-5)",
+                        }}
+                      >
+                        <div className="spec">
+                          <SpecLine k="נשלח" v={date(w.sentAt)} />
+                          <SpecLine k="תאריך יעד" v={date(w.dueDate)} />
+                          <SpecLine
+                            k="ההתחייבות של המפעל"
+                            v={w.factoryEta ? date(w.factoryEta) : "טרם נמסרה"}
+                          />
+                        </div>
+                        <div className="spec">
+                          <SpecLine k="זהב שנשלח" v={w.metalSentG ? grams(w.metalSentG) : "—"} />
+                          <SpecLine
+                            k="זהב שחזר"
+                            v={w.metalReturnedG ? grams(w.metalReturnedG) : "—"}
+                          />
+                          <SpecLine
+                            k="פחת"
+                            v={
+                              w.metalReturnedG ? (
+                                <span className={w.wasteG > 0 ? "warn" : ""}>{grams(w.wasteG)}</span>
+                              ) : (
+                                "—"
+                              )
+                            }
+                          />
+                          <SpecLine
+                            k="עלות"
+                            v={w.cost ? (w.costCurrency === "USD" ? usd(w.cost) : ils(w.cost)) : "—"}
+                          />
+                        </div>
+                      </div>
+
+                      {lastFactoryUpdate ? (
+                        <div className="panel-accent" style={{ padding: "12px 14px" }}>
+                          <span className="micro">העדכון האחרון מהמפעל</span>
+                          <p style={{ fontSize: 13.5, marginTop: 4 }}>
+                            {lastFactoryUpdate.status ? (
+                              <strong>{lastFactoryUpdate.status}</strong>
+                            ) : null}
+                            {lastFactoryUpdate.body ? ` · ${lastFactoryUpdate.body}` : ""}
+                            <span className="quiet"> · {dateTime(lastFactoryUpdate.createdAt)}</span>
+                          </p>
+                        </div>
+                      ) : null}
+
+                      {w.photos.length > 0 ? (
+                        <div className="stack-sm">
+                          <span className="micro">
+                            תמונות · {w.photos.filter((p) => p.author === "מפעל").length} מהמפעל
+                          </span>
+                          <div className="photo-strip">
+                            {w.photos.map((p) => (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                key={p.id}
+                                src={`/factory/${w.accessToken}/photo/${p.id}`}
+                                alt={p.author}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      ) : null}
+
+                      <WorkOrderPhotoUploader workOrderId={w.id} />
+
+                      <details>
+                        <summary className="micro" style={{ cursor: "pointer" }}>
+                          עדכון פרטים וסגירה
+                        </summary>
+                        <form action={updateWorkOrderAction} className="stack" style={{ marginTop: 12 }}>
+                          <input type="hidden" name="id" value={w.id} />
+                          <div className="form-grid">
+                            <Field label="סטטוס">
+                              <select name="status" defaultValue={w.status}>
+                                {ALL_WORK_ORDER_STATUSES.map((st) => (
+                                  <option key={st}>{st}</option>
+                                ))}
+                              </select>
+                            </Field>
+                            <Field label="עבודה">
+                              <select name="scope" defaultValue={w.scope}>
+                                {WORK_ORDER_SCOPES.map((sc) => (
+                                  <option key={sc}>{sc}</option>
+                                ))}
+                              </select>
+                            </Field>
+                            <Field label="נשלח">
+                              <input type="date" name="sentAt" defaultValue={w.sentAt ?? ""} />
+                            </Field>
+                            <Field label="תאריך יעד">
+                              <input type="date" name="dueDate" defaultValue={w.dueDate ?? ""} />
+                            </Field>
+                            <Field label="זהב שנשלח (גרם)">
+                              <input type="number" name="metalSentG" step="0.01" min="0" defaultValue={w.metalSentG} />
+                            </Field>
+                            <Field label="זהב שחזר (גרם)" hint="כולל הפריט המוגמר">
+                              <input type="number" name="metalReturnedG" step="0.01" min="0" defaultValue={w.metalReturnedG} />
+                            </Field>
+                            <Field label="עלות">
+                              <input type="number" name="cost" step="1" min="0" defaultValue={w.cost} />
+                            </Field>
+                            <Field label="מטבע">
+                              <select name="costCurrency" defaultValue={w.costCurrency}>
+                                <option value="ILS">₪</option>
+                                <option value="USD">$</option>
+                              </select>
+                            </Field>
+                          </div>
+                          <Field label="הוראות למפעל">
+                            <textarea name="instructions" defaultValue={w.instructions ?? ""} />
+                          </Field>
+                          <Field label="הערות פנימיות">
+                            <textarea name="notes" defaultValue={w.notes ?? ""} />
+                          </Field>
+                          <div>
+                            <button className="btn btn-primary btn-sm" type="submit">
+                              שמור
+                            </button>
+                          </div>
+                        </form>
+                      </details>
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+          ) : null}
         </>
       ) : null}
 

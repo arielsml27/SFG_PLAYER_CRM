@@ -3,10 +3,11 @@ import { AUTH_COOKIE, verifySessionToken } from "@/lib/auth";
 
 /**
  * כל המערכת מאחורי סיסמה, חוץ מ:
- * /login, ועמודי השיתוף /p ו-/c שנשלחים ללקוחות.
+ * /login, עמודי השיתוף /p ו-/c שנשלחים ללקוחות,
+ * ופורטל המפעל /factory — שם הטוקן שבכתובת הוא האימות.
  * /photos שומר על עצמו — הוא מגיש רק תמונות של דגמים מפורסמים למי שאינו מחובר.
  */
-const PUBLIC_PREFIXES = ["/login", "/p/", "/c/", "/photos/"];
+const PUBLIC_PREFIXES = ["/login", "/p/", "/c/", "/photos/", "/factory/"];
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;

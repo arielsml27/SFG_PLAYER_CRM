@@ -114,3 +114,61 @@ export const PAYMENT_METHODS = [
 ] as const;
 
 export const CURRENCIES = ["ILS", "USD"] as const;
+
+export const SUPPLIER_TYPES = [
+  "מפעל ייצור",
+  "משבץ",
+  "מצפה",
+  "ספק זהב",
+  "ספק אבנים",
+  "חורט",
+  "שליחויות",
+  "אחר",
+] as const;
+
+/** מסלול הזמנת העבודה מול המפעל. */
+export const WORK_ORDER_STATUSES = [
+  "נשלח",
+  "התקבל במפעל",
+  "בעבודה",
+  "מוכן",
+  "נשלח חזרה",
+  "התקבל אצלי",
+] as const;
+
+export const WORK_ORDER_SIDE_STATUSES = ["בהמתנה", "נדחה"] as const;
+
+export const ALL_WORK_ORDER_STATUSES = [
+  ...WORK_ORDER_STATUSES,
+  ...WORK_ORDER_SIDE_STATUSES,
+];
+
+/** מה שהמפעל יכול לבחור בעצמו — בלי "התקבל אצלי", שזה אני. */
+export const FACTORY_SELECTABLE_STATUSES = [
+  "התקבל במפעל",
+  "בעבודה",
+  "מוכן",
+  "נשלח חזרה",
+  "בהמתנה",
+] as const;
+
+export const WORK_ORDER_CLOSED = new Set<string>(["התקבל אצלי", "נדחה"]);
+
+export const WORK_ORDER_SCOPES = [
+  "ייצור מלא",
+  "יציקה",
+  "שיבוץ",
+  "ליטוש וגימור",
+  "ציפוי רודיום",
+  "תיקון",
+  "שינוי מידה",
+  "חריטה",
+] as const;
+
+export function workOrderTone(status: string): "accent" | "good" | "warn" | "danger" | "quiet" {
+  if (status === "נדחה") return "danger";
+  if (status === "התקבל אצלי") return "quiet";
+  if (status === "מוכן" || status === "נשלח חזרה") return "good";
+  if (status === "בהמתנה") return "warn";
+  return "accent";
+}

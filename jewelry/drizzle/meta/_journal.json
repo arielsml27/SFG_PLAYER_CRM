@@ -29,6 +29,13 @@
       "when": 1787931188127,
       "tag": "0003_absurd_smiling_tiger",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1787932984656,
+      "tag": "0004_famous_jack_power",
+      "breakpoints": true
     }
   ]
 }

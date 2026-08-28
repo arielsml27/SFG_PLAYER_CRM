@@ -77,6 +77,17 @@ export default async function DashboardPage() {
             emptyText="אין מסירות בשבוע הקרוב"
           />
           <AttentionCard
+            title="תקוע במפעל"
+            count={d.stuckAtFactory.length}
+            tone="warn"
+            rows={d.stuckAtFactory.slice(0, 5).map((w) => ({
+              href: `/orders/${w.orderId}?tab=factory`,
+              main: `${w.woNumber} · ${w.supplierName}`,
+              side: `${w.daysOut} ימים`,
+            }))}
+            emptyText="שום עבודה לא תקועה"
+          />
+          <AttentionCard
             title="משימות קרובות"
             count={d.dueTasks.length}
             tone="accent"

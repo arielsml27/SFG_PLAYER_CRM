@@ -5,7 +5,7 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { logoutAction } from "@/lib/actions";
 
-type Counts = { orders: number; customers: number; tasks: number; catalog: number };
+type Counts = { orders: number; customers: number; tasks: number; catalog: number; workOrders: number };
 
 const NAV = [
   { group: "יומיום", items: [
@@ -16,6 +16,10 @@ const NAV = [
   ]},
   { group: "אנשים", items: [
     { href: "/customers", label: "לקוחות", key: "customers" as const },
+  ]},
+  { group: "ייצור", items: [
+    { href: "/work-orders", label: "הזמנות עבודה", key: "workOrders" as const },
+    { href: "/suppliers", label: "ספקים ומפעלים", key: null },
   ]},
   { group: "מוצרים", items: [
     { href: "/catalog", label: "קטלוג", key: "catalog" as const },

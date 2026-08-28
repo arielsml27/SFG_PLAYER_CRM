@@ -330,3 +330,92 @@ export const payments = sqliteTable("payments", {
   notes: text("notes"),
   createdAt: now(),
 });
+
+/* ---------------------------------------------------------------
+   ספקים ומפעלים — כולם חיצוניים
+   --------------------------------------------------------------- */
+export const suppliers = sqliteTable("suppliers", {
+  id: id(),
+  name: text("name").notNull(),
+  type: text("type").notNull().default("מפעל ייצור"),
+  contactName: text("contact_name"),
+  phone: text("phone"),
+  whatsapp: text("whatsapp"),
+  email: text("email"),
+  city: text("city"),
+  paymentTerms: text("payment_terms"),
+  /** זמן אספקה ממוצע בימים — לתכנון תאריך יעד */
+  leadDays: integer("lead_days").notNull().default(0),
+  rating: integer("rating").notNull().default(0), // 0–5, פנימי
+  isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
+  notes: text("notes"),
+  createdAt: now(),
+  updatedAt: text("updated_at").notNull().$defaultFn(() => new Date().toISOString()),
+});
+
+/* ---------------------------------------------------------------
+   הזמנות עבודה — הישות שמחזיקה את הייצור מול המפעל
+   --------------------------------------------------------------- */
+export const workOrders = sqliteTable("work_orders", {
+  id: id(),
+  woNumber: text("wo_number").notNull().unique(),
+  orderId: text("order_id")
+    .notNull()
+    .references(() => orders.id, { onDelete: "cascade" }),
+  orderItemId: text("order_item_id").references(() => orderItems.id, { onDelete: "set null" }),
+  supplierId: text("supplier_id")
+    .notNull()
+    .references(() => suppliers.id, { onDelete: "restrict" }),
+
+  /** מה בדיוק מבקשים: יציקה / שיבוץ / ליטוש / ציפוי / הכל */
+  scope: text("scope").notNull().default("ייצור מלא"),
+  instructions: text("instructions"),
+  status: text("status").notNull().default("נשלח"),
+
+  sentAt: text("sent_at"),
+  dueDate: text("due_date"),
+  /** התאריך שהמפעל עצמו התחייב לו */
+  factoryEta: text("factory_eta"),
+  receivedAt: text("received_at"),
+
+  /** מעקב זהב: כמה יצא, כמה חזר. הפחת הוא ההפרש. */
+  metalSentG: real("metal_sent_g").notNull().default(0),
+  metalReturnedG: real("metal_returned_g").notNull().default(0),
+
+  cost: real("cost").notNull().default(0),
+  costCurrency: text("cost_currency").notNull().default("ILS"),
+
+  /** הטוקן שבלינק שנשלח למפעל. נוצר פעם אחת ולא משתנה. */
+  accessToken: text("access_token").notNull().unique(),
+  notes: text("notes"),
+  createdAt: now(),
+  updatedAt: text("updated_at").notNull().$defaultFn(() => new Date().toISOString()),
+});
+
+/** כל עדכון מהמפעל או ממני, לפי סדר זמנים. */
+export const workOrderUpdates = sqliteTable("work_order_updates", {
+  id: id(),
+  workOrderId: text("work_order_id")
+    .notNull()
+    .references(() => workOrders.id, { onDelete: "cascade" }),
+  /** מי כתב: "מפעל" או "אני" */
+  author: text("author").notNull().default("מפעל"),
+  status: text("status"),
+  eta: text("eta"),
+  body: text("body"),
+  createdAt: now(),
+});
+
+/** תמונות של הזמנת עבודה — סקיצות שאני שולח, והתקדמות שהמפעל מעלה. */
+export const workOrderPhotos = sqliteTable("work_order_photos", {
+  id: id(),
+  workOrderId: text("work_order_id")
+    .notNull()
+    .references(() => workOrders.id, { onDelete: "cascade" }),
+  author: text("author").notNull().default("מפעל"),
+  mime: text("mime").notNull().default("image/jpeg"),
+  data: blob("data", { mode: "buffer" }).notNull(),
+  bytes: integer("bytes").notNull().default(0),
+  caption: text("caption"),
+  createdAt: now(),
+});

@@ -268,6 +268,7 @@ export async function getDashboard() {
     return d === null ? false : d <= 3;
   });
 
+  const stuckAtFactory = await getStuckWorkOrders(10);
   const pipelineValueUsd = decorated.reduce((a, o) => a + o.totalUsd, 0);
   const outstandingUsd = decorated.filter((o) => !o.isSettled).reduce((a, o) => a + o.balanceUsd, 0);
   const outstandingCount = decorated.filter((o) => !o.isSettled && o.balanceUsd > 0.01).length;
@@ -289,6 +290,7 @@ export async function getDashboard() {
     outstandingUsd,
     outstandingIls: outstandingUsd * settings.fxUsdIls,
     outstandingCount,
+    stuckAtFactory,
     recent,
     customerCount: (await db.select({ n: sql<number>`count(*)` }).from(schema.customers))[0]?.n ?? 0,
   };
@@ -303,8 +305,10 @@ export async function navCounts() {
     .from(schema.tasks)
     .where(eq(schema.tasks.status, "פתוח"));
   const products = await db.select({ n: sql<number>`count(*)` }).from(schema.products);
+  const wos = await db.select({ status: schema.workOrders.status }).from(schema.workOrders);
   return {
     orders: openOrders,
+    workOrders: wos.filter((w) => !CLOSED_WO.has(w.status)).length,
     customers: Number(customers[0]?.n ?? 0),
     tasks: Number(openTasks[0]?.n ?? 0),
     catalog: Number(products[0]?.n ?? 0),
@@ -535,4 +539,179 @@ export async function getReceivables() {
     overdueUsd: rows.filter((o) => o.ageDays > 30).reduce((a, o) => a + o.balanceUsd, 0),
     overdueCount: rows.filter((o) => o.ageDays > 30).length,
   };
+}
+
+/* ---------------------------------------------------------------
+   ספקים והזמנות עבודה
+   --------------------------------------------------------------- */
+export type Supplier = typeof schema.suppliers.$inferSelect;
+export type WorkOrder = typeof schema.workOrders.$inferSelect;
+
+export async function listSuppliers() {
+  const rows = await db.select().from(schema.suppliers).orderBy(schema.suppliers.name);
+  const wos = await db.select().from(schema.workOrders);
+  return rows.map((s) => {
+    const mine = wos.filter((w) => w.supplierId === s.id);
+    return {
+      ...s,
+      workOrderCount: mine.length,
+      openCount: mine.filter((w) => !CLOSED_WO.has(w.status)).length,
+    };
+  });
+}
+
+const CLOSED_WO = new Set<string>(["התקבל אצלי", "נדחה"]);
+
+export async function getSupplier(id: string) {
+  const rows = await db.select().from(schema.suppliers).where(eq(schema.suppliers.id, id)).limit(1);
+  return rows[0] ?? null;
+}
+
+export type WorkOrderRow = WorkOrder & {
+  supplierName: string;
+  orderNumber: string;
+  customerName: string;
+  itemName: string | null;
+  daysOut: number | null;
+  isOpen: boolean;
+  wasteG: number;
+};
+
+function daysSince(iso: string | null): number | null {
+  if (!iso) return null;
+  const d = new Date(iso.length === 10 ? iso + "T00:00:00" : iso);
+  if (Number.isNaN(d.getTime())) return null;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return Math.max(0, Math.round((today.getTime() - d.getTime()) / 86400000));
+}
+
+async function decorateWorkOrders(rows: WorkOrder[]): Promise<WorkOrderRow[]> {
+  if (rows.length === 0) return [];
+  const [sups, ords, custs, items] = await Promise.all([
+    db.select().from(schema.suppliers),
+    db.select().from(schema.orders),
+    db.select().from(schema.customers),
+    db.select().from(schema.orderItems),
+  ]);
+  const supById = new Map(sups.map((s) => [s.id, s.name]));
+  const custById = new Map(custs.map((c) => [c.id, c.name]));
+
+  return rows.map((w) => {
+    const order = ords.find((o) => o.id === w.orderId);
+    const item = w.orderItemId ? items.find((i) => i.id === w.orderItemId) : null;
+    return {
+      ...w,
+      supplierName: supById.get(w.supplierId) ?? "—",
+      orderNumber: order?.orderNumber ?? "—",
+      customerName: order ? custById.get(order.customerId) ?? "—" : "—",
+      itemName: item?.name ?? null,
+      daysOut: CLOSED_WO.has(w.status) ? null : daysSince(w.sentAt),
+      isOpen: !CLOSED_WO.has(w.status),
+      wasteG: Math.max(0, w.metalSentG - w.metalReturnedG),
+    };
+  });
+}
+
+export async function listWorkOrders(filter?: { status?: string; supplierId?: string }) {
+  const rows = await db.select().from(schema.workOrders).orderBy(desc(schema.workOrders.createdAt));
+  const decorated = await decorateWorkOrders(rows);
+  return decorated.filter((w) => {
+    if (filter?.status === "פתוחות") return w.isOpen;
+    if (filter?.status && filter.status !== "הכל" && w.status !== filter.status) return false;
+    if (filter?.supplierId && w.supplierId !== filter.supplierId) return false;
+    return true;
+  });
+}
+
+export async function getOrderWorkOrders(orderId: string) {
+  const rows = await db
+    .select()
+    .from(schema.workOrders)
+    .where(eq(schema.workOrders.orderId, orderId))
+    .orderBy(desc(schema.workOrders.createdAt));
+  const decorated = await decorateWorkOrders(rows);
+  const updates = await db
+    .select()
+    .from(schema.workOrderUpdates)
+    .orderBy(desc(schema.workOrderUpdates.createdAt));
+  const photos = await db
+    .select({
+      id: schema.workOrderPhotos.id,
+      workOrderId: schema.workOrderPhotos.workOrderId,
+      author: schema.workOrderPhotos.author,
+      bytes: schema.workOrderPhotos.bytes,
+    })
+    .from(schema.workOrderPhotos);
+
+  return decorated.map((w) => ({
+    ...w,
+    updates: updates.filter((u) => u.workOrderId === w.id),
+    photos: photos.filter((p) => p.workOrderId === w.id),
+  }));
+}
+
+/** מה שהמפעל רואה. אין כאן לקוח, אין מחיר, אין רווח. */
+export async function getFactoryView(token: string) {
+  const rows = await db
+    .select()
+    .from(schema.workOrders)
+    .where(eq(schema.workOrders.accessToken, token))
+    .limit(1);
+  const wo = rows[0];
+  if (!wo) return null;
+
+  const [supplier, item, updates, photos, settings] = await Promise.all([
+    getSupplier(wo.supplierId),
+    wo.orderItemId
+      ? db
+          .select()
+          .from(schema.orderItems)
+          .where(eq(schema.orderItems.id, wo.orderItemId))
+          .limit(1)
+          .then((r) => r[0] ?? null)
+      : Promise.resolve(null),
+    db
+      .select()
+      .from(schema.workOrderUpdates)
+      .where(eq(schema.workOrderUpdates.workOrderId, wo.id))
+      .orderBy(desc(schema.workOrderUpdates.createdAt)),
+    db
+      .select({
+        id: schema.workOrderPhotos.id,
+        author: schema.workOrderPhotos.author,
+        createdAt: schema.workOrderPhotos.createdAt,
+      })
+      .from(schema.workOrderPhotos)
+      .where(eq(schema.workOrderPhotos.workOrderId, wo.id))
+      .orderBy(schema.workOrderPhotos.createdAt),
+    getSettings(),
+  ]);
+
+  return { workOrder: wo, supplier, item, updates, photos, settings };
+}
+
+export async function getWorkOrderPhoto(token: string, photoId: string) {
+  const wo = await db
+    .select({ id: schema.workOrders.id })
+    .from(schema.workOrders)
+    .where(eq(schema.workOrders.accessToken, token))
+    .limit(1);
+  if (!wo[0]) return null;
+  const rows = await db
+    .select()
+    .from(schema.workOrderPhotos)
+    .where(eq(schema.workOrderPhotos.id, photoId))
+    .limit(1);
+  const photo = rows[0];
+  if (!photo || photo.workOrderId !== wo[0].id) return null;
+  return photo;
+}
+
+/** הזמנות עבודה שתקועות במפעל מעל מספר ימים. */
+export async function getStuckWorkOrders(thresholdDays = 10) {
+  const all = await listWorkOrders({ status: "פתוחות" });
+  return all
+    .filter((w) => (w.daysOut ?? 0) >= thresholdDays)
+    .sort((a, b) => (b.daysOut ?? 0) - (a.daysOut ?? 0));
 }
