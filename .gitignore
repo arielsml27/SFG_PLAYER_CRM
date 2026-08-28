@@ -51,3 +51,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Samuel jewelry app
+jewelry/node_modules/
+jewelry/.next/
+jewelry/*.db

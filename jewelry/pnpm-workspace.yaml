@@ -1,0 +1,6 @@
+# קיים כדי ש-pnpm יתייחס ל-jewelry כשורש עצמאי ולא יטפס לריפו שמעליו.
+# כשהפרויקט יעבור לריפו משלו, אפשר להשאיר את הקובץ כמו שהוא.
+allowBuilds:
+  esbuild: false
+  sharp: false
+  unrs-resolver: false

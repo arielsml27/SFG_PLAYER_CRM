@@ -1,0 +1,794 @@
+@import "tailwindcss";
+
+/* ============================================================
+   גופני המותג — מוגשים מקומית, בלי תלות ברשת.
+   שני הקבצים משתנים (variable) ומכסים את כל המשקלים.
+   ============================================================ */
+@font-face {
+  font-family: "Frank Ruhl Libre";
+  src: url("/fonts/frank-ruhl-libre-hebrew.woff2") format("woff2");
+  font-weight: 300 900;
+  font-display: swap;
+  unicode-range: U+0590-05FF, U+200C-200E, U+20AA, U+25CC, U+FB1D-FB4F;
+}
+@font-face {
+  font-family: "Frank Ruhl Libre";
+  src: url("/fonts/frank-ruhl-libre-latin.woff2") format("woff2");
+  font-weight: 300 900;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+2000-206F, U+2074, U+20AC, U+2122, U+2212, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Frank Ruhl Libre";
+  src: url("/fonts/frank-ruhl-libre-latin-ext.woff2") format("woff2");
+  font-weight: 300 900;
+  font-display: swap;
+  unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "Assistant";
+  src: url("/fonts/assistant-hebrew.woff2") format("woff2");
+  font-weight: 200 800;
+  font-display: swap;
+  unicode-range: U+0590-05FF, U+200C-200E, U+20AA, U+25CC, U+FB1D-FB4F;
+}
+@font-face {
+  font-family: "Assistant";
+  src: url("/fonts/assistant-latin.woff2") format("woff2");
+  font-weight: 200 800;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+2000-206F, U+2074, U+20AC, U+2122, U+2212, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Assistant";
+  src: url("/fonts/assistant-latin-ext.woff2") format("woff2");
+  font-weight: 200 800;
+  font-display: swap;
+  unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2C60-2C7F, U+A720-A7FF;
+}
+
+/* ============================================================
+   SAMUEL — DESIGN SYSTEM
+   נגזר מדף הצעת המחיר וממחשבון התמחור. מקור אמת יחיד לצבע,
+   טיפוגרפיה ומרווחים בכל המערכת.
+   ============================================================ */
+
+:root {
+  /* המותג כהה. זו ברירת המחדל בכל מסך, בלי קשר להעדפת מערכת ההפעלה —
+     כדי שהמערכת תיראה כמו הצעת המחיר שנשלחת ללקוח. פלטה בהירה קיימת
+     ומופעלת רק בבחירה מפורשת: <html data-theme="light">. */
+  color-scheme: dark;
+
+  /* --- משטחים --- */
+  --surface-0: #10151d;
+  --surface-1: #1a1e26;
+  --surface-2: #22272e;
+  --surface-3: #2a2f36;
+
+  /* --- זהב שמפניה — צבע המותג --- */
+  --accent: #c8ab6d;
+  --accent-strong: #d8c190;
+  --accent-dim: rgba(200, 171, 109, 0.35);
+  --accent-hair: rgba(200, 171, 109, 0.28);
+  --accent-wash: rgba(200, 171, 109, 0.1);
+
+  /* --- קווים --- */
+  --line: #33373c;
+  --line-soft: #24282e;
+  --line-hair: rgba(236, 231, 221, 0.16);
+
+  /* --- דיו --- */
+  --ink-1: #ece7dd;
+  --ink-2: #a9a08c;
+  --ink-3: #7d7565;
+  --platinum: #8695a6;
+
+  /* --- סמנטי --- */
+  --good: #6e9b7c;
+  --warning: #c97a4a;
+  --danger: #b4626e;
+
+  --panel: rgba(255, 255, 255, 0.045);
+  --shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+  --btn-ink: var(--surface-0);
+
+  /* --- טיפוגרפיה --- */
+  --font-display: "Frank Ruhl Libre", Georgia, serif;
+  --font-body: "Assistant", "Segoe UI", Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, "DejaVu Sans Mono", monospace;
+
+  /* --- קצב מרווחים --- */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+
+  --radius-sm: 4px;
+  --radius-md: 7px;
+
+  /* --- אותיות זעירות (המיקרו-לייבל של המותג) --- */
+  --track-micro: 0.2em;
+  --track-wide: 0.22em;
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+  --surface-0: #f5f4f2;
+  --surface-1: #ffffff;
+  --surface-2: #ebeae8;
+  --surface-3: #e2e1e0;
+  --accent: #735a26;
+  --accent-strong: #51401a;
+  --accent-dim: rgba(115, 90, 38, 0.4);
+  --accent-hair: rgba(115, 90, 38, 0.3);
+  --accent-wash: rgba(115, 90, 38, 0.08);
+  --line: #d0d0d0;
+  --line-soft: #e3e2e1;
+  --line-hair: rgba(16, 21, 29, 0.12);
+  --ink-1: #10151d;
+  --ink-2: #454b54;
+  --ink-3: #636973;
+  --platinum: #5c6773;
+  --good: #3f7a54;
+  --warning: #a85a2c;
+  --danger: #97323f;
+  --panel: rgba(16, 21, 29, 0.03);
+  --shadow: 0 12px 34px rgba(16, 21, 29, 0.1);
+  --btn-ink: #ffffff;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  background: var(--surface-0);
+}
+
+body {
+  margin: 0;
+  color: var(--ink-1);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-display);
+  font-weight: 500;
+  margin: 0;
+  text-wrap: balance;
+  letter-spacing: -0.01em;
+}
+
+p {
+  margin: 0;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: var(--accent);
+  color: var(--btn-ink);
+}
+
+/* ============================================================
+   1. מספרים — תמיד מונו וטבלאי
+   ============================================================ */
+.num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+
+/* ============================================================
+   2. מיקרו-לייבל — חתימת המותג
+   ============================================================ */
+.micro {
+  font-size: 9.5px;
+  letter-spacing: var(--track-micro);
+  color: var(--accent);
+  text-transform: uppercase;
+  line-height: 1.4;
+}
+
+.micro-quiet {
+  font-size: 10px;
+  letter-spacing: var(--track-wide);
+  color: var(--ink-2);
+}
+
+/* ============================================================
+   3. כותרת מקטע — עברית · קו שיער · לטינית
+   ============================================================ */
+.section-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: 0 0 var(--space-3);
+}
+.section-head h2,
+.section-head h3 {
+  font-size: 17px;
+  white-space: nowrap;
+}
+.section-head .rule {
+  flex: 1;
+  height: 1px;
+  background: var(--accent-dim);
+}
+.section-head .latin {
+  font-size: 10px;
+  letter-spacing: var(--track-micro);
+  color: var(--accent);
+  white-space: nowrap;
+}
+
+/* מפריד שיער עם דהייה בשני הקצוות */
+.hairline {
+  height: 1px;
+  border: 0;
+  background: linear-gradient(
+    to left,
+    transparent,
+    var(--accent-dim) 18%,
+    var(--accent-dim) 82%,
+    transparent
+  );
+  margin: var(--space-4) 0;
+}
+
+/* ============================================================
+   4. לוח — כרטיס בסיסי
+   ============================================================ */
+.panel {
+  background: var(--surface-1);
+  border: 1px solid var(--line);
+  padding: var(--space-5);
+}
+
+.panel-tight {
+  padding: var(--space-4);
+}
+
+/* רשת תאים מופרדת בקווי זהב — מהצעת המחיר */
+.cell-grid {
+  display: grid;
+  gap: 1px;
+  background: var(--accent-hair);
+  border: 1px solid var(--accent-hair);
+}
+.cell {
+  /* שכבת ההרמה מונחת על משטח אטום, אחרת רקע הזהב של הרשת מבצבץ
+     דרך התא וכל הבלוק נצבע בזית. */
+  background: linear-gradient(var(--panel), var(--panel)), var(--surface-1);
+  padding: 11px 14px;
+  min-width: 0;
+}
+.cell .val {
+  font-size: 15px;
+  margin-top: 3px;
+  color: var(--ink-1);
+  overflow-wrap: anywhere;
+}
+
+/* לוח הדגשה — לסכומים */
+.panel-accent {
+  background: var(--accent-wash);
+  border: 1px solid var(--accent-dim);
+}
+
+/* ============================================================
+   5. שורות מפרט — תווית מול ערך
+   ============================================================ */
+.spec {
+  display: flex;
+  flex-direction: column;
+}
+.spec-row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: 8px 2px;
+  border-bottom: 1px solid var(--line-hair);
+  font-size: 13.5px;
+}
+.spec-row:last-child {
+  border-bottom: none;
+}
+.spec-row .k {
+  color: var(--ink-2);
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+.spec-row .v {
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+
+/* ============================================================
+   6. מספר גדול
+   ============================================================ */
+.figure {
+  font-family: var(--font-display);
+  font-size: 36px;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+}
+.figure-sm {
+  font-family: var(--font-display);
+  font-size: 24px;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ============================================================
+   7. כפתורים
+   ============================================================ */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  padding: 9px 18px;
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+  color: var(--ink-1);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+.btn:hover {
+  border-color: var(--accent-dim);
+  color: var(--accent-strong);
+}
+.btn-primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--btn-ink);
+}
+.btn-primary:hover {
+  background: var(--accent-strong);
+  border-color: var(--accent-strong);
+  color: var(--btn-ink);
+}
+.btn-ghost {
+  background: transparent;
+}
+.btn-danger:hover {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+.btn-sm {
+  font-size: 13px;
+  padding: 6px 13px;
+}
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* ============================================================
+   8. טפסים
+   ============================================================ */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+.field > label {
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  color: var(--accent);
+  text-transform: uppercase;
+}
+.field .hint {
+  font-size: 11.5px;
+  color: var(--ink-3);
+}
+input,
+select,
+textarea {
+  font-family: inherit;
+  font-size: 14px;
+  color: var(--ink-1);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 8px 11px;
+  width: 100%;
+  min-width: 0;
+}
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--accent-dim);
+}
+input[type="number"] {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  direction: ltr;
+  text-align: right;
+  -moz-appearance: textfield;
+}
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="date"] {
+  direction: ltr;
+  text-align: right;
+}
+textarea {
+  resize: vertical;
+  min-height: 72px;
+  line-height: 1.6;
+}
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: var(--space-4);
+}
+.switch {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 13px;
+  color: var(--ink-2);
+  cursor: pointer;
+}
+.switch input {
+  width: auto;
+  accent-color: var(--accent);
+}
+fieldset.off {
+  opacity: 0.4;
+}
+
+/* ============================================================
+   9. טבלאות
+   ============================================================ */
+.table-scroll {
+  overflow-x: auto;
+}
+table.data {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  min-width: 620px;
+}
+table.data thead th {
+  text-align: start;
+  font-family: var(--font-body);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--accent);
+  text-transform: uppercase;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--accent-hair);
+  white-space: nowrap;
+}
+table.data td {
+  padding: 12px;
+  border-bottom: 1px solid var(--line-hair);
+  vertical-align: middle;
+}
+table.data tbody tr:last-child td {
+  border-bottom: none;
+}
+table.data tbody tr.link-row:hover {
+  background: var(--panel);
+}
+table.data td.name {
+  font-family: var(--font-display);
+  font-size: 15px;
+}
+
+/* ============================================================
+   10. באדג'ים וסטטוסים
+   ============================================================ */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11.5px;
+  letter-spacing: 0.04em;
+  padding: 3px 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+.badge-accent {
+  border-color: var(--accent-dim);
+  color: var(--accent);
+}
+.badge-good {
+  border-color: var(--good);
+  color: var(--good);
+}
+.badge-warn {
+  border-color: var(--warning);
+  color: var(--warning);
+}
+.badge-danger {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+.badge-quiet {
+  border-color: var(--line-soft);
+  color: var(--ink-3);
+}
+
+/* ============================================================
+   11. שלד האפליקציה
+   ============================================================ */
+.shell {
+  display: grid;
+  grid-template-columns: 232px 1fr;
+  min-height: 100vh;
+}
+.sidebar {
+  background: var(--surface-1);
+  border-inline-start: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  padding: var(--space-5) var(--space-4);
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+}
+.sidebar .brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--accent-hair);
+}
+.sidebar .brand img {
+  width: 132px;
+  height: auto;
+  display: block;
+}
+.sidebar nav {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.sidebar nav a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: 8px 11px;
+  font-size: 14px;
+  color: var(--ink-2);
+  border-inline-start: 2px solid transparent;
+  border-radius: var(--radius-sm);
+}
+.sidebar nav a:hover {
+  color: var(--ink-1);
+  background: var(--panel);
+}
+.sidebar nav a.active {
+  color: var(--accent-strong);
+  background: var(--accent-wash);
+  border-inline-start-color: var(--accent);
+}
+.sidebar nav a .count {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-3);
+}
+.sidebar .nav-group {
+  font-size: 9.5px;
+  letter-spacing: var(--track-micro);
+  color: var(--ink-3);
+  text-transform: uppercase;
+  padding: 0 11px;
+  margin-bottom: 5px;
+}
+.sidebar .foot {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--line-soft);
+  font-size: 12px;
+  color: var(--ink-3);
+}
+
+.main {
+  min-width: 0;
+  padding: var(--space-6) var(--space-6) var(--space-8);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+.page-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-5);
+  flex-wrap: wrap;
+}
+.page-head h1 {
+  font-size: 30px;
+}
+.page-head .sub {
+  font-size: 13px;
+  color: var(--ink-2);
+  margin-top: 2px;
+}
+.page-actions {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+@media (max-width: 900px) {
+  .shell {
+    grid-template-columns: 1fr;
+  }
+  .sidebar {
+    position: static;
+    height: auto;
+    border-inline-start: none;
+    border-bottom: 1px solid var(--line);
+  }
+  .sidebar nav {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+  .sidebar .nav-group,
+  .sidebar .foot {
+    display: none;
+  }
+  .main {
+    padding: var(--space-5) var(--space-4) var(--space-7);
+  }
+}
+
+/* ============================================================
+   12. מצב ריק
+   ============================================================ */
+.empty {
+  border: 1px dashed var(--line);
+  padding: var(--space-7) var(--space-5);
+  text-align: center;
+  color: var(--ink-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  align-items: center;
+}
+
+/* ============================================================
+   13. טאבים
+   ============================================================ */
+.tabs {
+  display: flex;
+  gap: 2px;
+  border-bottom: 1px solid var(--line);
+  overflow-x: auto;
+}
+.tabs a {
+  padding: 9px 15px;
+  font-size: 14px;
+  color: var(--ink-2);
+  border-bottom: 2px solid transparent;
+  white-space: nowrap;
+}
+.tabs a:hover {
+  color: var(--ink-1);
+}
+.tabs a.active {
+  color: var(--accent-strong);
+  border-bottom-color: var(--accent);
+}
+
+/* ============================================================
+   14. עזרי פריסה
+   ============================================================ */
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+.stack-sm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+.grid-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: var(--space-4);
+}
+.muted {
+  color: var(--ink-2);
+}
+.quiet {
+  color: var(--ink-3);
+}
+.gold {
+  color: var(--accent);
+}
+.danger {
+  color: var(--danger);
+}
+.good {
+  color: var(--good);
+}
+.warn {
+  color: var(--warning);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* ============================================================
+   15. אריחי צנרת — כל אריח עומד בפני עצמו, כדי שלא ייווצרו
+   תאי רפאים בסוף השורה כמו ברשת עם רקע משותף.
+   ============================================================ */
+.tile-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(118px, 1fr));
+  gap: var(--space-2);
+}
+.tile {
+  background: linear-gradient(var(--panel), var(--panel)), var(--surface-1);
+  border: 1px solid var(--accent-hair);
+  padding: 11px 13px;
+  min-width: 0;
+}
+.tile:hover {
+  border-color: var(--accent-dim);
+}
+.tile .n {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 22px;
+  margin-top: 2px;
+}
+.tile .n.zero {
+  color: var(--ink-3);
+}
