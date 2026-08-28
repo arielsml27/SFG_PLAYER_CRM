@@ -37,6 +37,16 @@ export default async function DashboardPage() {
           <Cell label="שער יציג $/₪" value={<span className="num">{d.settings.fxUsdIls.toFixed(4)}</span>} />
           <Cell label="מע״מ" value={<span className="num">{d.settings.vatPct}%</span>} />
           <Cell label="שווי צנרת פתוחה" value={<span className="num">{ils(d.pipelineValueIls)}</span>} />
+          <Cell
+            label="יתרות לגבייה"
+            value={
+              <Link href="/receivables">
+                <span className={`num ${d.outstandingCount ? "warn" : ""}`}>
+                  {ils(d.outstandingIls)}
+                </span>
+              </Link>
+            }
+          />
         </div>
       </section>
 

@@ -468,3 +468,62 @@ export async function deleteTaskAction(fd: FormData) {
   await db.delete(schema.tasks).where(eq(schema.tasks.id, id));
   revalidatePath("/tasks");
 }
+
+/* ---------------------------------------------------------------
+   תשלומים
+   --------------------------------------------------------------- */
+export async function addPaymentAction(fd: FormData) {
+  await requireUser();
+  const orderId = str(fd, "orderId");
+  if (!orderId) return;
+
+  const rows = await db.select().from(schema.orders).where(eq(schema.orders.id, orderId)).limit(1);
+  const order = rows[0];
+  if (!order) return;
+
+  const amount = num(fd, "amount");
+  if (amount <= 0) return;
+
+  const currency = str(fd, "currency") ?? "ILS";
+  const settings = await getSettings();
+  // שער ההמרה של יום התשלום. ההזמנה שומרת שער משלה לתמחור, אבל
+  // תשלום שהתקבל היום הומר בשער של היום.
+  const fx = settings.fxUsdIls || order.fxSnapshot || 0;
+  const amountUsd = currency === "USD" ? amount : fx ? amount / fx : 0;
+
+  await db.insert(schema.payments).values({
+    id: randomUUID(),
+    orderId,
+    kind: str(fd, "kind") ?? "מקדמה",
+    amount,
+    currency,
+    fxAtPayment: fx,
+    amountUsd,
+    paidAt: str(fd, "paidAt") ?? new Date().toISOString().slice(0, 10),
+    method: str(fd, "method") ?? "העברה",
+    reference: str(fd, "reference"),
+    greenInvoiceNumber: str(fd, "greenInvoiceNumber"),
+    notes: str(fd, "notes"),
+    createdAt: nowIso(),
+  });
+
+  await db
+    .update(schema.orders)
+    .set({ updatedAt: nowIso() })
+    .where(eq(schema.orders.id, orderId));
+
+  revalidatePath(`/orders/${orderId}`);
+  revalidatePath("/receivables");
+  revalidatePath("/");
+}
+
+export async function deletePaymentAction(fd: FormData) {
+  await requireUser();
+  const paymentId = str(fd, "paymentId");
+  const orderId = str(fd, "orderId");
+  if (!paymentId) return;
+  await db.delete(schema.payments).where(eq(schema.payments.id, paymentId));
+  if (orderId) revalidatePath(`/orders/${orderId}`);
+  revalidatePath("/receivables");
+  revalidatePath("/");
+}

@@ -306,3 +306,27 @@ export const collectionItems = sqliteTable("collection_items", {
   sortOrder: integer("sort_order").notNull().default(0),
   note: text("note"),
 });
+
+/* ---------------------------------------------------------------
+   תשלומים
+   הסכום נשמר במטבע שבו שולם בפועל, יחד עם השער של אותו יום ועם
+   הערך הדולרי — כדי שיתרה לגבייה תישאר נכונה גם אם השער יזוז.
+   --------------------------------------------------------------- */
+export const payments = sqliteTable("payments", {
+  id: id(),
+  orderId: text("order_id")
+    .notNull()
+    .references(() => orders.id, { onDelete: "cascade" }),
+  kind: text("kind").notNull().default("מקדמה"), // מקדמה / ביניים / סופי / החזר
+  amount: real("amount").notNull().default(0),
+  currency: text("currency").notNull().default("ILS"), // ILS / USD
+  fxAtPayment: real("fx_at_payment").notNull().default(0),
+  /** הערך הדולרי, מחושב פעם אחת בשמירה */
+  amountUsd: real("amount_usd").notNull().default(0),
+  paidAt: text("paid_at").notNull(),
+  method: text("method").notNull().default("העברה"),
+  reference: text("reference"),
+  greenInvoiceNumber: text("green_invoice_number"),
+  notes: text("notes"),
+  createdAt: now(),
+});

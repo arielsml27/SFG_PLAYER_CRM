@@ -2,8 +2,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getOrder, getSettings, listCustomers } from "@/lib/data";
 import {
+  addPaymentAction,
   addTimelineEventAction,
   createTaskAction,
+  deletePaymentAction,
   deleteOrderAction,
   deleteOrderItemAction,
   refreshOrderRatesAction,
@@ -17,17 +19,20 @@ import {
   ORDER_CHANNELS,
   ORDER_STATUSES,
   ORDER_TYPES,
+  PAYMENT_KINDS,
+  PAYMENT_METHODS,
   PRIORITIES,
   TIMELINE_KINDS,
 } from "@/lib/constants";
 import { marginPctFromMultiplier } from "@/lib/pricing";
-import { date, dateTime, ils, pct, relativeDays, usd } from "@/lib/format";
+import { date, dateTime, ils, pct, relativeDays, todayIso, usd } from "@/lib/format";
 import { saveItemAsProductAction } from "@/lib/product-actions";
 import { Badge, Cell, Empty, Field, PageHead, SectionHead, StatusBadge } from "@/components/ui";
 
 const TABS = [
   { key: "details", label: "פרטים" },
   { key: "items", label: "פריטים ותמחור" },
+  { key: "payments", label: "תשלומים" },
   { key: "journal", label: "יומן" },
   { key: "tasks", label: "משימות" },
 ] as const;
@@ -45,7 +50,8 @@ export default async function OrderPage({
 
   const full = await getOrder(id);
   if (!full) notFound();
-  const { order, customer, items, lines, totals, history, timeline, tasks } = full;
+  const { order, customer, items, lines, totals, history, timeline, tasks, payments, balance } =
+    full;
   const [settings, customers] = await Promise.all([getSettings(), listCustomers()]);
 
   const money = (u: number, i: number) => (order.isExport ? usd(u) : ils(i));
@@ -80,8 +86,20 @@ export default async function OrderPage({
           value={<span className="num">{money(totals.vatUsd, totals.vatIls)}</span>}
         />
         <Cell
-          label={`מקדמה ${order.depositPct}%`}
-          value={<span className="num">{money(totals.depositUsd, totals.depositIls)}</span>}
+          label="שולם"
+          value={
+            <span className="num">{money(balance.netPaidUsd, balance.netPaidUsd * order.fxSnapshot)}</span>
+          }
+        />
+        <Cell
+          label="יתרה לגבייה"
+          value={
+            <span className={`num ${balance.isSettled ? "good" : "warn"}`}>
+              {balance.isSettled
+                ? "שולם במלואו"
+                : money(balance.balanceUsd, balance.balanceUsd * order.fxSnapshot)}
+            </span>
+          }
         />
         <Cell
           label="רווח"
@@ -435,6 +453,185 @@ export default async function OrderPage({
                 </div>
               </div>
             </div>
+          </section>
+        </>
+      ) : null}
+
+      {/* ============================ תשלומים ============================ */}
+      {tab === "payments" ? (
+        <>
+          <section>
+            <SectionHead title="מצב התשלום" latin="BALANCE" />
+            <div className="panel panel-accent">
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+                  gap: "var(--space-5)",
+                }}
+              >
+                <div className="spec">
+                  <SpecLine k="סה״כ ההזמנה" v={money(totals.totalUsd, totals.totalIls)} />
+                  <SpecLine
+                    k={`מקדמה נדרשת ${order.depositPct}%`}
+                    v={
+                      <span className={balance.depositPaid ? "good" : undefined}>
+                        {money(totals.depositUsd, totals.depositIls)}
+                        {balance.depositPaid ? " · התקבלה" : ""}
+                      </span>
+                    }
+                  />
+                  <SpecLine
+                    k="שולם"
+                    v={money(balance.paidUsd, balance.paidUsd * order.fxSnapshot)}
+                  />
+                  {balance.refundedUsd > 0 ? (
+                    <SpecLine
+                      k="הוחזר"
+                      v={
+                        <span className="danger">
+                          {money(balance.refundedUsd, balance.refundedUsd * order.fxSnapshot)}
+                        </span>
+                      }
+                    />
+                  ) : null}
+                </div>
+                <div style={{ textAlign: "center" }}>
+                  <div className="micro">{balance.isSettled ? "סטטוס" : "יתרה לגבייה"}</div>
+                  <div className={`figure ${balance.isSettled ? "good" : ""}`}>
+                    {balance.isSettled
+                      ? "שולם"
+                      : money(balance.balanceUsd, balance.balanceUsd * order.fxSnapshot)}
+                  </div>
+                  {!balance.isSettled && !balance.depositPaid && totals.depositUsd > 0 ? (
+                    <div className="warn" style={{ fontSize: 12, marginTop: 6 }}>
+                      המקדמה עוד לא התקבלה
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section>
+            <SectionHead title="רישום תשלום" latin="RECORD" />
+            <form action={addPaymentAction} className="panel stack">
+              <input type="hidden" name="orderId" value={order.id} />
+              <div className="form-grid">
+                <Field label="סוג">
+                  <select
+                    name="kind"
+                    defaultValue={balance.depositPaid ? "סופי" : "מקדמה"}
+                  >
+                    {PAYMENT_KINDS.map((k) => (
+                      <option key={k}>{k}</option>
+                    ))}
+                  </select>
+                </Field>
+                <Field
+                  label="סכום"
+                  hint={balance.isSettled ? undefined : "מולא מראש ביתרה המדויקת"}
+                >
+                  <input
+                    type="number"
+                    name="amount"
+                    step="0.01"
+                    min="0"
+                    required
+                    defaultValue={
+                      balance.isSettled
+                        ? ""
+                        : (order.isExport
+                            ? balance.balanceUsd
+                            : balance.balanceUsd * order.fxSnapshot
+                          ).toFixed(2)
+                    }
+                  />
+                </Field>
+                <Field label="מטבע">
+                  <select name="currency" defaultValue={order.isExport ? "USD" : "ILS"}>
+                    <option value="ILS">₪</option>
+                    <option value="USD">$</option>
+                  </select>
+                </Field>
+                <Field label="תאריך">
+                  <input type="date" name="paidAt" defaultValue={todayIso()} />
+                </Field>
+                <Field label="אמצעי">
+                  <select name="method" defaultValue="העברה">
+                    {PAYMENT_METHODS.map((m) => (
+                      <option key={m}>{m}</option>
+                    ))}
+                  </select>
+                </Field>
+                <Field label="אסמכתא">
+                  <input name="reference" dir="ltr" />
+                </Field>
+                <Field label="מס׳ חשבונית ירוקה">
+                  <input name="greenInvoiceNumber" dir="ltr" />
+                </Field>
+              </div>
+              <div>
+                <button className="btn btn-primary" type="submit">
+                  רשום תשלום
+                </button>
+              </div>
+            </form>
+          </section>
+
+          <section>
+            <SectionHead title="תשלומים שהתקבלו" latin="PAYMENTS" />
+            {payments.length === 0 ? (
+              <Empty>
+                <p>עוד לא נרשמו תשלומים להזמנה הזו.</p>
+              </Empty>
+            ) : (
+              <div className="panel panel-tight table-scroll">
+                <table className="data">
+                  <thead>
+                    <tr>
+                      <th>תאריך</th>
+                      <th>סוג</th>
+                      <th>סכום</th>
+                      <th>אמצעי</th>
+                      <th>אסמכתא</th>
+                      <th>חשבונית</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {payments.map((p) => (
+                      <tr key={p.id}>
+                        <td className="num muted">{date(p.paidAt)}</td>
+                        <td>
+                          <Badge tone={p.kind === "החזר" ? "danger" : "accent"}>{p.kind}</Badge>
+                        </td>
+                        <td className={`num ${p.kind === "החזר" ? "danger" : ""}`}>
+                          {p.kind === "החזר" ? "−" : ""}
+                          {p.currency === "USD" ? usd(p.amount) : ils(p.amount)}
+                        </td>
+                        <td className="muted">{p.method}</td>
+                        <td className="num muted">{p.reference ?? "—"}</td>
+                        <td className="num muted">{p.greenInvoiceNumber ?? "—"}</td>
+                        <td style={{ width: 60 }}>
+                          <form action={deletePaymentAction}>
+                            <input type="hidden" name="paymentId" value={p.id} />
+                            <input type="hidden" name="orderId" value={order.id} />
+                            <button className="btn btn-sm btn-ghost btn-danger" type="submit">
+                              מחק
+                            </button>
+                          </form>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            <p className="quiet" style={{ fontSize: 12 }}>
+              כל תשלום נשמר במטבע שבו התקבל, עם השער של אותו יום. חשבוניות מופקות
+              בחשבונית ירוקה — כאן נשמר רק מספר האסמכתא.
+            </p>
           </section>
         </>
       ) : null}

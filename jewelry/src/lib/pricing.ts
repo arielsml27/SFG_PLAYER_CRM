@@ -195,3 +195,56 @@ export function orderTotals(
     depositIls: totalUsd * (n(opts.depositPct) / 100) * fx,
   };
 }
+
+/* ---------------------------------------------------------------
+   יתרה לגבייה
+   --------------------------------------------------------------- */
+export type PaymentLike = { amountUsd: number; kind: string };
+
+export type Balance = {
+  paidUsd: number;
+  refundedUsd: number;
+  netPaidUsd: number;
+  balanceUsd: number;
+  depositRequiredUsd: number;
+  depositPaid: boolean;
+  isSettled: boolean;
+};
+
+/**
+ * החזר מקטין את מה ששולם, ולכן מגדיל את היתרה.
+ *
+ * הסף ל"שולם במלואו" נגזר ממטבע התצוגה: שקלים מוצגים בלי אגורות, ולכן
+ * יתרה של פחות מחצי שקל מוצגת כ-₪0 — ואם לא נחשיב אותה כסגורה, ההזמנה
+ * תיתקע ברשימת הגבייה לנצח בזמן שהמסך מראה אפס.
+ */
+export function balanceFor(
+  totals: { totalUsd: number; depositUsd: number },
+  payments: PaymentLike[],
+  opts?: { fx?: number; isExport?: boolean }
+): Balance {
+  const paidUsd = payments
+    .filter((p) => p.kind !== "החזר")
+    .reduce((a, p) => a + (Number.isFinite(p.amountUsd) ? p.amountUsd : 0), 0);
+  const refundedUsd = payments
+    .filter((p) => p.kind === "החזר")
+    .reduce((a, p) => a + (Number.isFinite(p.amountUsd) ? p.amountUsd : 0), 0);
+  const netPaidUsd = paidUsd - refundedUsd;
+  const balanceUsd = totals.totalUsd - netPaidUsd;
+
+  const fx = opts?.fx ?? 0;
+  const tolerance =
+    opts?.isExport || !fx
+      ? 0.005 // דולר מוצג עם אגורות
+      : 0.5 / fx; // חצי שקל, שמוצג כ-₪0
+
+  return {
+    paidUsd,
+    refundedUsd,
+    netPaidUsd,
+    balanceUsd,
+    depositRequiredUsd: totals.depositUsd,
+    depositPaid: netPaidUsd + tolerance >= totals.depositUsd && totals.depositUsd > 0,
+    isSettled: balanceUsd <= tolerance,
+  };
+}

@@ -12,6 +12,7 @@ const NAV = [
     { href: "/", label: "דשבורד", key: null as keyof Counts | null },
     { href: "/orders", label: "הזמנות", key: "orders" as const },
     { href: "/tasks", label: "משימות", key: "tasks" as const },
+    { href: "/receivables", label: "גבייה", key: null },
   ]},
   { group: "אנשים", items: [
     { href: "/customers", label: "לקוחות", key: "customers" as const },

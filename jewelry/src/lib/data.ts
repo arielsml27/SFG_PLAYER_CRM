@@ -1,7 +1,7 @@
 import { desc, eq, inArray, sql } from "drizzle-orm";
 import { db, schema } from "@/db";
 import { CLOSED_STATUSES } from "./constants";
-import { orderTotals, priceItem, type ItemPricing } from "./pricing";
+import { balanceFor, orderTotals, priceItem, type Balance, type ItemPricing } from "./pricing";
 
 export type Settings = typeof schema.settings.$inferSelect;
 export type Customer = typeof schema.customers.$inferSelect;
@@ -74,6 +74,9 @@ export type OrderRow = Order & {
   itemCount: number;
   totalUsd: number;
   totalIls: number;
+  balanceUsd: number;
+  balanceIls: number;
+  isSettled: boolean;
 };
 
 async function decorateOrders(rows: Order[]): Promise<OrderRow[]> {
@@ -85,6 +88,10 @@ async function decorateOrders(rows: Order[]): Promise<OrderRow[]> {
     .where(inArray(schema.orderItems.orderId, ids));
   const customers = await db.select().from(schema.customers);
   const nameById = new Map(customers.map((c) => [c.id, c.name]));
+  const allPayments = await db
+    .select()
+    .from(schema.payments)
+    .where(inArray(schema.payments.orderId, ids));
 
   return rows.map((o) => {
     const mine = items.filter((i) => i.orderId === o.id);
@@ -95,12 +102,19 @@ async function decorateOrders(rows: Order[]): Promise<OrderRow[]> {
       fx: o.fxSnapshot,
       depositPct: o.depositPct,
     });
+    const balance = balanceFor(totals, allPayments.filter((p) => p.orderId === o.id), {
+      fx: o.fxSnapshot,
+      isExport: o.isExport,
+    });
     return {
       ...o,
       customerName: nameById.get(o.customerId) ?? "—",
       itemCount: mine.length,
       totalUsd: totals.totalUsd,
       totalIls: totals.totalIls,
+      balanceUsd: balance.balanceUsd,
+      balanceIls: balance.balanceUsd * o.fxSnapshot,
+      isSettled: balance.isSettled,
     };
   });
 }
@@ -127,6 +141,8 @@ export type FullOrder = {
   history: (typeof schema.orderStatusHistory.$inferSelect)[];
   timeline: (typeof schema.timelineEvents.$inferSelect)[];
   tasks: (typeof schema.tasks.$inferSelect)[];
+  payments: (typeof schema.payments.$inferSelect)[];
+  balance: Balance;
 };
 
 export async function getOrder(id: string): Promise<FullOrder | null> {
@@ -134,7 +150,7 @@ export async function getOrder(id: string): Promise<FullOrder | null> {
   const order = rows[0];
   if (!order) return null;
 
-  const [customer, items, history, timeline, orderTasks] = await Promise.all([
+  const [customer, items, history, timeline, orderTasks, orderPayments] = await Promise.all([
     getCustomer(order.customerId),
     db
       .select()
@@ -152,6 +168,11 @@ export async function getOrder(id: string): Promise<FullOrder | null> {
       .where(eq(schema.timelineEvents.orderId, id))
       .orderBy(desc(schema.timelineEvents.createdAt)),
     db.select().from(schema.tasks).where(eq(schema.tasks.orderId, id)).orderBy(schema.tasks.dueDate),
+    db
+      .select()
+      .from(schema.payments)
+      .where(eq(schema.payments.orderId, id))
+      .orderBy(schema.payments.paidAt),
   ]);
 
   const lines = items.map((i) => priceItem(i, order.goldSpotSnapshot));
@@ -162,7 +183,21 @@ export async function getOrder(id: string): Promise<FullOrder | null> {
     depositPct: order.depositPct,
   });
 
-  return { order, customer, items, lines, totals, history, timeline, tasks: orderTasks };
+  return {
+    order,
+    customer,
+    items,
+    lines,
+    totals,
+    history,
+    timeline,
+    tasks: orderTasks,
+    payments: orderPayments,
+    balance: balanceFor(totals, orderPayments, {
+      fx: order.fxSnapshot,
+      isExport: order.isExport,
+    }),
+  };
 }
 
 /* ---------------------------------------------------------------
@@ -234,6 +269,8 @@ export async function getDashboard() {
   });
 
   const pipelineValueUsd = decorated.reduce((a, o) => a + o.totalUsd, 0);
+  const outstandingUsd = decorated.filter((o) => !o.isSettled).reduce((a, o) => a + o.balanceUsd, 0);
+  const outstandingCount = decorated.filter((o) => !o.isSettled && o.balanceUsd > 0.01).length;
 
   const recent = (await decorateOrders(
     [...allOrders].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 6)
@@ -249,6 +286,9 @@ export async function getDashboard() {
     dueTasks,
     pipelineValueUsd,
     pipelineValueIls: pipelineValueUsd * settings.fxUsdIls,
+    outstandingUsd,
+    outstandingIls: outstandingUsd * settings.fxUsdIls,
+    outstandingCount,
     recent,
     customerCount: (await db.select({ n: sql<number>`count(*)` }).from(schema.customers))[0]?.n ?? 0,
   };
@@ -466,4 +506,33 @@ export async function getCollection(id: string) {
     })
     .filter((x): x is NonNullable<typeof x> => x !== null);
   return { collection, products };
+}
+
+/* ---------------------------------------------------------------
+   גבייה
+   --------------------------------------------------------------- */
+export async function getReceivables() {
+  const all = await listOrders();
+  const open = all.filter((o) => !o.isSettled && o.status !== "בוטל" && o.totalUsd > 0);
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const ageInDays = (iso: string) => {
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return 0;
+    return Math.max(0, Math.round((today.getTime() - d.getTime()) / 86400000));
+  };
+
+  const rows = open
+    .map((o) => ({ ...o, ageDays: ageInDays(o.createdAt) }))
+    .sort((a, b) => b.ageDays - a.ageDays);
+
+  return {
+    rows,
+    totalUsd: rows.reduce((a, o) => a + o.balanceUsd, 0),
+    totalIls: rows.reduce((a, o) => a + o.balanceIls, 0),
+    /** מה שפתוח מעל 30 יום — זה מה שבאמת דורש טלפון */
+    overdueUsd: rows.filter((o) => o.ageDays > 30).reduce((a, o) => a + o.balanceUsd, 0),
+    overdueCount: rows.filter((o) => o.ageDays > 30).length,
+  };
 }

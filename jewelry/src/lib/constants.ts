@@ -100,3 +100,17 @@ export function statusTone(status: string): "accent" | "good" | "warn" | "danger
   if (status.startsWith("בהמתנה") || status === "בתיקון") return "warn";
   return "accent";
 }
+
+export const PAYMENT_KINDS = ["מקדמה", "ביניים", "סופי", "החזר"] as const;
+
+export const PAYMENT_METHODS = [
+  "העברה",
+  "אשראי",
+  "מזומן",
+  "ביט",
+  "פייפאל",
+  "צ׳ק",
+  "אחר",
+] as const;
+
+export const CURRENCIES = ["ILS", "USD"] as const;
