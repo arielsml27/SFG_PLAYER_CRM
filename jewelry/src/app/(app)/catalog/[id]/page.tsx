@@ -5,11 +5,15 @@ import {
   deletePhotoAction,
   deleteProductAction,
   makePrimaryPhotoAction,
+  setProductPriceModeAction,
+  toggleProductPublishAction,
 } from "@/lib/product-actions";
+import ShareBox from "@/components/ShareBox";
+import { shareBase, productShareUrl, whatsappLink } from "@/lib/share";
 import PhotoUploader from "@/components/PhotoUploader";
 import { costBreakdown, marginPctFromMultiplier } from "@/lib/pricing";
 import { date, ils, pct, usd } from "@/lib/format";
-import { Cell, Empty, PageHead, SectionHead, StatusBadge } from "@/components/ui";
+import { Badge, Cell, Empty, Field, PageHead, SectionHead, StatusBadge } from "@/components/ui";
 
 export default async function ProductPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -27,6 +31,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
   const price = product.priceRetailUsd ?? cost.totalUsd * product.multiplier;
   const margin = price ? ((price - cost.totalUsd) / price) * 100 : 0;
   const fx = settings.fxUsdIls;
+  const shareUrl = productShareUrl(shareBase(settings.publicBaseUrl), product.shareSlug ?? "");
   const totalKb = Math.round(photos.reduce((a, p) => a + p.bytes, 0) / 1024);
 
   // הזמנות פתוחות, כדי להוסיף את הדגם לאחת מהן ישירות מכאן
@@ -35,6 +40,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
   return (
     <>
       <PageHead title={product.name} sub={`${product.sku} · ${product.category}`}>
+        {product.isPublished ? <Badge tone="good">מפורסם</Badge> : <Badge>לא מפורסם</Badge>}
         <Link href={`/catalog/${product.id}/edit`} className="btn btn-primary btn-sm">
           עריכה
         </Link>
@@ -102,6 +108,58 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
 
           <hr className="hairline" style={{ margin: "4px 0" }} />
           <PhotoUploader productId={product.id} />
+        </div>
+      </section>
+
+      {/* ---------- שיתוף ---------- */}
+      <section>
+        <SectionHead title="שיתוף" latin="SHARE" />
+        <div className="panel stack">
+          <div className="row" style={{ justifyContent: "space-between" }}>
+            <form action={toggleProductPublishAction}>
+              <input type="hidden" name="id" value={product.id} />
+              <button
+                className={product.isPublished ? "btn btn-sm" : "btn btn-sm btn-primary"}
+                type="submit"
+              >
+                {product.isPublished ? "בטל פרסום" : "פרסם דגם"}
+              </button>
+            </form>
+
+            <form action={setProductPriceModeAction} className="row" style={{ gap: 6 }}>
+              <input type="hidden" name="id" value={product.id} />
+              <div style={{ minWidth: 150 }}>
+                <Field label="מה הלקוח רואה">
+                  <select name="sharePriceMode" defaultValue={product.sharePriceMode}>
+                    <option>מחיר</option>
+                    <option>לפנייה</option>
+                  </select>
+                </Field>
+              </div>
+              <button className="btn btn-sm" type="submit">
+                עדכן
+              </button>
+            </form>
+          </div>
+
+          {product.isPublished && product.shareSlug ? (
+            <ShareBox
+              url={shareUrl}
+              whatsappHref={whatsappLink(
+                settings.whatsappNumber,
+                `${product.name}\n${shareUrl}`
+              )}
+              hint={
+                settings.publicBaseUrl
+                  ? undefined
+                  : "לא הוגדרה כתובת בסיס בהגדרות — הלינק מצביע על המחשב הזה בלבד."
+              }
+            />
+          ) : (
+            <p className="quiet" style={{ fontSize: 13 }}>
+              הדגם עוד לא מפורסם. אחרי פרסום יתקבל לינק קבוע שאפשר לשלוח בוואטסאפ.
+            </p>
+          )}
         </div>
       </section>
 

@@ -18,6 +18,7 @@ const NAV = [
   ]},
   { group: "מוצרים", items: [
     { href: "/catalog", label: "קטלוג", key: "catalog" as const },
+    { href: "/collections", label: "קולקציות", key: null },
   ]},
   { group: "מערכת", items: [
     { href: "/settings", label: "הגדרות ושערים", key: null },

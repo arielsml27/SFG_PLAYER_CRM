@@ -884,3 +884,199 @@ table.data td.name {
   font-size: 11px;
   color: var(--ink-3);
 }
+
+/* ============================================================
+   17. עמודי שיתוף — מה שהלקוח רואה
+   שכבה נפרדת: אותה שפה, יותר אוויר, בלי שלד ניהולי.
+   ============================================================ */
+.share {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: var(--space-7) var(--space-5) var(--space-8);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+.share-head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+}
+.share-head img.logo {
+  width: 168px;
+  height: auto;
+}
+.share h1 {
+  font-size: clamp(1.9rem, 4.5vw, 2.6rem);
+  line-height: 1.15;
+}
+.share-lede {
+  color: var(--ink-2);
+  font-size: 15px;
+  max-width: 62ch;
+  line-height: 1.75;
+}
+
+.share-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+  gap: var(--space-6);
+  align-items: start;
+}
+@media (max-width: 780px) {
+  .share-hero {
+    grid-template-columns: 1fr;
+  }
+}
+
+.shots {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+.shots .main-shot {
+  aspect-ratio: 1 / 1;
+  background: var(--surface-1);
+  border: 1px solid var(--accent-hair);
+  overflow: hidden;
+}
+.shots .main-shot img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.shots .thumbs {
+  display: flex;
+  gap: var(--space-2);
+  overflow-x: auto;
+}
+.shots .thumbs button {
+  padding: 0;
+  border: 1px solid var(--line);
+  background: none;
+  cursor: pointer;
+  flex: 0 0 auto;
+  line-height: 0;
+}
+.shots .thumbs button[aria-current="true"] {
+  border-color: var(--accent);
+}
+.shots .thumbs img {
+  width: 74px;
+  height: 74px;
+  object-fit: cover;
+  display: block;
+}
+.shots .no-shot {
+  aspect-ratio: 1 / 1;
+  display: grid;
+  place-items: center;
+  color: var(--ink-3);
+  background: var(--surface-1);
+  border: 1px solid var(--line);
+  font-size: 13px;
+}
+
+.price-block {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: var(--space-4) 0;
+  border-top: 1px solid var(--accent-hair);
+  border-bottom: 1px solid var(--accent-hair);
+}
+.price-block .amount {
+  font-family: var(--font-display);
+  font-size: 34px;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+}
+.price-block .ask {
+  font-family: var(--font-display);
+  font-size: 26px;
+  color: var(--accent);
+}
+
+.cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--accent);
+  color: var(--btn-ink);
+  border: 1px solid var(--accent);
+  font-weight: 700;
+  font-size: 15px;
+  padding: 12px 22px;
+  border-radius: var(--radius-sm);
+}
+.cta:hover {
+  background: var(--accent-strong);
+  border-color: var(--accent-strong);
+}
+
+.share-foot {
+  border-top: 1px solid var(--accent-hair);
+  padding-top: var(--space-4);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 20px;
+  justify-content: center;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  color: var(--ink-3);
+}
+
+/* רשת הקולקציה */
+.share-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(232px, 1fr));
+  gap: var(--space-4);
+}
+.share-card {
+  border: 1px solid var(--line);
+  background: var(--surface-1);
+  display: flex;
+  flex-direction: column;
+}
+.share-card:hover {
+  border-color: var(--accent-dim);
+}
+.share-card .shot {
+  aspect-ratio: 1 / 1;
+  background: var(--surface-2);
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+}
+.share-card .shot img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.share-card .shot span {
+  color: var(--ink-3);
+  font-size: 12px;
+}
+.share-card .body {
+  padding: 13px 14px 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.share-card .body .nm {
+  font-family: var(--font-display);
+  font-size: 16px;
+}
+.share-card .body .pr {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 14px;
+  color: var(--accent);
+  direction: ltr;
+  text-align: start;
+}

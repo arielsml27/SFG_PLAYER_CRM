@@ -21,6 +21,9 @@ export async function getSettings(): Promise<Settings> {
     defaultMultiplier: 2,
     defaultDepositPct: 30,
     businessName: "Samuel",
+    whatsappNumber: null,
+    instagramHandle: null,
+    publicBaseUrl: null,
     updatedAt: new Date().toISOString(),
   };
   await db.insert(schema.settings).values(fresh);
@@ -359,4 +362,108 @@ export async function getProductUsage(productId: string) {
 export async function catalogCount() {
   const rows = await db.select({ n: sql<number>`count(*)` }).from(schema.products);
   return Number(rows[0]?.n ?? 0);
+}
+
+/* ---------------------------------------------------------------
+   שיתוף — שליפות לעמודים הציבוריים
+   --------------------------------------------------------------- */
+export async function getPublishedProductBySlug(slug: string) {
+  const rows = await db
+    .select()
+    .from(schema.products)
+    .where(eq(schema.products.shareSlug, slug))
+    .limit(1);
+  const product = rows[0];
+  if (!product || !product.isPublished) return null;
+
+  const photos = await db
+    .select({ id: schema.productPhotos.id, sortOrder: schema.productPhotos.sortOrder })
+    .from(schema.productPhotos)
+    .where(eq(schema.productPhotos.productId, product.id))
+    .orderBy(schema.productPhotos.sortOrder);
+
+  return { product, photoIds: photos.map((p) => p.id) };
+}
+
+export async function getPublishedCollectionBySlug(slug: string) {
+  const rows = await db
+    .select()
+    .from(schema.collections)
+    .where(eq(schema.collections.slug, slug))
+    .limit(1);
+  const collection = rows[0];
+  if (!collection || !collection.isPublished) return null;
+
+  const items = await db
+    .select()
+    .from(schema.collectionItems)
+    .where(eq(schema.collectionItems.collectionId, collection.id))
+    .orderBy(schema.collectionItems.sortOrder);
+
+  const all = await listProducts();
+  const products = items
+    .map((i) => {
+      const p = all.find((x) => x.id === i.productId);
+      return p ? { ...p, note: i.note, itemId: i.id } : null;
+    })
+    .filter((x): x is NonNullable<typeof x> => x !== null);
+
+  return { collection, products };
+}
+
+/** האם התמונה שייכת למוצר מפורסם — משמש להגשה ציבורית. */
+export async function isPhotoPublic(photoId: string) {
+  const rows = await db
+    .select({ productId: schema.productPhotos.productId })
+    .from(schema.productPhotos)
+    .where(eq(schema.productPhotos.id, photoId))
+    .limit(1);
+  const productId = rows[0]?.productId;
+  if (!productId) return false;
+  const product = await db
+    .select({ isPublished: schema.products.isPublished })
+    .from(schema.products)
+    .where(eq(schema.products.id, productId))
+    .limit(1);
+  return product[0]?.isPublished === true;
+}
+
+export type CollectionRow = typeof schema.collections.$inferSelect;
+
+export async function listCollections() {
+  const rows = await db
+    .select()
+    .from(schema.collections)
+    .orderBy(desc(schema.collections.updatedAt));
+  const items = await db.select().from(schema.collectionItems);
+  const customersAll = await db.select().from(schema.customers);
+  const nameById = new Map(customersAll.map((c) => [c.id, c.name]));
+  return rows.map((c) => ({
+    ...c,
+    itemCount: items.filter((i) => i.collectionId === c.id).length,
+    customerName: c.customerId ? nameById.get(c.customerId) ?? null : null,
+  }));
+}
+
+export async function getCollection(id: string) {
+  const rows = await db
+    .select()
+    .from(schema.collections)
+    .where(eq(schema.collections.id, id))
+    .limit(1);
+  const collection = rows[0];
+  if (!collection) return null;
+  const items = await db
+    .select()
+    .from(schema.collectionItems)
+    .where(eq(schema.collectionItems.collectionId, id))
+    .orderBy(schema.collectionItems.sortOrder);
+  const all = await listProducts();
+  const products = items
+    .map((i) => {
+      const p = all.find((x) => x.id === i.productId);
+      return p ? { ...p, itemId: i.id } : null;
+    })
+    .filter((x): x is NonNullable<typeof x> => x !== null);
+  return { collection, products };
 }

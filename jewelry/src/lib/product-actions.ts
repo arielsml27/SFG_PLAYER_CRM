@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { eq, sql } from "drizzle-orm";
 import { db, schema } from "@/db";
 import { requireUser } from "./session";
+import { makeSlug } from "./share";
 
 const nowIso = () => new Date().toISOString();
 const str = (fd: FormData, k: string) => {
@@ -244,3 +245,141 @@ export async function makePrimaryPhotoAction(fd: FormData) {
   revalidatePath("/catalog");
 }
 
+
+/* ---------------------------------------------------------------
+   פרסום ושיתוף
+   --------------------------------------------------------------- */
+export async function toggleProductPublishAction(fd: FormData) {
+  await requireUser();
+  const id = str(fd, "id");
+  if (!id) return;
+  const rows = await db.select().from(schema.products).where(eq(schema.products.id, id)).limit(1);
+  const product = rows[0];
+  if (!product) return;
+
+  await db
+    .update(schema.products)
+    .set({
+      isPublished: !product.isPublished,
+      // הסלאג נוצר פעם אחת ונשאר, כדי שלינק שכבר נשלח לא יישבר.
+      shareSlug: product.shareSlug ?? makeSlug(product.sku),
+      updatedAt: nowIso(),
+    })
+    .where(eq(schema.products.id, id));
+
+  revalidatePath(`/catalog/${id}`);
+  revalidatePath("/catalog");
+}
+
+export async function setProductPriceModeAction(fd: FormData) {
+  await requireUser();
+  const id = str(fd, "id");
+  const mode = str(fd, "sharePriceMode");
+  if (!id || !mode) return;
+  await db
+    .update(schema.products)
+    .set({ sharePriceMode: mode, updatedAt: nowIso() })
+    .where(eq(schema.products.id, id));
+  revalidatePath(`/catalog/${id}`);
+}
+
+/* ---------------------------------------------------------------
+   קולקציות
+   --------------------------------------------------------------- */
+export async function createCollectionAction(fd: FormData) {
+  await requireUser();
+  const title = str(fd, "title") ?? "מבחר";
+  const id = randomUUID();
+  await db.insert(schema.collections).values({
+    id,
+    slug: makeSlug(title.replace(/[^\w\s-]/g, "") || "selection"),
+    title,
+    subtitle: str(fd, "subtitle"),
+    intro: str(fd, "intro"),
+    customerId: str(fd, "customerId"),
+    priceMode: str(fd, "priceMode") ?? "מחיר",
+    isPublished: false,
+    createdAt: nowIso(),
+    updatedAt: nowIso(),
+  });
+  revalidatePath("/collections");
+  redirect(`/collections/${id}`);
+}
+
+export async function updateCollectionAction(fd: FormData) {
+  await requireUser();
+  const id = str(fd, "id");
+  if (!id) return;
+  await db
+    .update(schema.collections)
+    .set({
+      title: str(fd, "title") ?? "מבחר",
+      subtitle: str(fd, "subtitle"),
+      intro: str(fd, "intro"),
+      customerId: str(fd, "customerId"),
+      priceMode: str(fd, "priceMode") ?? "מחיר",
+      updatedAt: nowIso(),
+    })
+    .where(eq(schema.collections.id, id));
+  revalidatePath(`/collections/${id}`);
+  revalidatePath("/collections");
+}
+
+export async function toggleCollectionPublishAction(fd: FormData) {
+  await requireUser();
+  const id = str(fd, "id");
+  if (!id) return;
+  const rows = await db
+    .select()
+    .from(schema.collections)
+    .where(eq(schema.collections.id, id))
+    .limit(1);
+  const collection = rows[0];
+  if (!collection) return;
+  await db
+    .update(schema.collections)
+    .set({ isPublished: !collection.isPublished, updatedAt: nowIso() })
+    .where(eq(schema.collections.id, id));
+  revalidatePath(`/collections/${id}`);
+  revalidatePath("/collections");
+}
+
+export async function addToCollectionAction(fd: FormData) {
+  await requireUser();
+  const collectionId = str(fd, "collectionId");
+  const productId = str(fd, "productId");
+  if (!collectionId || !productId) return;
+
+  const existing = await db
+    .select()
+    .from(schema.collectionItems)
+    .where(eq(schema.collectionItems.collectionId, collectionId));
+  if (existing.some((i) => i.productId === productId)) return;
+
+  await db.insert(schema.collectionItems).values({
+    id: randomUUID(),
+    collectionId,
+    productId,
+    sortOrder: existing.length,
+    note: null,
+  });
+  revalidatePath(`/collections/${collectionId}`);
+}
+
+export async function removeFromCollectionAction(fd: FormData) {
+  await requireUser();
+  const itemId = str(fd, "itemId");
+  const collectionId = str(fd, "collectionId");
+  if (!itemId) return;
+  await db.delete(schema.collectionItems).where(eq(schema.collectionItems.id, itemId));
+  if (collectionId) revalidatePath(`/collections/${collectionId}`);
+}
+
+export async function deleteCollectionAction(fd: FormData) {
+  await requireUser();
+  const id = str(fd, "id");
+  if (!id) return;
+  await db.delete(schema.collections).where(eq(schema.collections.id, id));
+  revalidatePath("/collections");
+  redirect("/collections");
+}

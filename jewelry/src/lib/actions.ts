@@ -62,6 +62,9 @@ export async function saveSettingsAction(fd: FormData) {
     defaultMultiplier: num(fd, "defaultMultiplier", current.defaultMultiplier),
     defaultDepositPct: num(fd, "defaultDepositPct", current.defaultDepositPct),
     businessName: str(fd, "businessName") ?? current.businessName,
+    whatsappNumber: str(fd, "whatsappNumber"),
+    instagramHandle: str(fd, "instagramHandle"),
+    publicBaseUrl: str(fd, "publicBaseUrl"),
     updatedAt: nowIso(),
   };
   await db.update(schema.settings).set(next).where(eq(schema.settings.id, "singleton"));

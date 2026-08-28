@@ -25,6 +25,13 @@ export const settings = sqliteTable("settings", {
   defaultMultiplier: real("default_multiplier").notNull().default(2),
   defaultDepositPct: real("default_deposit_pct").notNull().default(30),
   businessName: text("business_name").notNull().default("Samuel"),
+
+  /** לכפתור הפנייה בעמודי השיתוף */
+  whatsappNumber: text("whatsapp_number"),
+  instagramHandle: text("instagram_handle"),
+  /** כתובת הבסיס שממנה מורכבים לינקי השיתוף */
+  publicBaseUrl: text("public_base_url"),
+
   updatedAt: text("updated_at").notNull().$defaultFn(() => new Date().toISOString()),
 });
 
@@ -240,6 +247,13 @@ export const products = sqliteTable("products", {
   priceWholesaleUsd: real("price_wholesale_usd"),
 
   isAvailable: integer("is_available", { mode: "boolean" }).notNull().default(true),
+
+  /** פרסום לשיתוף — הסלאג נוצר בפרסום ונשאר קבוע כדי שלינקים ישנים לא יישברו. */
+  shareSlug: text("share_slug").unique(),
+  isPublished: integer("is_published", { mode: "boolean" }).notNull().default(false),
+  /** מה רואה הלקוח: מחיר, או "לפנייה" */
+  sharePriceMode: text("share_price_mode").notNull().default("מחיר"),
+
   timesSold: integer("times_sold").notNull().default(0),
   notes: text("notes"),
   createdAt: now(),
@@ -260,4 +274,35 @@ export const productPhotos = sqliteTable("product_photos", {
   sortOrder: integer("sort_order").notNull().default(0),
   caption: text("caption"),
   createdAt: now(),
+});
+
+
+/* ---------------------------------------------------------------
+   קולקציות — מבחר דגמים שנשלח בלינק אחד
+   --------------------------------------------------------------- */
+export const collections = sqliteTable("collections", {
+  id: id(),
+  slug: text("slug").notNull().unique(),
+  title: text("title").notNull(),
+  subtitle: text("subtitle"),
+  intro: text("intro"),
+  /** מבחר שהוכן ללקוח מסוים */
+  customerId: text("customer_id").references(() => customers.id, { onDelete: "set null" }),
+  /** מחיר / סיטונאי / לפנייה */
+  priceMode: text("price_mode").notNull().default("מחיר"),
+  isPublished: integer("is_published", { mode: "boolean" }).notNull().default(false),
+  createdAt: now(),
+  updatedAt: text("updated_at").notNull().$defaultFn(() => new Date().toISOString()),
+});
+
+export const collectionItems = sqliteTable("collection_items", {
+  id: id(),
+  collectionId: text("collection_id")
+    .notNull()
+    .references(() => collections.id, { onDelete: "cascade" }),
+  productId: text("product_id")
+    .notNull()
+    .references(() => products.id, { onDelete: "cascade" }),
+  sortOrder: integer("sort_order").notNull().default(0),
+  note: text("note"),
 });

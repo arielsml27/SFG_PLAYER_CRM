@@ -78,6 +78,38 @@ export default async function SettingsPage() {
       </section>
 
       <section>
+        <SectionHead title="עמודי שיתוף" latin="SHARING" />
+        <form action={saveSettingsAction} className="panel stack">
+          <input type="hidden" name="goldSpotUsdOz" value={settings.goldSpotUsdOz} />
+          <input type="hidden" name="fxUsdIls" value={settings.fxUsdIls} />
+          <input type="hidden" name="vatPct" value={settings.vatPct} />
+          <input type="hidden" name="defaultMultiplier" value={settings.defaultMultiplier} />
+          <input type="hidden" name="defaultDepositPct" value={settings.defaultDepositPct} />
+          <input type="hidden" name="businessName" value={settings.businessName} />
+          <div className="form-grid">
+            <Field label="וואטסאפ לפניות" hint="הכפתור בעמודי השיתוף מוביל לכאן">
+              <input name="whatsappNumber" defaultValue={settings.whatsappNumber ?? ""} dir="ltr" placeholder="+972…" />
+            </Field>
+            <Field label="אינסטגרם">
+              <input name="instagramHandle" defaultValue={settings.instagramHandle ?? ""} dir="ltr" placeholder="@samuel" />
+            </Field>
+            <Field label="כתובת בסיס ללינקים" hint="הכתובת שממנה המערכת נגישה מבחוץ">
+              <input name="publicBaseUrl" defaultValue={settings.publicBaseUrl ?? ""} dir="ltr" placeholder="https://…" />
+            </Field>
+          </div>
+          <p className="quiet" style={{ fontSize: 12.5 }}>
+            כל עוד המערכת רצה רק על המחשב שלך, לינק שיתוף יעבוד רק מהמחשב הזה. כדי לשלוח
+            אותו ללקוח צריך שהמערכת תהיה נגישה מהאינטרנט.
+          </p>
+          <div>
+            <button className="btn btn-primary" type="submit">
+              שמור פרטי שיתוף
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <section>
         <SectionHead title="מחיר זהב לגרם" latin="GOLD PER GRAM" />
         <div className="panel panel-tight table-scroll">
           <table className="data" style={{ minWidth: 380 }}>

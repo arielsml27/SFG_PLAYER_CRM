@@ -15,6 +15,13 @@
       "when": 1787928424955,
       "tag": "0001_wakeful_champions",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1787929450445,
+      "tag": "0002_familiar_micromacro",
+      "breakpoints": true
     }
   ]
 }
