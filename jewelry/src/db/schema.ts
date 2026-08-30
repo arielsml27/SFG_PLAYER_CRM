@@ -34,6 +34,10 @@ export const settings = sqliteTable("settings", {
   /** כתובת הבסיס שממנה מורכבים לינקי השיתוף */
   publicBaseUrl: text("public_base_url"),
 
+  /** מתי נמשכו השערים ממקור חיצוני, ומאיזה. ריק = הוזנו ביד. */
+  ratesFetchedAt: text("rates_fetched_at"),
+  ratesSource: text("rates_source"),
+
   updatedAt: text("updated_at").notNull().$defaultFn(() => new Date().toISOString()),
 });
 

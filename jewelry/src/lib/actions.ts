@@ -104,6 +104,22 @@ export async function saveSettingsAction(fd: FormData) {
   revalidatePath("/");
 }
 
+export type RatesResult = { ok: boolean; message: string; at: number } | null;
+
+export async function refreshRatesAction(
+  _prev: RatesResult,
+  _fd: FormData
+): Promise<RatesResult> {
+  await requireUser();
+  const { applyLiveRates } = await import("./rates-sync");
+  const result = await applyLiveRates();
+  if (result.ok) {
+    revalidatePath("/settings");
+    revalidatePath("/");
+  }
+  return { ...result, at: Date.now() };
+}
+
 /* ---------------------------------------------------------------
    לקוחות
    --------------------------------------------------------------- */

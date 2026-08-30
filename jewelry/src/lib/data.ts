@@ -25,6 +25,8 @@ export async function getSettings(): Promise<Settings> {
     whatsappNumber: null,
     instagramHandle: null,
     publicBaseUrl: null,
+    ratesFetchedAt: null,
+    ratesSource: null,
     updatedAt: new Date().toISOString(),
   };
   await db.insert(schema.settings).values(fresh);

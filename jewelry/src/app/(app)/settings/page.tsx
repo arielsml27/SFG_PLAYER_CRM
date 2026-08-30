@@ -11,6 +11,7 @@ import {
 } from "@/lib/pricing";
 import { dateTime, ils, pct, usd } from "@/lib/format";
 import { Badge, Cell, Field, PageHead, SectionHead } from "@/components/ui";
+import RefreshRates from "@/components/RefreshRates";
 
 export default async function SettingsPage() {
   const settings = await getSettings();
@@ -29,6 +30,9 @@ export default async function SettingsPage() {
 
       <section>
         <SectionHead title="שערי היום" latin="RATES" />
+        <div className="panel stack" style={{ marginBottom: 12 }}>
+          <RefreshRates fetchedAt={settings.ratesFetchedAt} source={settings.ratesSource} />
+        </div>
         <form action={saveSettingsAction} className="panel stack">
           <div className="form-grid">
             <Field label="זהב 24K לאונקיית טרוי ($)" hint="מקור: Kitco">

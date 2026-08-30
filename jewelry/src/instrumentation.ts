@@ -44,8 +44,24 @@ export async function register() {
     }
   };
 
+  // שערים: משיכה בעלייה אם עברו 12 שעות, ואז באותו קצב כמו הגיבוי.
+  // רשת שלא עונה לא מפילה את המערכת — היא פשוט ממשיכה עם השערים הקיימים.
+  const pullRates = async () => {
+    try {
+      const { refreshRatesIfStale } = await import("@/lib/rates-sync");
+      const result = await refreshRatesIfStale(12);
+      if (result) console.log(result.ok ? `✓ שערים: ${result.message}` : `✗ ${result.message}`);
+    } catch (err) {
+      console.error("✗ משיכת השערים נכשלה:", err);
+    }
+  };
+
   tick();
-  const timer = setInterval(tick, 6 * 3600_000);
+  void pullRates();
+  const timer = setInterval(() => {
+    tick();
+    void pullRates();
+  }, 6 * 3600_000);
   // לא מחזיק את התהליך בחיים בגלל הטיימר
   if (typeof timer.unref === "function") timer.unref();
 

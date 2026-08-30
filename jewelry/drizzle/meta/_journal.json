@@ -57,6 +57,13 @@
       "when": 1788106777545,
       "tag": "0007_lucky_captain_marvel",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1788110190582,
+      "tag": "0008_hard_thunderbolts",
+      "breakpoints": true
     }
   ]
 }
