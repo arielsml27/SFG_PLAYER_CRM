@@ -537,3 +537,46 @@ export async function runBackupAction() {
   runBackup();
   revalidatePath("/settings");
 }
+
+/* ---------------------------------------------------------------
+   הוצאות
+   --------------------------------------------------------------- */
+export async function createExpenseAction(fd: FormData) {
+  await requireUser();
+  const amount = num(fd, "amount");
+  const description = str(fd, "description");
+  if (amount <= 0 || !description) return;
+
+  const settings = await getSettings();
+  const currency = str(fd, "currency") ?? "ILS";
+  const fx = settings.fxUsdIls || 0;
+  const amountUsd = currency === "USD" ? amount : fx ? amount / fx : 0;
+
+  await db.insert(schema.expenses).values({
+    id: randomUUID(),
+    spentAt: str(fd, "spentAt") ?? new Date().toISOString().slice(0, 10),
+    category: str(fd, "category") ?? "אחר",
+    description,
+    amount,
+    currency,
+    fxAtSpend: fx,
+    amountUsd,
+    supplierId: str(fd, "supplierId"),
+    invoiceNumber: str(fd, "invoiceNumber"),
+    isRecurring: bool(fd, "isRecurring"),
+    notes: str(fd, "notes"),
+    createdAt: nowIso(),
+  });
+
+  revalidatePath("/expenses");
+  revalidatePath("/reports");
+}
+
+export async function deleteExpenseAction(fd: FormData) {
+  await requireUser();
+  const id = str(fd, "id");
+  if (!id) return;
+  await db.delete(schema.expenses).where(eq(schema.expenses.id, id));
+  revalidatePath("/expenses");
+  revalidatePath("/reports");
+}

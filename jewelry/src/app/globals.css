@@ -1151,3 +1151,60 @@ table.data td.name {
   color: var(--ink-3);
   direction: ltr;
 }
+
+/* ============================================================
+   19. סימני נתונים
+   צבעי הגרף אינם צבעי הממשק. הזהב של המותג בהיר ודל ברוויה מכדי
+   לשמש כמילוי גדול על רקע כהה, ולכן יש כאן דרגה משלו — מאומתת
+   מול המשטח בשני המצבים.
+   ============================================================ */
+:root {
+  --data-gain: #b58c2c;
+  --data-loss: #b0506a;
+  --data-grid: rgba(236, 231, 221, 0.09);
+}
+:root[data-theme="light"] {
+  --data-gain: #8f6a12;
+  --data-loss: #93313f;
+  --data-grid: rgba(16, 21, 29, 0.08);
+}
+
+.chart {
+  width: 100%;
+  overflow-x: auto;
+}
+.chart svg {
+  display: block;
+  min-width: 520px;
+}
+.chart .bar {
+  transition: opacity 0.12s ease;
+}
+.chart g.col:hover .bar {
+  opacity: 0.78;
+}
+.chart .axis-label {
+  font-family: var(--font-body);
+  font-size: 10.5px;
+  fill: var(--ink-3);
+}
+.chart .value-label {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  fill: var(--ink-2);
+}
+.chart .zero-line {
+  stroke: var(--rule-strong);
+  stroke-width: 1;
+}
+.chart .grid-line {
+  stroke: var(--data-grid);
+  stroke-width: 1;
+}
+
+/* הלוגו הוא נכס בגוון שמנת, ועל רקע בהיר הוא נעלם. בפלטה הבהירה
+   מכהים אותו כדי שיישאר קריא. */
+:root[data-theme="light"] .sidebar .brand img,
+:root[data-theme="light"] .share-head img.logo {
+  filter: brightness(0.42) saturate(1.35);
+}

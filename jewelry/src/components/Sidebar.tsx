@@ -14,6 +14,10 @@ const NAV = [
     { href: "/tasks", label: "משימות", key: "tasks" as const },
     { href: "/receivables", label: "גבייה", key: null },
   ]},
+  { group: "כסף", items: [
+    { href: "/reports", label: "דוחות", key: null },
+    { href: "/expenses", label: "הוצאות", key: null },
+  ]},
   { group: "אנשים", items: [
     { href: "/customers", label: "לקוחות", key: "customers" as const },
   ]},

@@ -43,6 +43,13 @@
       "when": 1788072628028,
       "tag": "0005_slippery_goliath",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1788074899724,
+      "tag": "0006_chemical_annihilus",
+      "breakpoints": true
     }
   ]
 }

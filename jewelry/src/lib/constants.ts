@@ -172,3 +172,18 @@ export function workOrderTone(status: string): "accent" | "good" | "warn" | "dan
   if (status === "בהמתנה") return "warn";
   return "accent";
 }
+
+export const EXPENSE_CATEGORIES = [
+  "שכירות",
+  "פרסום ושיווק",
+  "אריזה",
+  "משלוחים",
+  "כלים וציוד",
+  "תוכנות ומנויים",
+  "רואה חשבון ומשפטי",
+  "ביטוח",
+  "נסיעות",
+  "תערוכות",
+  "עמלות סליקה",
+  "אחר",
+] as const;

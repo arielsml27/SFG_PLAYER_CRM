@@ -844,3 +844,174 @@ export async function getOrderPhotos(orderId: string) {
     .where(eq(schema.orderPhotos.orderId, orderId))
     .orderBy(schema.orderPhotos.sortOrder);
 }
+
+/* ---------------------------------------------------------------
+   הוצאות ודוחות
+   --------------------------------------------------------------- */
+export type Expense = typeof schema.expenses.$inferSelect;
+
+export async function listExpenses(filter?: { month?: string; category?: string }) {
+  const rows = await db.select().from(schema.expenses).orderBy(desc(schema.expenses.spentAt));
+  const suppliersAll = await db.select().from(schema.suppliers);
+  const nameById = new Map(suppliersAll.map((s) => [s.id, s.name]));
+
+  return rows
+    .filter((e) => {
+      if (filter?.month && !e.spentAt.startsWith(filter.month)) return false;
+      if (filter?.category && filter.category !== "הכל" && e.category !== filter.category)
+        return false;
+      return true;
+    })
+    .map((e) => ({ ...e, supplierName: e.supplierId ? nameById.get(e.supplierId) ?? null : null }));
+}
+
+export type MonthRow = {
+  month: string; // YYYY-MM
+  label: string;
+  revenueUsd: number;
+  cogsUsd: number;
+  grossUsd: number;
+  expensesUsd: number;
+  netUsd: number;
+  orders: number;
+};
+
+const HE_MONTHS = [
+  "ינואר", "פברואר", "מרץ", "אפריל", "מאי", "יוני",
+  "יולי", "אוגוסט", "ספטמבר", "אוקטובר", "נובמבר", "דצמבר",
+];
+
+function monthLabel(key: string): string {
+  const [y, m] = key.split("-").map(Number);
+  return `${HE_MONTHS[m - 1]} ${String(y).slice(2)}`;
+}
+
+/**
+ * דוח רווחיות.
+ *
+ * הכנסה ועלות נרשמות ב**חודש המסירה** — פריט שנמסר בספטמבר שייך לספטמבר,
+ * גם אם ההזמנה נפתחה ביולי. הוצאות נרשמות בחודש שבו יצא הכסף.
+ * זו הגדרה אחת ועקבית; חשוב שתדע אותה כשאתה קורא את המספרים.
+ */
+export async function getProfitReport(monthsBack = 12) {
+  const [allOrders, allItems, allExpenses] = await Promise.all([
+    db.select().from(schema.orders),
+    db.select().from(schema.orderItems),
+    db.select().from(schema.expenses),
+  ]);
+
+  const delivered = allOrders.filter(
+    (o) => o.deliveredAt && o.status !== "בוטל"
+  );
+
+  const months: string[] = [];
+  const now = new Date();
+  for (let i = monthsBack - 1; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    months.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
+  }
+
+  const perOrder = delivered.map((o) => {
+    const lines = allItems
+      .filter((i) => i.orderId === o.id)
+      .map((i) => priceItem(i, o.goldSpotSnapshot));
+    const totals = orderTotals(lines, {
+      isExport: o.isExport,
+      vatPct: o.vatSnapshot,
+      fx: o.fxSnapshot,
+      depositPct: o.depositPct,
+    });
+    return {
+      order: o,
+      month: (o.deliveredAt ?? "").slice(0, 7),
+      // ההכנסה היא לפני מע"מ — המע"מ אינו שלך
+      revenueUsd: totals.subtotalUsd,
+      cogsUsd: totals.costUsd,
+    };
+  });
+
+  const rows: MonthRow[] = months.map((month) => {
+    const mine = perOrder.filter((p) => p.month === month);
+    const revenueUsd = mine.reduce((a, p) => a + p.revenueUsd, 0);
+    const cogsUsd = mine.reduce((a, p) => a + p.cogsUsd, 0);
+    const expensesUsd = allExpenses
+      .filter((e) => e.spentAt.startsWith(month))
+      .reduce((a, e) => a + e.amountUsd, 0);
+    const grossUsd = revenueUsd - cogsUsd;
+    return {
+      month,
+      label: monthLabel(month),
+      revenueUsd,
+      cogsUsd,
+      grossUsd,
+      expensesUsd,
+      netUsd: grossUsd - expensesUsd,
+      orders: mine.length,
+    };
+  });
+
+  const totalRevenue = rows.reduce((a, r) => a + r.revenueUsd, 0);
+  const totalOrders = rows.reduce((a, r) => a + r.orders, 0);
+  const totalGross = rows.reduce((a, r) => a + r.grossUsd, 0);
+
+  return {
+    rows,
+    thisMonth: rows[rows.length - 1],
+    lastMonth: rows[rows.length - 2],
+    totalRevenue,
+    totalCogs: rows.reduce((a, r) => a + r.cogsUsd, 0),
+    totalGross,
+    totalExpenses: rows.reduce((a, r) => a + r.expensesUsd, 0),
+    totalNet: rows.reduce((a, r) => a + r.netUsd, 0),
+    totalOrders,
+    avgOrderUsd: totalOrders ? totalRevenue / totalOrders : 0,
+    avgMarginPct: totalRevenue ? (totalGross / totalRevenue) * 100 : 0,
+    /** הזמנות שנמסרו אך טרם נרשמה עליהן מסירה — לא נספרות בדוח */
+    undeliveredOpen: allOrders.filter((o) => !o.deliveredAt && !CLOSED_STATUSES.has(o.status)).length,
+  };
+}
+
+/** אילו דגמים באמת עובדים. */
+export async function getProductPerformance() {
+  const [allItems, allOrders, allProducts] = await Promise.all([
+    db.select().from(schema.orderItems),
+    db.select().from(schema.orders),
+    db.select().from(schema.products),
+  ]);
+  const deliveredIds = new Set(
+    allOrders.filter((o) => o.deliveredAt && o.status !== "בוטל").map((o) => o.id)
+  );
+
+  const byProduct = new Map<
+    string,
+    { name: string; sku: string; units: number; revenueUsd: number; profitUsd: number }
+  >();
+
+  for (const item of allItems) {
+    if (!item.productId || !deliveredIds.has(item.orderId)) continue;
+    const order = allOrders.find((o) => o.id === item.orderId);
+    if (!order) continue;
+    const product = allProducts.find((p) => p.id === item.productId);
+    if (!product) continue;
+    const line = priceItem(item, order.goldSpotSnapshot);
+    const current = byProduct.get(item.productId) ?? {
+      name: product.name,
+      sku: product.sku,
+      units: 0,
+      revenueUsd: 0,
+      profitUsd: 0,
+    };
+    current.units += line.quantity;
+    current.revenueUsd += line.linePriceUsd;
+    current.profitUsd += line.profitUsd;
+    byProduct.set(item.productId, current);
+  }
+
+  return [...byProduct.entries()]
+    .map(([id, v]) => ({
+      id,
+      ...v,
+      marginPct: v.revenueUsd ? (v.profitUsd / v.revenueUsd) * 100 : 0,
+    }))
+    .sort((a, b) => b.profitUsd - a.profitUsd);
+}

@@ -445,3 +445,24 @@ export const orderPhotos = sqliteTable("order_photos", {
   sortOrder: integer("sort_order").notNull().default(0),
   createdAt: now(),
 });
+
+/* ---------------------------------------------------------------
+   הוצאות — מה שלא נספר בעלות של פריט מסוים
+   --------------------------------------------------------------- */
+export const expenses = sqliteTable("expenses", {
+  id: id(),
+  spentAt: text("spent_at").notNull(),
+  category: text("category").notNull().default("אחר"),
+  description: text("description").notNull(),
+  amount: real("amount").notNull().default(0),
+  currency: text("currency").notNull().default("ILS"),
+  fxAtSpend: real("fx_at_spend").notNull().default(0),
+  /** הערך הדולרי, מחושב פעם אחת בשמירה — כדי שדוחות יהיו יציבים */
+  amountUsd: real("amount_usd").notNull().default(0),
+  supplierId: text("supplier_id").references(() => suppliers.id, { onDelete: "set null" }),
+  invoiceNumber: text("invoice_number"),
+  /** הוצאה קבועה חוזרת, לסימון בלבד */
+  isRecurring: integer("is_recurring", { mode: "boolean" }).notNull().default(false),
+  notes: text("notes"),
+  createdAt: now(),
+});
