@@ -3,6 +3,7 @@
 כדי שהמערכת תהיה נגישה מהאינטרנט, Cloudflare צריכה לנהל את ה-DNS של הדומיין.
 ההעברה עצמה פשוטה. הסיכון היחיד הוא המייל.
 
+**הרשם:** Squarespace (שקנתה את Google Domains) · **תפוגה:** 30 באוגוסט 2027
 **זמן עבודה:** כשעה · **המתנה אחר כך:** עד 24 שעות · **עלות:** ללא ·
 **אפשר לחזור אחורה:** כן
 
@@ -22,9 +23,15 @@
 
 לפני שנוגעים במשהו.
 
-- [ ] **מצא איפה הדומיין רשום.** הרשם הוא מי שגבה את הכסף — חפש במייל
-      `samuel-diamonds.io`.
-- [ ] **פתח את מסך ה-DNS אצל הרשם וצלם הכל.** כל שורה: סוג, שם, ערך, עדיפות.
+- [ ] **ב-Squarespace:** `account.squarespace.com/domains` ← לחץ על
+      **samuel-diamonds.io** ← **DNS** בתפריט הצדדי.
+- [ ] **צלם את כל הרשומות.** כל שורה: סוג, שם, ערך, עדיפות.
+      שים לב לקטע **Custom Records** ולקטע של רשומות מוגדרות מראש.
+
+> **הערה על דומיינים שהגיעו מ-Google Domains:** לפעמים רשומות ה-MX של Workspace
+> מוצגות שם כהגדרה מרוכזת (״Google Workspace״) ולא כחמש שורות נפרדות. אם זה המצב,
+> שלוף את הערכים האמיתיים דרך `mxtoolbox` בשלב הבא — Cloudflare צריכה את השורות
+> עצמן.
 - [ ] **גבה גם מבחוץ.** ב-`mxtoolbox.com/SuperTool.aspx` הרץ `MX Lookup` ואז
       `TXT Lookup` על הדומיין, ושמור את התוצאות.
 - [ ] **שלוף את ה-DKIM ממסוף Workspace:** אפליקציות ← Google Workspace ← Gmail ←
@@ -54,11 +61,16 @@ Google עובדת עם אחת משתי תצורות MX. **שלך היא זו ש�
 | חדשה | `smtp.google.com` | 1 |
 | קלאסית | `ASPMX.L.GOOGLE.COM`<br>`ALT1.ASPMX.L.GOOGLE.COM`<br>`ALT2.ASPMX.L.GOOGLE.COM`<br>`ALT3.ASPMX.L.GOOGLE.COM`<br>`ALT4.ASPMX.L.GOOGLE.COM` | 1<br>5<br>5<br>10<br>10 |
 
-## 4. להחליף nameservers
+## 4. להחליף nameservers ב-Squarespace
 
 - [ ] העתק את שני ה-nameservers ש-Cloudflare נותנת
       (למשל `arya.ns.cloudflare.com`).
-- [ ] אצל הרשם: החלף את הקיימים בשניים האלה.
+- [ ] ב-Squarespace: **samuel-diamonds.io** ← **DNS** ← גלול ל-**Nameservers**.
+- [ ] בחר **Use custom nameservers** (במקום Squarespace defaults),
+      הזן את שני השמות ושמור.
+- [ ] Squarespace תזהיר ש**ניהול ה-DNS שלה יפסיק לפעול** — זו בדיוק המטרה.
+      מרגע זה כל הרשומות מנוהלות ב-Cloudflare, ולכן שלב 3 חייב להיות מושלם
+      לפני שלוחצים כאן.
 - [ ] חכה. בדרך כלל שעה עד ארבע, לפעמים 24. Cloudflare תשלח מייל
       *"is now active"*. עד אז הכל ממשיך לעבוד.
 
@@ -68,8 +80,9 @@ Google עובדת עם אחת משתי תצורות MX. **שלך היא זו ש�
 - [ ] שלח גם החוצה מהכתובת העסקית — בודק SPF ו-DKIM.
 - [ ] הרץ שוב `MX Lookup`. התוצאה חייבת להיות זהה לזו משלב 1.
 
-**אם המייל נפל:** חזור אל הרשם והחזר את ה-nameservers הישנים. תוך שעות המייל
-חוזר. תקן ב-Cloudflare בנחת ונסה שוב. אל תתקן תחת לחץ.
+**אם המייל נפל:** חזור ל-Squarespace ← DNS ← Nameservers ← **Use Squarespace
+defaults**. תוך שעות המייל חוזר. תקן ב-Cloudflare בנחת ונסה שוב.
+אל תתקן תחת לחץ.
 
 ## 6. לחבר את המערכת
 
