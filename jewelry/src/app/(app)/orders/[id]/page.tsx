@@ -1,12 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getOrder, getSettings, listCustomers } from "@/lib/data";
+import DeleteOrder from "@/components/DeleteOrder";
 import {
   addPaymentAction,
   addTimelineEventAction,
   createTaskAction,
   deletePaymentAction,
-  deleteOrderAction,
   deleteOrderItemAction,
   refreshOrderRatesAction,
   setOrderStatusAction,
@@ -315,13 +315,6 @@ export default async function OrderPage({
             </div>
           </section>
 
-          <hr className="hairline" />
-          <form action={deleteOrderAction}>
-            <input type="hidden" name="id" value={order.id} />
-            <button className="btn btn-ghost btn-sm btn-danger" type="submit">
-              מחיקת ההזמנה
-            </button>
-          </form>
         </>
       ) : null}
 
@@ -1140,6 +1133,14 @@ export default async function OrderPage({
           </div>
         </section>
       ) : null}
+
+      <hr className="hairline" />
+      <DeleteOrder
+        id={order.id}
+        orderNumber={order.orderNumber}
+        itemCount={items.length}
+        paymentCount={payments.length}
+      />
     </>
   );
 }

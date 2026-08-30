@@ -148,6 +148,10 @@ export async function updateCustomerAction(fd: FormData) {
 /**
  * מחיקת לקוח מחזירה הודעה במקום לזרוק. לקוח עם הזמנות הוא מצב רגיל
  * ולא תקלה — זריקה הייתה מחליפה את המסך במסך שגיאה ומאבדת את ההקשר.
+ *
+ * לקוח עם הזמנות נמחק רק בבקשה מפורשת (`withOrders`), כי המחיקה גוררת
+ * איתה את ההזמנות, הפריטים, התשלומים והתמונות שלהן. הבעלים מחליט —
+ * המערכת רק דואגת שההחלטה תהיה מודעת.
  */
 export async function deleteCustomerAction(
   _prev: string | null,
@@ -157,17 +161,26 @@ export async function deleteCustomerAction(
   const id = str(fd, "id");
   if (!id) return "הלקוח לא נמצא";
 
-  const orders = await db
+  const counted = await db
     .select({ n: sql<number>`count(*)` })
     .from(schema.orders)
     .where(eq(schema.orders.customerId, id));
-  const n = Number(orders[0]?.n ?? 0);
-  if (n > 0) {
-    return `ללקוח ${n} הזמנות. אי אפשר למחוק לקוח שיש לו הזמנות — מחק אותן קודם, או שנה את הסטטוס שלו ל״לא פעיל״.`;
+  const n = Number(counted[0]?.n ?? 0);
+
+  if (n > 0 && !bool(fd, "withOrders")) {
+    return `ללקוח ${n} הזמנות. סמן את האישור כדי למחוק אותן יחד איתו.`;
   }
 
+  // ההזמנות נמחקות ראשונות: המפתח הזר מוגדר restrict, והילדים שלהן
+  // (פריטים, תשלומים, תמונות, יומן) נמחקים בשרשור מהמסד עצמו.
+  if (n > 0) {
+    await db.delete(schema.orders).where(eq(schema.orders.customerId, id));
+  }
   await db.delete(schema.customers).where(eq(schema.customers.id, id));
+
   revalidatePath("/customers");
+  revalidatePath("/orders");
+  revalidatePath("/");
   redirect("/customers");
 }
 
