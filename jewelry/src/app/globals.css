@@ -1208,3 +1208,192 @@ table.data td.name {
 :root[data-theme="light"] .share-head img.logo {
   filter: brightness(0.42) saturate(1.35);
 }
+
+/* ---------------------------------------------------------------
+   הצעת מחיר — /quote/[token]
+   מסמך, לא עמוד נחיתה: כותרת בשלושה חלקים, מפרט, סכומים, תנאים
+   וחתימה. יושב על שכבת השיתוף ומוסיף רק את מה שמסמך צריך.
+   --------------------------------------------------------------- */
+.quote-head {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: var(--space-4);
+}
+.quote-head img.logo {
+  width: 168px;
+  height: auto;
+}
+.quote-head .num:last-child {
+  text-align: end;
+}
+.quote-head span {
+  font-size: 12px;
+  letter-spacing: 0.06em;
+}
+
+.quote-sub {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+.quote-sub .stack-sm {
+  font-size: 12.5px;
+}
+
+.quote-customer {
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.quote-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  gap: var(--space-5);
+  align-items: start;
+}
+.quote-shots {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+}
+.quote-shots img,
+.quote-shots .slot {
+  aspect-ratio: 1;
+  width: 100%;
+  object-fit: cover;
+  border: 1px dashed var(--accent-hair);
+  background: var(--surface-1);
+}
+.quote-shots img {
+  border-style: solid;
+}
+.quote-item-name {
+  font-size: clamp(1.25rem, 3vw, 1.6rem);
+  line-height: 1.2;
+}
+
+.quote-totals {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+  gap: var(--space-4);
+  align-items: stretch;
+}
+.quote-sum {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 6px;
+}
+.quote-sum .amount {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 6vw, 2.9rem);
+  line-height: 1.05;
+  color: var(--accent);
+}
+.quote-terms-pay .hairline {
+  margin: 2px 0;
+}
+
+.quote-terms {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--space-3) var(--space-6);
+}
+.quote-terms ul {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.quote-terms li {
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: var(--ink-2);
+  padding-inline-start: 14px;
+  position: relative;
+}
+.quote-terms li::before {
+  content: "";
+  position: absolute;
+  inset-inline-start: 0;
+  top: 0.62em;
+  width: 5px;
+  height: 5px;
+  background: var(--accent);
+}
+
+.quote-sign {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-6);
+  margin-top: var(--space-4);
+}
+.quote-sign .line {
+  border-bottom: 1px solid var(--accent-hair);
+  height: 38px;
+  margin-bottom: 8px;
+}
+
+@media (max-width: 720px) {
+  .quote-item,
+  .quote-totals {
+    grid-template-columns: 1fr;
+  }
+  .quote-head {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    text-align: center;
+  }
+  .quote-head .num:last-child {
+    text-align: center;
+  }
+}
+
+/* הדפסה ושמירה כ-PDF. הצעה מודפסת על רקע כהה מבזבזת טונר ונקראת
+   גרוע; לנייר עוברים לדיו כהה על לבן, ומורידים כל מה שאי אפשר
+   ללחוץ עליו על דף. */
+@page {
+  margin: 14mm 12mm;
+}
+
+@media print {
+  .no-print,
+  .cta,
+  .sidebar,
+  .tabs,
+  .page-actions {
+    display: none !important;
+  }
+  :root,
+  :root[data-theme="dark"] {
+    --surface-0: #ffffff;
+    --surface-1: #ffffff;
+    --surface-2: #ffffff;
+    --ink-1: #14181f;
+    --ink-2: #3d434d;
+    --ink-3: #6b727d;
+    --accent: #8a6d24;
+    --accent-hair: #c9b489;
+    --rule-strong: #b9bcc2;
+  }
+  body {
+    background: #fff !important;
+  }
+  .share.quote {
+    max-width: none;
+    padding: 0;
+    gap: 22px;
+  }
+  .quote-head img.logo {
+    filter: brightness(0.35) saturate(1.4);
+  }
+  .panel,
+  .panel-accent {
+    break-inside: avoid;
+  }
+  section {
+    break-inside: avoid;
+  }
+}

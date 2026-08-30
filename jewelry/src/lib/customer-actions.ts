@@ -40,6 +40,27 @@ export async function toggleCustomerLinkAction(fd: FormData) {
   revalidatePath(`/orders/${id}`);
 }
 
+/** פרסום הצעת המחיר. אותו טוקן כמו עמוד הלקוח, מתג נפרד. */
+export async function toggleQuoteAction(fd: FormData) {
+  await requireUser();
+  const id = str(fd, "id");
+  if (!id) return;
+  const rows = await db.select().from(schema.orders).where(eq(schema.orders.id, id)).limit(1);
+  const order = rows[0];
+  if (!order) return;
+
+  await db
+    .update(schema.orders)
+    .set({
+      quoteEnabled: !order.quoteEnabled,
+      accessToken: order.accessToken ?? randomBytes(16).toString("hex"),
+      updatedAt: nowIso(),
+    })
+    .where(eq(schema.orders.id, id));
+
+  revalidatePath(`/orders/${id}`);
+}
+
 /* ---------------------------------------------------------------
    תמונות עיצוב
    --------------------------------------------------------------- */

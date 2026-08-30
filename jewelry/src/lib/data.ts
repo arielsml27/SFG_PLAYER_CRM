@@ -25,6 +25,11 @@ export async function getSettings(): Promise<Settings> {
     whatsappNumber: null,
     instagramHandle: null,
     publicBaseUrl: null,
+    quoteValidDays: 7,
+    quoteLeadTime: "14 – 21 ימי עסקים",
+    quotePaymentMethods: "העברה בנקאית · אפליקציות תשלום · מזומן",
+    quoteTerms:
+      "הצעת המחיר בתוקף ל-7 ימים ממועד הפקתה.\nפריטים בהתאמה אישית — לא ניתן לבטל לאחר תחילת הייצור.\nכל פריט נמסר עם תעודת הערכה גמולוגית לביטוח.\nהתמונות להמחשה בלבד; ייתכנו שינויים קלים בייצור.",
     ratesFetchedAt: null,
     ratesSource: null,
     updatedAt: new Date().toISOString(),
@@ -816,14 +821,83 @@ export async function getCustomerView(token: string) {
   };
 }
 
-export async function getOrderPhoto(token: string, photoId: string) {
+/**
+ * הצעת מחיר. אותו טוקן של עמוד הלקוח, מתג פרסום נפרד — הצעה יוצאת
+ * בתחילת השיחה, הרבה לפני שיש מה להראות בעמוד המצב.
+ */
+export async function getQuoteView(token: string) {
+  const rows = await db
+    .select()
+    .from(schema.orders)
+    .where(eq(schema.orders.accessToken, token))
+    .limit(1);
+  const order = rows[0];
+  if (!order || !order.quoteEnabled) return null;
+
+  const [customer, items, photos, settings] = await Promise.all([
+    getCustomer(order.customerId),
+    db
+      .select()
+      .from(schema.orderItems)
+      .where(eq(schema.orderItems.orderId, order.id))
+      .orderBy(schema.orderItems.sortOrder),
+    db
+      .select({ id: schema.orderPhotos.id, kind: schema.orderPhotos.kind })
+      .from(schema.orderPhotos)
+      .where(eq(schema.orderPhotos.orderId, order.id))
+      .orderBy(schema.orderPhotos.sortOrder),
+    getSettings(),
+  ]);
+
+  const lines = items.map((i) => priceItem(i, order.goldSpotSnapshot));
+  const totals = orderTotals(lines, {
+    isExport: order.isExport,
+    vatPct: order.vatSnapshot,
+    fx: order.fxSnapshot,
+    depositPct: order.depositPct,
+  });
+
+  // ההצעה נספרת מיום פתיחת ההזמנה, לא מיום הצפייה — אחרת התוקף
+  // היה נדחה מעצמו בכל פעם שהלקוח פותח את הקישור.
+  const issuedAt = new Date(order.createdAt);
+  const validUntil = new Date(issuedAt);
+  validUntil.setDate(validUntil.getDate() + Math.round(settings.quoteValidDays));
+
+  return {
+    order,
+    customer,
+    items,
+    lines,
+    photos: photos.filter((p) => p.kind === "עיצוב"),
+    settings,
+    totals,
+    issuedAt: issuedAt.toISOString(),
+    validUntil: validUntil.toISOString(),
+    expired: Date.now() > validUntil.getTime(),
+  };
+}
+
+/**
+ * תמונת הזמנה מוגשת רק דרך הדף שביקש אותה. עמוד המצב והצעת המחיר
+ * חולקים טוקן אבל לא מתג — פרסום ההצעה לא פותח את עמוד המצב, ולהפך.
+ */
+export async function getOrderPhoto(
+  token: string,
+  photoId: string,
+  gate: "customer" | "quote" = "customer"
+) {
   const orderRows = await db
-    .select({ id: schema.orders.id, enabled: schema.orders.customerLinkEnabled })
+    .select({
+      id: schema.orders.id,
+      customerEnabled: schema.orders.customerLinkEnabled,
+      quoteEnabled: schema.orders.quoteEnabled,
+    })
     .from(schema.orders)
     .where(eq(schema.orders.accessToken, token))
     .limit(1);
   const order = orderRows[0];
-  if (!order || !order.enabled) return null;
+  const open = gate === "quote" ? order?.quoteEnabled : order?.customerEnabled;
+  if (!order || !open) return null;
   const rows = await db
     .select()
     .from(schema.orderPhotos)

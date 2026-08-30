@@ -2,6 +2,7 @@ import Link from "next/link";
 import { listCustomers, getSettings } from "@/lib/data";
 import { createOrderAction } from "@/lib/actions";
 import { ORDER_CHANNELS, ORDER_TYPES, PRIORITIES } from "@/lib/constants";
+import { todayIso } from "@/lib/format";
 import { Empty, Field, PageHead, SectionHead } from "@/components/ui";
 
 export default async function NewOrderPage({
@@ -78,13 +79,13 @@ export default async function NewOrderPage({
           <SectionHead title="תאריכים" latin="DATES" />
           <div className="form-grid">
             <Field label="תאריך האירוע" hint="חתונה, הצעה, יום נישואין">
-              <input type="date" name="eventDate" />
+              <input type="date" name="eventDate" defaultValue={todayIso()} />
             </Field>
             <Field label="תאריך מובטח ללקוח">
-              <input type="date" name="promisedDate" />
+              <input type="date" name="promisedDate" defaultValue={todayIso()} />
             </Field>
             <Field label="יעד פנימי" hint="מוקדם מהמובטח">
-              <input type="date" name="internalDueDate" />
+              <input type="date" name="internalDueDate" defaultValue={todayIso()} />
             </Field>
             <Field label="מקדמה (%)">
               <input type="number" name="depositPct" defaultValue={settings.defaultDepositPct} step="1" min="0" max="100" />

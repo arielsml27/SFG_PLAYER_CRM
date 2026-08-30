@@ -181,7 +181,16 @@ export default function ItemForm({
               onChange={(e) => set("centerCaratTotal")(N(e.target.value))}
             />
           </Field>
-          <Field label="תיאור" hint="צבע, ניקיון, חיתוך, תעודה">
+          <Field label="חיתוך" hint="מופיע בהצעת המחיר">
+            <input name="centerCut" defaultValue={base.centerCut ?? ""} placeholder="Round Brilliant" />
+          </Field>
+          <Field label="צבע">
+            <input name="centerColor" defaultValue={base.centerColor ?? ""} placeholder="D – F" dir="ltr" />
+          </Field>
+          <Field label="ניקיון">
+            <input name="centerClarity" defaultValue={base.centerClarity ?? ""} placeholder="VS" dir="ltr" />
+          </Field>
+          <Field label="תיאור נוסף" hint="תעודה, הערות">
             <input name="centerDesc" defaultValue={base.centerDesc ?? ""} />
           </Field>
         </div>

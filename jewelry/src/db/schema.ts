@@ -34,6 +34,19 @@ export const settings = sqliteTable("settings", {
   /** כתובת הבסיס שממנה מורכבים לינקי השיתוף */
   publicBaseUrl: text("public_base_url"),
 
+  /* --- הצעת מחיר: נוסח קבוע שמופיע על כל הצעה --- */
+  quoteValidDays: real("quote_valid_days").notNull().default(7),
+  quoteLeadTime: text("quote_lead_time").notNull().default("14 – 21 ימי עסקים"),
+  quotePaymentMethods: text("quote_payment_methods")
+    .notNull()
+    .default("העברה בנקאית · אפליקציות תשלום · מזומן"),
+  /** שורה בכל שורה. מוצג בשני טורים. */
+  quoteTerms: text("quote_terms")
+    .notNull()
+    .default(
+      "הצעת המחיר בתוקף ל-7 ימים ממועד הפקתה.\nפריטים בהתאמה אישית — לא ניתן לבטל לאחר תחילת הייצור.\nכל פריט נמסר עם תעודת הערכה גמולוגית לביטוח.\nהתמונות להמחשה בלבד; ייתכנו שינויים קלים בייצור."
+    ),
+
   /** מתי נמשכו השערים ממקור חיצוני, ומאיזה. ריק = הוזנו ביד. */
   ratesFetchedAt: text("rates_fetched_at"),
   ratesSource: text("rates_source"),
@@ -110,6 +123,8 @@ export const orders = sqliteTable("orders", {
   customerLinkEnabled: integer("customer_link_enabled", { mode: "boolean" })
     .notNull()
     .default(false),
+  /** הצעת המחיר מתפרסמת בנפרד — היא יוצאת לפני שיש מה להראות בעמוד המצב. */
+  quoteEnabled: integer("quote_enabled", { mode: "boolean" }).notNull().default(false),
   /** אישור העיצוב מגיע מהלקוח דרך העמוד שלו. */
   designApprovedAt: text("design_approved_at"),
   designApprovalNote: text("design_approval_note"),
@@ -140,6 +155,9 @@ export const orderItems = sqliteTable("order_items", {
   // --- אבן מרכזית ---
   centerStoneType: text("center_stone_type"),
   centerDesc: text("center_desc"),
+  centerCut: text("center_cut"),
+  centerColor: text("center_color"),
+  centerClarity: text("center_clarity"),
   centerPricePerCt: real("center_price_per_ct").notNull().default(0),
   centerCaratTotal: real("center_carat_total").notNull().default(0),
 
@@ -241,6 +259,9 @@ export const products = sqliteTable("products", {
   weightG: real("weight_g").notNull().default(0),
   centerStoneType: text("center_stone_type"),
   centerDesc: text("center_desc"),
+  centerCut: text("center_cut"),
+  centerColor: text("center_color"),
+  centerClarity: text("center_clarity"),
   centerCaratTotal: real("center_carat_total").notNull().default(0),
   centerPricePerCt: real("center_price_per_ct").notNull().default(0),
   sideStonesOn: integer("side_stones_on", { mode: "boolean" }).notNull().default(false),

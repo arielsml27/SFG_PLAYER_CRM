@@ -14,7 +14,10 @@ const str = (fd: FormData, k: string) => {
   const s = typeof v === "string" ? v.trim() : "";
   return s.length ? s : null;
 };
+// שדה שאינו בטופס כלל מקבל את ברירת המחדל. בלי הבדיקה הזו
+// Number(null) הוא 0 — וטופס שלא כולל שדה היה מאפס אותו בשקט.
 const num = (fd: FormData, k: string, fallback = 0) => {
+  if (!fd.has(k)) return fallback;
   const v = Number(fd.get(k));
   return Number.isFinite(v) ? v : fallback;
 };
@@ -40,6 +43,9 @@ function productFields(fd: FormData) {
     weightG: num(fd, "weightG"),
     centerStoneType: str(fd, "centerStoneType"),
     centerDesc: str(fd, "centerDesc"),
+    centerCut: str(fd, "centerCut"),
+    centerColor: str(fd, "centerColor"),
+    centerClarity: str(fd, "centerClarity"),
     centerCaratTotal: num(fd, "centerCaratTotal"),
     centerPricePerCt: num(fd, "centerPricePerCt"),
     sideStonesOn: bool(fd, "sideStonesOn"),
@@ -124,6 +130,9 @@ export async function saveItemAsProductAction(fd: FormData) {
     weightG: item.weightG,
     centerStoneType: item.centerStoneType,
     centerDesc: item.centerDesc,
+    centerCut: item.centerCut,
+    centerColor: item.centerColor,
+    centerClarity: item.centerClarity,
     centerCaratTotal: item.centerCaratTotal,
     centerPricePerCt: item.centerPricePerCt,
     sideStonesOn: item.sideStonesOn,

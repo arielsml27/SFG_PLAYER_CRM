@@ -2,7 +2,7 @@ import Link from "next/link";
 import { listTasks } from "@/lib/data";
 import { createTaskAction, deleteTaskAction, toggleTaskAction } from "@/lib/actions";
 import { PRIORITIES } from "@/lib/constants";
-import { relativeDays } from "@/lib/format";
+import { relativeDays, todayIso } from "@/lib/format";
 import { Badge, Empty, Field, PageHead, SectionHead } from "@/components/ui";
 
 export default async function TasksPage({
@@ -32,7 +32,7 @@ export default async function TasksPage({
           </div>
           <div style={{ flex: "1 1 140px" }}>
             <Field label="עד מתי">
-              <input type="date" name="dueDate" />
+              <input type="date" name="dueDate" defaultValue={todayIso()} />
             </Field>
           </div>
           <div style={{ flex: "1 1 120px" }}>

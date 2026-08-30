@@ -95,6 +95,15 @@ export default function ProductForm({
           <Field label="קראט מרכזית">
             <input type="number" name="centerCaratTotal" step="0.01" min="0" defaultValue={product?.centerCaratTotal ?? 0} />
           </Field>
+          <Field label="חיתוך">
+            <input name="centerCut" defaultValue={product?.centerCut ?? ""} placeholder="Round Brilliant" />
+          </Field>
+          <Field label="צבע">
+            <input name="centerColor" defaultValue={product?.centerColor ?? ""} placeholder="D – F" dir="ltr" />
+          </Field>
+          <Field label="ניקיון">
+            <input name="centerClarity" defaultValue={product?.centerClarity ?? ""} placeholder="VS" dir="ltr" />
+          </Field>
           <Field label="תיאור אבן">
             <input name="centerDesc" defaultValue={product?.centerDesc ?? ""} />
           </Field>

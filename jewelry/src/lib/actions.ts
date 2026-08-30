@@ -18,7 +18,10 @@ const str = (fd: FormData, k: string) => {
   const s = typeof v === "string" ? v.trim() : "";
   return s.length ? s : null;
 };
+// שדה שאינו בטופס כלל מקבל את ברירת המחדל. בלי הבדיקה הזו
+// Number(null) הוא 0 — וטופס שלא כולל שדה היה מאפס אותו בשקט.
 const num = (fd: FormData, k: string, fallback = 0) => {
+  if (!fd.has(k)) return fallback;
   const v = Number(fd.get(k));
   return Number.isFinite(v) ? v : fallback;
 };
@@ -83,6 +86,10 @@ export async function saveSettingsAction(fd: FormData) {
     defaultMultiplier: num(fd, "defaultMultiplier", current.defaultMultiplier),
     defaultDepositPct: num(fd, "defaultDepositPct", current.defaultDepositPct),
     defaultKarat: str(fd, "defaultKarat") ?? current.defaultKarat,
+    quoteValidDays: num(fd, "quoteValidDays", current.quoteValidDays),
+    quoteLeadTime: str(fd, "quoteLeadTime") ?? current.quoteLeadTime,
+    quotePaymentMethods: str(fd, "quotePaymentMethods") ?? current.quotePaymentMethods,
+    quoteTerms: str(fd, "quoteTerms") ?? current.quoteTerms,
     businessName: str(fd, "businessName") ?? current.businessName,
     whatsappNumber: str(fd, "whatsappNumber"),
     instagramHandle: str(fd, "instagramHandle"),
@@ -373,6 +380,9 @@ function itemFields(fd: FormData) {
     weightG: num(fd, "weightG"),
     centerStoneType: str(fd, "centerStoneType"),
     centerDesc: str(fd, "centerDesc"),
+    centerCut: str(fd, "centerCut"),
+    centerColor: str(fd, "centerColor"),
+    centerClarity: str(fd, "centerClarity"),
     centerPricePerCt: num(fd, "centerPricePerCt"),
     centerCaratTotal: num(fd, "centerCaratTotal"),
     sideStonesOn: bool(fd, "sideStonesOn"),

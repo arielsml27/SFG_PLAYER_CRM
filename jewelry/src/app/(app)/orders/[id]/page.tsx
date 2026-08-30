@@ -42,6 +42,7 @@ import { getOrderPhotos, getOrderWorkOrders, listSuppliers } from "@/lib/data";
 import {
   deleteOrderPhotoAction,
   toggleCustomerLinkAction,
+  toggleQuoteAction,
 } from "@/lib/customer-actions";
 import OrderPhotoUploader from "@/components/OrderPhotoUploader";
 import { Badge, Cell, Empty, Field, PageHead, SectionHead, StatusBadge } from "@/components/ui";
@@ -80,6 +81,9 @@ export default async function OrderPage({
   ]);
   const customerUrl = order.accessToken
     ? `${shareBase(settings.publicBaseUrl)}/order/${order.accessToken}`
+    : null;
+  const quoteUrl = order.accessToken
+    ? `${shareBase(settings.publicBaseUrl)}/quote/${order.accessToken}`
     : null;
   const openWorkOrders = workOrders.filter((w) => w.isOpen).length;
 
@@ -483,6 +487,59 @@ export default async function OrderPage({
       {/* ============================ עיצוב ולקוח ============================ */}
       {tab === "design" ? (
         <>
+          <section>
+            <SectionHead title="הצעת מחיר" latin="QUOTE" />
+            <div className="panel stack">
+              <div className="row" style={{ justifyContent: "space-between" }}>
+                <div className="row" style={{ gap: 8 }}>
+                  {order.quoteEnabled ? (
+                    <Badge tone="good">ההצעה פורסמה</Badge>
+                  ) : (
+                    <Badge>ההצעה לא פורסמה</Badge>
+                  )}
+                  <Badge tone="accent">
+                    {totals.totalIls ? ils(totals.totalIls) : usd(totals.totalUsd)}
+                  </Badge>
+                </div>
+                <form action={toggleQuoteAction}>
+                  <input type="hidden" name="id" value={order.id} />
+                  <button
+                    className={order.quoteEnabled ? "btn btn-sm" : "btn btn-sm btn-primary"}
+                    type="submit"
+                    disabled={items.length === 0}
+                  >
+                    {order.quoteEnabled ? "בטל פרסום" : "פרסם הצעת מחיר"}
+                  </button>
+                </form>
+              </div>
+
+              {items.length === 0 ? (
+                <p className="quiet" style={{ fontSize: 13 }}>
+                  אין עדיין פריטים בהזמנה — אין ממה להרכיב הצעה. הוסף פריט בלשונית
+                  ״פריטים ותמחור״.
+                </p>
+              ) : order.quoteEnabled && quoteUrl ? (
+                <ShareBox
+                  url={quoteUrl}
+                  whatsappHref={whatsappLink(
+                    customer?.whatsapp ?? customer?.phone,
+                    `הצעת מחיר ${order.orderNumber}\n${quoteUrl}`
+                  )}
+                  hint="מסמך הצעה עם מפרט, מחיר ותנאים. אפשר להדפיס או לשמור כ-PDF מהדפדפן (Ctrl+P). לא מוצגים עלות, רווח או ספק."
+                />
+              ) : (
+                <p className="quiet" style={{ fontSize: 13 }}>
+                  ההצעה נבנית מהפריטים והשערים של ההזמנה הזו. הנוסח הקבוע — תוקף, זמן אספקה,
+                  אמצעי תשלום ותנאים — נערך פעם אחת ב
+                  <Link href="/settings" className="gold" style={{ textDecoration: "underline" }}>
+                    הגדרות
+                  </Link>
+                  .
+                </p>
+              )}
+            </div>
+          </section>
+
           <section>
             <SectionHead title="עמוד הלקוח" latin="CUSTOMER PAGE" />
             <div className="panel stack">
@@ -1089,7 +1146,7 @@ export default async function OrderPage({
               </div>
               <div style={{ flex: "1 1 140px" }}>
                 <Field label="עד מתי">
-                  <input type="date" name="dueDate" />
+                  <input type="date" name="dueDate" defaultValue={todayIso()} />
                 </Field>
               </div>
               <button className="btn btn-sm" type="submit">

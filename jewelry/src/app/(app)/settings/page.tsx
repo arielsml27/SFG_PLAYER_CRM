@@ -127,6 +127,42 @@ export default async function SettingsPage() {
       </section>
 
       <section>
+        <SectionHead title="נוסח הצעת המחיר" latin="QUOTE WORDING" />
+        <form action={saveSettingsAction} className="panel stack">
+          <p className="quiet" style={{ fontSize: 12.5 }}>
+            הטקסט הקבוע שמופיע על כל הצעה. הפריטים, המחיר והמקדמה מגיעים מההזמנה
+            עצמה — כאן רק מה שחוזר בכל הצעה.
+          </p>
+          <div className="form-grid">
+            <Field label="תוקף ההצעה (ימים)" hint="נספר מיום פתיחת ההזמנה">
+              <input
+                type="number"
+                name="quoteValidDays"
+                step="1"
+                min="1"
+                max="365"
+                defaultValue={settings.quoteValidDays}
+              />
+            </Field>
+            <Field label="זמן אספקה" hint="מוצג כשאין תאריך מובטח בהזמנה">
+              <input name="quoteLeadTime" defaultValue={settings.quoteLeadTime} />
+            </Field>
+            <Field label="אמצעי תשלום">
+              <input name="quotePaymentMethods" defaultValue={settings.quotePaymentMethods} />
+            </Field>
+          </div>
+          <Field label="תנאים כלליים" hint="שורה אחת לכל תנאי. מוצג בשני טורים.">
+            <textarea name="quoteTerms" rows={5} defaultValue={settings.quoteTerms} />
+          </Field>
+          <div>
+            <button className="btn btn-primary" type="submit">
+              שמור נוסח
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <section>
         <SectionHead title="מחיר זהב לגרם" latin="GOLD PER GRAM" />
         <div className="panel panel-tight table-scroll">
           <table className="data" style={{ minWidth: 380 }}>

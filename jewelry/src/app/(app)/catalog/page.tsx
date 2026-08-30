@@ -14,6 +14,19 @@ export default async function CatalogPage({
   const [products, settings] = await Promise.all([listProducts({ q, category }), getSettings()]);
   const withPhotos = products.filter((p) => p.photoIds.length > 0).length;
 
+  // הקטלוג מוצג לפי נושאים, בסדר הקבוע של הקטגוריות. קטגוריה שאין בה
+  // דגמים לא מוצגת, וקטגוריה שאינה ברשימה נופלת לסוף במקום להיעלם.
+  const order = new Map(ITEM_CATEGORIES.map((c, i) => [c as string, i]));
+  const byCategory = new Map<string, typeof products>();
+  for (const p of products) {
+    const list = byCategory.get(p.category);
+    if (list) list.push(p);
+    else byCategory.set(p.category, [p]);
+  }
+  const groups = [...byCategory.entries()].sort(
+    (a, b) => (order.get(a[0]) ?? ITEM_CATEGORIES.length) - (order.get(b[0]) ?? ITEM_CATEGORIES.length)
+  );
+
   return (
     <>
       <PageHead
@@ -70,44 +83,51 @@ export default async function CatalogPage({
           ) : null}
         </>
       ) : (
-        <div className="product-grid">
-          {products.map((p) => {
-            const cost = costBreakdown(
-              { ...p, modelOn: false, modelPrice: 0 },
-              settings.goldSpotUsdOz
-            );
-            const price = p.priceRetailUsd ?? cost.totalUsd * p.multiplier;
-            return (
-              <Link key={p.id} href={`/catalog/${p.id}`} className="product-card">
-                <div className="shot">
-                  {p.photoIds[0] ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={`/photos/${p.photoIds[0]}`} alt={p.name} loading="lazy" />
-                  ) : (
-                    <span className="none">אין תמונה</span>
-                  )}
-                </div>
-                <div className="body">
-                  <span className="nm">{p.name}</span>
-                  <span className="num quiet" style={{ fontSize: 11 }}>
-                    {p.sku}
-                  </span>
-                  <div className="row" style={{ gap: 5 }}>
-                    <Badge>{p.category}</Badge>
-                    <Badge tone="accent">{p.karat}</Badge>
-                    {p.photoIds.length > 1 ? <Badge>{p.photoIds.length} תמונות</Badge> : null}
-                  </div>
-                  <div className="row" style={{ justifyContent: "space-between", marginTop: 2 }}>
-                    <span className="num" style={{ fontSize: 14 }}>
-                      {settings.fxUsdIls ? ils(price * settings.fxUsdIls) : usd(price)}
-                    </span>
-                    {!p.isAvailable ? <Badge tone="warn">לא זמין</Badge> : null}
-                  </div>
-                </div>
-              </Link>
-            );
-          })}
-        </div>
+        groups.map(([groupName, groupProducts]) => (
+          <section key={groupName}>
+            <SectionHead
+              title={groupName}
+              latin={`${groupProducts.length} ${groupProducts.length === 1 ? "דגם" : "דגמים"}`}
+            />
+            <div className="product-grid">
+              {groupProducts.map((p) => {
+                const cost = costBreakdown(
+                  { ...p, modelOn: false, modelPrice: 0 },
+                  settings.goldSpotUsdOz
+                );
+                const price = p.priceRetailUsd ?? cost.totalUsd * p.multiplier;
+                return (
+                  <Link key={p.id} href={`/catalog/${p.id}`} className="product-card">
+                    <div className="shot">
+                      {p.photoIds[0] ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={`/photos/${p.photoIds[0]}`} alt={p.name} loading="lazy" />
+                      ) : (
+                        <span className="none">אין תמונה</span>
+                      )}
+                    </div>
+                    <div className="body">
+                      <span className="nm">{p.name}</span>
+                      <span className="num quiet" style={{ fontSize: 11 }}>
+                        {p.sku}
+                      </span>
+                      <div className="row" style={{ gap: 5 }}>
+                        <Badge tone="accent">{p.karat}</Badge>
+                        {p.photoIds.length > 1 ? <Badge>{p.photoIds.length} תמונות</Badge> : null}
+                        {!p.isAvailable ? <Badge tone="warn">לא זמין</Badge> : null}
+                      </div>
+                      <div className="row" style={{ justifyContent: "space-between", marginTop: 2 }}>
+                        <span className="num" style={{ fontSize: 14 }}>
+                          {settings.fxUsdIls ? ils(price * settings.fxUsdIls) : usd(price)}
+                        </span>
+                      </div>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </section>
+        ))
       )}
     </>
   );

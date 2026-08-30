@@ -64,6 +64,13 @@
       "when": 1788110190582,
       "tag": "0008_hard_thunderbolts",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1788111261808,
+      "tag": "0009_aspiring_jubilee",
+      "breakpoints": true
     }
   ]
 }
