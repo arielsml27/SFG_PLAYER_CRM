@@ -46,22 +46,64 @@
 
 ## 3. לוודא — לפני שמחליפים
 
-פתח ב-Cloudflare את **DNS ← Records**, ולידו את הצילום משלב 1. שורה מול שורה.
+הרשומות בפועל של הדומיין, כפי שנקראו ממסך ה-DNS ב-Squarespace.
 
-- [ ] **MX** — הכי קריטי. העתק את מה שיש לך בפועל, אל תחליף תצורה.
-- [ ] **SPF (TXT)** — `v=spf1 include:_spf.google.com ~all`
-- [ ] **DKIM** — `google._domainkey`, שלם ובלי קיצור.
-- [ ] **אימות דומיין** — TXT שמתחילה ב-`google-site-verification=`
-- [ ] **A / CNAME** קיימים, אם יש אתר על הדומיין.
+### חייבות לעבור ל-Cloudflare — שלוש בלבד
 
-Google עובדת עם אחת משתי תצורות MX. **שלך היא זו שכבר קיימת.**
+| סוג | שם | עדיפות | ערך |
+|---|---|---|---|
+| `MX` | `@` | `1` | `smtp.google.com` |
+| `TXT` | `@` | — | `v=spf1 include:_spf.google.com ~all` |
+| `TXT` | `google._domainkey` | — | `v=DKIM1; k=rsa; p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ…` |
 
-| תצורה | רשומות | עדיפות |
-|---|---|---|
-| חדשה | `smtp.google.com` | 1 |
-| קלאסית | `ASPMX.L.GOOGLE.COM`<br>`ALT1.ASPMX.L.GOOGLE.COM`<br>`ALT2.ASPMX.L.GOOGLE.COM`<br>`ALT3.ASPMX.L.GOOGLE.COM`<br>`ALT4.ASPMX.L.GOOGLE.COM` | 1<br>5<br>5<br>10<br>10 |
+ה-MX כאן הוא **התצורה החדשה של Google — רשומה אחת בלבד**. אין צורך בחמש
+רשומות `ASPMX`. אם Cloudflare תציע להוסיף אותן, סרב.
+
+- [ ] MX קיים ב-Cloudflare עם עדיפות 1
+- [ ] SPF קיים
+- [ ] DKIM קיים **ובאורך מלא** (ראה למטה)
+
+### ה-DKIM חייב לעבור שלם
+
+הערך מוצג קטוע במסך של Squarespace (`…AOCAQ…`). מחרוזת חתוכה שקולה
+לרשומה שבורה, והמיילים שלך ייחתמו לא נכון וייכנסו לספאם.
+
+המקור האמין ביותר — **מסוף Workspace**:
+אפליקציות ← Google Workspace ← Gmail ← **אימות מיילים** (Authenticate email).
+שם הערך מוצג במלואו עם כפתור העתקה.
+
+חלופה: `mxtoolbox.com/dkim.aspx`, סלקטור `google`, דומיין `samuel-diamonds.io`.
+
+### לא צריך להעביר
+
+| רשומה | למה לא |
+|---|---|
+| ארבע רשומות `A` ל-`198.185.159.x` / `198.49.23.x` | מצביעות על דף חנייה של Squarespace שאינך משתמש בו |
+| `CNAME www → ext-sq.squarespace.com` | אותו דבר |
+| רשומת `HTTPS` | של אחסון Squarespace |
+| `CNAME _domainconnect` | שירות פנימי של Squarespace |
+
+**המשמעות:** אחרי המעבר, `samuel-diamonds.io` עצמו לא יצביע לשום מקום —
+רק `shop.samuel-diamonds.io` יעבוד. זה בסדר כל עוד אין לך אתר. כשיהיה,
+מוסיפים רשומה ב-Cloudflare.
+
+### אימות הדומיין מול Google
+
+אין רשומת `google-site-verification` — האימות נעשה דרך הקשר בין
+Google Domains ל-Workspace. המעבר לא אמור לבטל אותו. אם Google תבקש
+אימות מחדש, היא תיתן רשומת TXT להוסיף ב-Cloudflare.
 
 ## 4. להחליף nameservers ב-Squarespace
+
+> ### לפני הכל — DNSSEC
+>
+> בתפריט הצדדי של Squarespace יש **DNSSEC**. אם הוא **מופעל**, החלפת
+> nameservers תשבור את הדומיין **לגמרי** — לא רק את המייל. הדפדפן פשוט
+> לא ימצא אותו, ותיקון לוקח שעות.
+>
+> - [ ] היכנס ל-**DNSSEC** וודא שהוא **כבוי**. מופעל — כבה אותו,
+>       וחכה שעה לפני שממשיכים.
+> - [ ] אפשר להפעיל אותו מחדש מתוך Cloudflare אחרי שהמעבר הושלם.
 
 - [ ] העתק את שני ה-nameservers ש-Cloudflare נותנת
       (למשל `arya.ns.cloudflare.com`).
