@@ -9,6 +9,12 @@ if errorlevel 1 goto nosecret
 if not exist "%USERPROFILE%\.cloudflared\config.yml" goto notunnel
 
 echo.
+call "%~dp0_freeport.cmd"
+if errorlevel 1 (
+  pause
+  exit /b 1
+)
+
 echo   [1/2] Building for production...
 call pnpm build
 if errorlevel 1 goto failed
