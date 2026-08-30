@@ -1080,3 +1080,74 @@ table.data td.name {
   direction: ltr;
   text-align: start;
 }
+
+/* ============================================================
+   18. ציר זמן ההזמנה — מה שהלקוח רואה
+   ============================================================ */
+.journey {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.journey .stop {
+  display: grid;
+  grid-template-columns: 26px 1fr auto;
+  gap: var(--space-3);
+  align-items: start;
+  padding: 11px 0;
+  position: relative;
+}
+.journey .stop .dot {
+  width: 13px;
+  height: 13px;
+  margin: 4px auto 0;
+  border-radius: 50%;
+  border: 1px solid var(--rule, var(--line));
+  border-color: var(--line);
+  background: var(--surface-0);
+  position: relative;
+  z-index: 1;
+}
+/* הקו שמחבר בין התחנות */
+.journey .stop::before {
+  content: "";
+  position: absolute;
+  top: 20px;
+  bottom: -11px;
+  inset-inline-start: 12px;
+  width: 1px;
+  background: var(--line);
+}
+.journey .stop:last-child::before {
+  display: none;
+}
+.journey .stop.done .dot {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.journey .stop.done::before {
+  background: var(--accent-dim);
+}
+.journey .stop.current .dot {
+  background: var(--surface-0);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px var(--accent-wash);
+}
+.journey .stop .label {
+  font-size: 14.5px;
+  color: var(--ink-3);
+  padding-top: 1px;
+}
+.journey .stop.done .label {
+  color: var(--ink-2);
+}
+.journey .stop.current .label {
+  color: var(--ink-1);
+  font-weight: 600;
+}
+.journey .stop .when {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--ink-3);
+  direction: ltr;
+}

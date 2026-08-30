@@ -38,12 +38,18 @@ import {
 import WorkOrderPhotoUploader from "@/components/WorkOrderPhotoUploader";
 import ShareBox from "@/components/ShareBox";
 import { shareBase, whatsappLink } from "@/lib/share";
-import { getOrderWorkOrders, listSuppliers } from "@/lib/data";
+import { getOrderPhotos, getOrderWorkOrders, listSuppliers } from "@/lib/data";
+import {
+  deleteOrderPhotoAction,
+  toggleCustomerLinkAction,
+} from "@/lib/customer-actions";
+import OrderPhotoUploader from "@/components/OrderPhotoUploader";
 import { Badge, Cell, Empty, Field, PageHead, SectionHead, StatusBadge } from "@/components/ui";
 
 const TABS = [
   { key: "details", label: "פרטים" },
   { key: "items", label: "פריטים ותמחור" },
+  { key: "design", label: "עיצוב ולקוח" },
   { key: "factory", label: "מפעל" },
   { key: "payments", label: "תשלומים" },
   { key: "journal", label: "יומן" },
@@ -65,12 +71,16 @@ export default async function OrderPage({
   if (!full) notFound();
   const { order, customer, items, lines, totals, history, timeline, tasks, payments, balance } =
     full;
-  const [settings, customers, suppliers, workOrders] = await Promise.all([
+  const [settings, customers, suppliers, workOrders, designPhotos] = await Promise.all([
     getSettings(),
     listCustomers(),
     listSuppliers(),
     getOrderWorkOrders(id),
+    getOrderPhotos(id),
   ]);
+  const customerUrl = order.accessToken
+    ? `${shareBase(settings.publicBaseUrl)}/order/${order.accessToken}`
+    : null;
   const openWorkOrders = workOrders.filter((w) => w.isOpen).length;
 
   const money = (u: number, i: number) => (order.isExport ? usd(u) : ils(i));
@@ -472,6 +482,103 @@ export default async function OrderPage({
                   ) : null}
                 </div>
               </div>
+            </div>
+          </section>
+        </>
+      ) : null}
+
+      {/* ============================ עיצוב ולקוח ============================ */}
+      {tab === "design" ? (
+        <>
+          <section>
+            <SectionHead title="עמוד הלקוח" latin="CUSTOMER PAGE" />
+            <div className="panel stack">
+              <div className="row" style={{ justifyContent: "space-between" }}>
+                <div className="row" style={{ gap: 8 }}>
+                  {order.customerLinkEnabled ? (
+                    <Badge tone="good">הקישור פעיל</Badge>
+                  ) : (
+                    <Badge>הקישור כבוי</Badge>
+                  )}
+                  {order.designApprovedAt ? (
+                    <Badge tone="good">העיצוב אושר {date(order.designApprovedAt)}</Badge>
+                  ) : null}
+                </div>
+                <form action={toggleCustomerLinkAction}>
+                  <input type="hidden" name="id" value={order.id} />
+                  <button
+                    className={order.customerLinkEnabled ? "btn btn-sm" : "btn btn-sm btn-primary"}
+                    type="submit"
+                  >
+                    {order.customerLinkEnabled ? "כבה קישור" : "הפעל קישור ללקוח"}
+                  </button>
+                </form>
+              </div>
+
+              {order.customerLinkEnabled && customerUrl ? (
+                <ShareBox
+                  url={customerUrl}
+                  whatsappHref={whatsappLink(
+                    customer?.whatsapp ?? customer?.phone,
+                    `הזמנה ${order.orderNumber} — מעקב וצפייה בעיצוב\n${customerUrl}`
+                  )}
+                  hint="הלקוח רואה מצב, עיצוב ויתרה לתשלום. לא רואה עלות, רווח, ספק או מפעל."
+                />
+              ) : (
+                <p className="quiet" style={{ fontSize: 13 }}>
+                  הפעלת הקישור יוצרת כתובת קבועה שאפשר לשלוח ללקוח. כיבוי מחזיר 404 מיידית.
+                </p>
+              )}
+
+              {order.designApprovalNote ? (
+                <div className="panel-accent" style={{ padding: "12px 14px" }}>
+                  <span className="micro">הערת הלקוח באישור</span>
+                  <p style={{ fontSize: 13.5, marginTop: 4 }}>{order.designApprovalNote}</p>
+                </div>
+              ) : null}
+            </div>
+          </section>
+
+          <section>
+            <SectionHead title="תמונות עיצוב" latin="DESIGN" />
+            <div className="panel stack">
+              {designPhotos.length === 0 ? (
+                <p className="quiet" style={{ fontSize: 13 }}>
+                  עוד לא הועלו תמונות. כפתור אישור העיצוב מופיע ללקוח רק כשיש מה לאשר.
+                </p>
+              ) : (
+                <div className="gallery">
+                  {designPhotos.map((p) => (
+                    <figure key={p.id}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={order.accessToken ? `/order/${order.accessToken}/photo/${p.id}` : ""}
+                        alt={p.kind}
+                      />
+                      <figcaption>
+                        <span>{p.kind}</span>
+                        <form action={deleteOrderPhotoAction}>
+                          <input type="hidden" name="photoId" value={p.id} />
+                          <input type="hidden" name="orderId" value={order.id} />
+                          <button
+                            className="btn btn-sm btn-ghost btn-danger"
+                            style={{ padding: "1px 7px", fontSize: 11 }}
+                          >
+                            מחק
+                          </button>
+                        </form>
+                      </figcaption>
+                    </figure>
+                  ))}
+                </div>
+              )}
+
+              <hr className="hairline" style={{ margin: "4px 0" }} />
+              <OrderPhotoUploader orderId={order.id} />
+              <p className="quiet" style={{ fontSize: 12 }}>
+                ״עיצוב״ — סקיצות ורנדרים לאישור. ״מוכן״ — הפריט המוגמר, אחרי הייצור.
+                התמונות נראות רק דרך הקישור של ההזמנה.
+              </p>
             </div>
           </section>
         </>

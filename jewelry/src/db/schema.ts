@@ -98,6 +98,16 @@ export const orders = sqliteTable("orders", {
   depositPct: real("deposit_pct").notNull().default(30),
   greenInvoiceNumber: text("green_invoice_number"),
   notes: text("notes"),
+
+  /** עמוד הלקוח. הטוקן נוצר בהפעלת הקישור ולא משתנה אחר כך. */
+  accessToken: text("access_token").unique(),
+  customerLinkEnabled: integer("customer_link_enabled", { mode: "boolean" })
+    .notNull()
+    .default(false),
+  /** אישור העיצוב מגיע מהלקוח דרך העמוד שלו. */
+  designApprovedAt: text("design_approved_at"),
+  designApprovalNote: text("design_approval_note"),
+
   createdAt: now(),
   updatedAt: text("updated_at").notNull().$defaultFn(() => new Date().toISOString()),
 });
@@ -417,5 +427,21 @@ export const workOrderPhotos = sqliteTable("work_order_photos", {
   data: blob("data", { mode: "buffer" }).notNull(),
   bytes: integer("bytes").notNull().default(0),
   caption: text("caption"),
+  createdAt: now(),
+});
+
+
+/** תמונות עיצוב של ההזמנה — מה שהלקוח רואה בעמוד שלו. */
+export const orderPhotos = sqliteTable("order_photos", {
+  id: id(),
+  orderId: text("order_id")
+    .notNull()
+    .references(() => orders.id, { onDelete: "cascade" }),
+  kind: text("kind").notNull().default("עיצוב"), // עיצוב / מוכן
+  mime: text("mime").notNull().default("image/jpeg"),
+  data: blob("data", { mode: "buffer" }).notNull(),
+  bytes: integer("bytes").notNull().default(0),
+  caption: text("caption"),
+  sortOrder: integer("sort_order").notNull().default(0),
   createdAt: now(),
 });

@@ -36,6 +36,13 @@
       "when": 1787932984656,
       "tag": "0004_famous_jack_power",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1788072628028,
+      "tag": "0005_slippery_goliath",
+      "breakpoints": true
     }
   ]
 }

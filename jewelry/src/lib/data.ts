@@ -715,3 +715,132 @@ export async function getStuckWorkOrders(thresholdDays = 10) {
     .filter((w) => (w.daysOut ?? 0) >= thresholdDays)
     .sort((a, b) => (b.daysOut ?? 0) - (a.daysOut ?? 0));
 }
+
+/* ---------------------------------------------------------------
+   עמוד הלקוח
+   --------------------------------------------------------------- */
+
+/** התחנות שהלקוח רואה בציר הזמן. שלבים פנימיים לא מופיעים כאן. */
+export const CUSTOMER_JOURNEY = [
+  { key: "הצעת מחיר", label: "הצעת מחיר" },
+  { key: "אושר + מקדמה", label: "אישור והזמנה" },
+  { key: "עיצוב", label: "עיצוב" },
+  { key: "אישור עיצוב", label: "אישור העיצוב" },
+  { key: "ייצור במפעל", label: "ייצור" },
+  { key: "בקרת איכות", label: "בקרת איכות" },
+  { key: "מוכן", label: "מוכן לאיסוף" },
+  { key: "נמסר", label: "נמסר" },
+] as const;
+
+/** באיזו תחנה ההזמנה נמצאת מבחינת הלקוח. */
+export function journeyIndexFor(status: string): number {
+  const order = [
+    "פנייה",
+    "הצעת מחיר",
+    "אושר + מקדמה",
+    "עיצוב",
+    "אישור עיצוב",
+    "ייצור במפעל",
+    "שיבוץ",
+    "גימור וציפוי",
+    "בקרת איכות",
+    "מוכן",
+    "נמסר",
+    "תשלום סופי",
+    "סגור",
+  ];
+  const pos = order.indexOf(status);
+  if (pos < 0) return 0;
+  // שלבי הייצור הפנימיים מוצגים ללקוח כ"ייצור"
+  let reached = -1;
+  CUSTOMER_JOURNEY.forEach((stage, i) => {
+    if (order.indexOf(stage.key) <= pos) reached = i;
+  });
+  return reached;
+}
+
+/** מה שהלקוח רואה. אין כאן עלות, רווח, מפעל או ספק. */
+export async function getCustomerView(token: string) {
+  const rows = await db
+    .select()
+    .from(schema.orders)
+    .where(eq(schema.orders.accessToken, token))
+    .limit(1);
+  const order = rows[0];
+  if (!order || !order.customerLinkEnabled) return null;
+
+  const [customer, items, photos, orderPayments, settings] = await Promise.all([
+    getCustomer(order.customerId),
+    db
+      .select()
+      .from(schema.orderItems)
+      .where(eq(schema.orderItems.orderId, order.id))
+      .orderBy(schema.orderItems.sortOrder),
+    db
+      .select({
+        id: schema.orderPhotos.id,
+        kind: schema.orderPhotos.kind,
+        caption: schema.orderPhotos.caption,
+      })
+      .from(schema.orderPhotos)
+      .where(eq(schema.orderPhotos.orderId, order.id))
+      .orderBy(schema.orderPhotos.sortOrder),
+    db.select().from(schema.payments).where(eq(schema.payments.orderId, order.id)),
+    getSettings(),
+  ]);
+
+  const lines = items.map((i) => priceItem(i, order.goldSpotSnapshot));
+  const totals = orderTotals(lines, {
+    isExport: order.isExport,
+    vatPct: order.vatSnapshot,
+    fx: order.fxSnapshot,
+    depositPct: order.depositPct,
+  });
+  const balance = balanceFor(totals, orderPayments, {
+    fx: order.fxSnapshot,
+    isExport: order.isExport,
+  });
+
+  return {
+    order,
+    customerName: customer?.name ?? "",
+    items,
+    photos,
+    settings,
+    totals,
+    balance,
+    stage: journeyIndexFor(order.status),
+  };
+}
+
+export async function getOrderPhoto(token: string, photoId: string) {
+  const orderRows = await db
+    .select({ id: schema.orders.id, enabled: schema.orders.customerLinkEnabled })
+    .from(schema.orders)
+    .where(eq(schema.orders.accessToken, token))
+    .limit(1);
+  const order = orderRows[0];
+  if (!order || !order.enabled) return null;
+  const rows = await db
+    .select()
+    .from(schema.orderPhotos)
+    .where(eq(schema.orderPhotos.id, photoId))
+    .limit(1);
+  const photo = rows[0];
+  if (!photo || photo.orderId !== order.id) return null;
+  return photo;
+}
+
+/** תמונות העיצוב בצד הניהולי. */
+export async function getOrderPhotos(orderId: string) {
+  return db
+    .select({
+      id: schema.orderPhotos.id,
+      kind: schema.orderPhotos.kind,
+      bytes: schema.orderPhotos.bytes,
+      caption: schema.orderPhotos.caption,
+    })
+    .from(schema.orderPhotos)
+    .where(eq(schema.orderPhotos.orderId, orderId))
+    .orderBy(schema.orderPhotos.sortOrder);
+}
