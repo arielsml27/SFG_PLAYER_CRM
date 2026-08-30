@@ -111,6 +111,7 @@ export default async function ItemPage({
         goldSpotUsdOz={full.order.goldSpotSnapshot}
         fx={full.order.fxSnapshot}
         defaultMultiplier={settings.defaultMultiplier}
+        defaultKarat={settings.defaultKarat}
         action={saveOrderItemAction}
       />
     </>

@@ -35,7 +35,7 @@ function productFields(fd: FormData) {
     name: str(fd, "name") ?? "דגם",
     category: str(fd, "category") ?? "טבעת",
     description: str(fd, "description"),
-    karat: str(fd, "karat") ?? "18K",
+    karat: str(fd, "karat") ?? "14K",
     metalColor: str(fd, "metalColor") ?? "צהוב",
     weightG: num(fd, "weightG"),
     centerStoneType: str(fd, "centerStoneType"),
@@ -74,6 +74,7 @@ export async function createProductAction(fd: FormData) {
     timesSold: 0,
     createdAt: nowIso(),
   });
+  await insertPhotos(id, fd);
   revalidatePath("/catalog");
   redirect(`/catalog/${id}`);
 }
@@ -83,6 +84,7 @@ export async function updateProductAction(fd: FormData) {
   const id = str(fd, "id");
   if (!id) return;
   await db.update(schema.products).set(productFields(fd)).where(eq(schema.products.id, id));
+  await insertPhotos(id, fd);
   revalidatePath(`/catalog/${id}`);
   revalidatePath("/catalog");
   redirect(`/catalog/${id}`);
@@ -161,15 +163,13 @@ export async function saveItemAsProductAction(fd: FormData) {
    --------------------------------------------------------------- */
 const MAX_PHOTO_BYTES = 3 * 1024 * 1024;
 
-export type UploadResult = { uploaded: number; at: number } | null;
-
-export async function uploadPhotosAction(
-  _prev: UploadResult,
-  fd: FormData
-): Promise<UploadResult> {
-  await requireUser();
-  const productId = str(fd, "productId");
-  if (!productId) return { uploaded: 0, at: Date.now() };
+/**
+ * קולט את כל שדות ה-`photo` מהטופס ושומר אותם כתמונות של הדגם.
+ * משותף לטופס הדגם (שמירה ותמונות בפעולה אחת) ולהעלאה מעמוד הדגם.
+ */
+async function insertPhotos(productId: string, fd: FormData): Promise<number> {
+  const entries = fd.getAll("photo").filter((e): e is string => typeof e === "string");
+  if (!entries.length) return 0;
 
   const existing = await db
     .select({ n: sql<number>`count(*)` })
@@ -178,8 +178,7 @@ export async function uploadPhotosAction(
   let order = Number(existing[0]?.n ?? 0);
   let uploaded = 0;
 
-  for (const entry of fd.getAll("photo")) {
-    if (typeof entry !== "string") continue;
+  for (const entry of entries) {
     const match = /^data:(image\/[a-z+]+);base64,(.+)$/i.exec(entry);
     if (!match) continue;
     const buffer = Buffer.from(match[2], "base64");
@@ -199,6 +198,20 @@ export async function uploadPhotosAction(
     });
     uploaded++;
   }
+  return uploaded;
+}
+
+export type UploadResult = { uploaded: number; at: number } | null;
+
+export async function uploadPhotosAction(
+  _prev: UploadResult,
+  fd: FormData
+): Promise<UploadResult> {
+  await requireUser();
+  const productId = str(fd, "productId");
+  if (!productId) return { uploaded: 0, at: Date.now() };
+
+  const uploaded = await insertPhotos(productId, fd);
 
   revalidatePath(`/catalog/${productId}`);
   revalidatePath("/catalog");

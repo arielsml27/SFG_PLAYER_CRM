@@ -2,36 +2,10 @@
 
 import { useActionState, useRef, useState } from "react";
 import { uploadPhotosAction, type UploadResult } from "@/lib/product-actions";
-
-const MAX_EDGE = 1600;
-const QUALITY = 0.85;
-
-type Pending = { name: string; dataUrl: string; kb: number };
-
-/**
- * מקטין כל תמונה בדפדפן לפני השליחה. תמונה מהטלפון היא 4–6MB;
- * אחרי ההקטנה היא כ-200KB, וכך קובץ הגיבוי היחיד נשאר קטן.
- */
-async function shrink(file: File): Promise<Pending> {
-  const bitmap = await createImageBitmap(file);
-  const scale = Math.min(1, MAX_EDGE / Math.max(bitmap.width, bitmap.height));
-  const w = Math.round(bitmap.width * scale);
-  const h = Math.round(bitmap.height * scale);
-
-  const canvas = document.createElement("canvas");
-  canvas.width = w;
-  canvas.height = h;
-  const ctx = canvas.getContext("2d");
-  if (!ctx) throw new Error("הדפדפן לא תומך בעיבוד תמונה");
-  ctx.drawImage(bitmap, 0, 0, w, h);
-  bitmap.close();
-
-  const dataUrl = canvas.toDataURL("image/jpeg", QUALITY);
-  return { name: file.name, dataUrl, kb: Math.round((dataUrl.length * 0.75) / 1024) };
-}
+import { shrinkAll, type ShrunkPhoto } from "@/lib/shrink-image";
 
 export default function PhotoUploader({ productId }: { productId: string }) {
-  const [pending, setPending] = useState<Pending[]>([]);
+  const [pending, setPending] = useState<ShrunkPhoto[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -53,11 +27,7 @@ export default function PhotoUploader({ productId }: { productId: string }) {
     setBusy(true);
     setError(null);
     try {
-      const shrunk: Pending[] = [];
-      for (const file of Array.from(files)) {
-        if (!file.type.startsWith("image/")) continue;
-        shrunk.push(await shrink(file));
-      }
+      const shrunk = await shrinkAll(files);
       setPending((p) => [...p, ...shrunk]);
     } catch (e) {
       setError(e instanceof Error ? e.message : "לא הצלחתי לקרוא את התמונה");

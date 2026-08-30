@@ -82,6 +82,7 @@ export async function saveSettingsAction(fd: FormData) {
     vatPct: num(fd, "vatPct", current.vatPct),
     defaultMultiplier: num(fd, "defaultMultiplier", current.defaultMultiplier),
     defaultDepositPct: num(fd, "defaultDepositPct", current.defaultDepositPct),
+    defaultKarat: str(fd, "defaultKarat") ?? current.defaultKarat,
     businessName: str(fd, "businessName") ?? current.businessName,
     whatsappNumber: str(fd, "whatsappNumber"),
     instagramHandle: str(fd, "instagramHandle"),
@@ -144,17 +145,27 @@ export async function updateCustomerAction(fd: FormData) {
   redirect(`/customers/${id}`);
 }
 
-export async function deleteCustomerAction(fd: FormData) {
+/**
+ * מחיקת לקוח מחזירה הודעה במקום לזרוק. לקוח עם הזמנות הוא מצב רגיל
+ * ולא תקלה — זריקה הייתה מחליפה את המסך במסך שגיאה ומאבדת את ההקשר.
+ */
+export async function deleteCustomerAction(
+  _prev: string | null,
+  fd: FormData
+): Promise<string | null> {
   await requireUser();
   const id = str(fd, "id");
-  if (!id) return;
+  if (!id) return "הלקוח לא נמצא";
+
   const orders = await db
     .select({ n: sql<number>`count(*)` })
     .from(schema.orders)
     .where(eq(schema.orders.customerId, id));
-  if (Number(orders[0]?.n ?? 0) > 0) {
-    throw new Error("לא ניתן למחוק לקוח שיש לו הזמנות. מחק או העבר את ההזמנות קודם.");
+  const n = Number(orders[0]?.n ?? 0);
+  if (n > 0) {
+    return `ללקוח ${n} הזמנות. אי אפשר למחוק לקוח שיש לו הזמנות — מחק אותן קודם, או שנה את הסטטוס שלו ל״לא פעיל״.`;
   }
+
   await db.delete(schema.customers).where(eq(schema.customers.id, id));
   revalidatePath("/customers");
   redirect("/customers");

@@ -24,6 +24,8 @@ export const settings = sqliteTable("settings", {
   vatPct: real("vat_pct").notNull().default(18),
   defaultMultiplier: real("default_multiplier").notNull().default(2),
   defaultDepositPct: real("default_deposit_pct").notNull().default(30),
+  /** הקראט שממנו מתחיל כל פריט ודגם חדש */
+  defaultKarat: text("default_karat").notNull().default("14K"),
   businessName: text("business_name").notNull().default("Samuel"),
 
   /** לכפתור הפנייה בעמודי השיתוף */

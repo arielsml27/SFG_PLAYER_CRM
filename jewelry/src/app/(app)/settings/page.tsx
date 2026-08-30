@@ -65,6 +65,15 @@ export default async function SettingsPage() {
                 defaultValue={settings.defaultDepositPct}
               />
             </Field>
+            <Field label="קראט ברירת מחדל" hint="ממנו מתחיל כל פריט ודגם חדש">
+              <select name="defaultKarat" defaultValue={settings.defaultKarat}>
+                {KARATS.map((k) => (
+                  <option key={k.label} value={k.label}>
+                    {k.label} — {k.fine}
+                  </option>
+                ))}
+              </select>
+            </Field>
             <Field label="שם העסק">
               <input name="businessName" defaultValue={settings.businessName} />
             </Field>

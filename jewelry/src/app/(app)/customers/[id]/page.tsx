@@ -2,8 +2,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db, schema } from "@/db";
 import { desc, eq } from "drizzle-orm";
-import { getCustomer, getCustomerOrders, getSettings } from "@/lib/data";
-import { addTimelineEventAction, deleteCustomerAction } from "@/lib/actions";
+import { getCustomer, getCustomerOrders } from "@/lib/data";
+import { addTimelineEventAction } from "@/lib/actions";
+import DeleteCustomer from "@/components/DeleteCustomer";
 import { TIMELINE_KINDS } from "@/lib/constants";
 import { date, dateTime, ils, usd } from "@/lib/format";
 import { orderTotals, priceItem } from "@/lib/pricing";
@@ -14,14 +15,13 @@ export default async function CustomerPage({ params }: { params: Promise<{ id: s
   const customer = await getCustomer(id);
   if (!customer) notFound();
 
-  const [orders, timeline, settings] = await Promise.all([
+  const [orders, timeline] = await Promise.all([
     getCustomerOrders(id),
     db
       .select()
       .from(schema.timelineEvents)
       .where(eq(schema.timelineEvents.customerId, id))
       .orderBy(desc(schema.timelineEvents.createdAt)),
-    getSettings(),
   ]);
 
   const allItems = await db.select().from(schema.orderItems);
@@ -178,15 +178,7 @@ export default async function CustomerPage({ params }: { params: Promise<{ id: s
       </section>
 
       <hr className="hairline" />
-      <form action={deleteCustomerAction}>
-        <input type="hidden" name="id" value={customer.id} />
-        <button type="submit" className="btn btn-ghost btn-sm btn-danger">
-          מחיקת לקוח
-        </button>
-        <span className="quiet" style={{ fontSize: 12, marginInlineStart: 10 }}>
-          אפשרי רק כשאין הזמנות מקושרות. {settings.businessName}
-        </span>
-      </form>
+      <DeleteCustomer id={customer.id} name={customer.name} orderCount={orders.length} />
     </>
   );
 }

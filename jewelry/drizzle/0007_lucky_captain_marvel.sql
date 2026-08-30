@@ -1,0 +1,1 @@
+ALTER TABLE `settings` ADD `default_karat` text DEFAULT '14K' NOT NULL;

@@ -25,6 +25,7 @@ type Props = {
   goldSpotUsdOz: number;
   fx: number;
   defaultMultiplier: number;
+  defaultKarat: string;
   action: (fd: FormData) => void;
 };
 
@@ -45,12 +46,13 @@ export default function ItemForm({
   goldSpotUsdOz,
   fx,
   defaultMultiplier,
+  defaultKarat,
   action,
 }: Props) {
   // הפריט הקיים גובר על הדגם; הדגם גובר על ברירות המחדל.
   const base = { ...seed, ...item } as ItemSeed;
   const [f, setF] = useState({
-    karat: base.karat ?? "18K",
+    karat: base.karat ?? defaultKarat,
     weightG: base.weightG ?? 0,
     centerPricePerCt: base.centerPricePerCt ?? 0,
     centerCaratTotal: base.centerCaratTotal ?? 0,
@@ -163,7 +165,7 @@ export default function ItemForm({
             <input
               type="number"
               name="centerPricePerCt"
-              step="1"
+              step="0.01"
               min="0"
               value={f.centerPricePerCt}
               onChange={(e) => set("centerPricePerCt")(N(e.target.value))}
@@ -188,7 +190,7 @@ export default function ItemForm({
             <input
               type="number"
               name="centerSettingPrice"
-              step="1"
+              step="0.01"
               min="0"
               value={f.centerSettingPrice}
               onChange={(e) => set("centerSettingPrice")(N(e.target.value))}
@@ -239,7 +241,7 @@ export default function ItemForm({
               <input
                 type="number"
                 name="sidePricePerCt"
-                step="1"
+                step="0.01"
                 min="0"
                 value={f.sidePricePerCt}
                 onChange={(e) => set("sidePricePerCt")(N(e.target.value))}
@@ -262,7 +264,7 @@ export default function ItemForm({
               <input
                 type="number"
                 name="sideSettingPrice"
-                step="0.5"
+                step="0.01"
                 min="0"
                 value={f.sideSettingPrice}
                 onChange={(e) => set("sideSettingPrice")(N(e.target.value))}
@@ -301,7 +303,7 @@ export default function ItemForm({
             <input
               type="number"
               name="modelPrice"
-              step="1"
+              step="0.01"
               min="0"
               disabled={!f.modelOn}
               value={f.modelPrice}
@@ -312,7 +314,7 @@ export default function ItemForm({
             <input
               type="number"
               name="goldsmithCost"
-              step="1"
+              step="0.01"
               min="0"
               value={f.goldsmithCost}
               onChange={(e) => set("goldsmithCost")(N(e.target.value))}
@@ -322,7 +324,7 @@ export default function ItemForm({
             <input
               type="number"
               name="rhodiumCost"
-              step="1"
+              step="0.01"
               min="0"
               value={f.rhodiumCost}
               onChange={(e) => set("rhodiumCost")(N(e.target.value))}
@@ -332,7 +334,7 @@ export default function ItemForm({
             <input
               type="number"
               name="boxCost"
-              step="0.5"
+              step="0.01"
               min="0"
               value={f.boxCost}
               onChange={(e) => set("boxCost")(N(e.target.value))}
@@ -342,7 +344,7 @@ export default function ItemForm({
             <input
               type="number"
               name="bagCost"
-              step="0.5"
+              step="0.01"
               min="0"
               value={f.bagCost}
               onChange={(e) => set("bagCost")(N(e.target.value))}
@@ -352,7 +354,7 @@ export default function ItemForm({
             <input
               type="number"
               name="packagingCost"
-              step="0.5"
+              step="0.01"
               min="0"
               value={f.packagingCost}
               onChange={(e) => set("packagingCost")(N(e.target.value))}
@@ -426,7 +428,7 @@ export default function ItemForm({
             <input
               type="number"
               name="priceOverrideUsd"
-              step="1"
+              step="0.01"
               min="0"
               value={f.priceOverrideUsd ?? ""}
               onChange={(e) =>

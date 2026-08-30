@@ -20,6 +20,7 @@ export async function getSettings(): Promise<Settings> {
     vatPct: 18,
     defaultMultiplier: 2,
     defaultDepositPct: 30,
+    defaultKarat: "14K",
     businessName: "Samuel",
     whatsappNumber: null,
     instagramHandle: null,
