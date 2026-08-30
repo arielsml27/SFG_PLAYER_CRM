@@ -537,6 +537,22 @@ export default async function OrderPage({
                   .
                 </p>
               )}
+
+              <hr className="hairline" style={{ margin: "4px 0" }} />
+              <span className="micro">תמונות ההצעה</span>
+              {designPhotos.length ? (
+                <div className="photo-strip">
+                  {designPhotos.slice(0, 6).map((p) => (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img key={p.id} src={`/photos/order/${p.id}`} alt="" />
+                  ))}
+                </div>
+              ) : null}
+              <OrderPhotoUploader orderId={order.id} />
+              <p className="quiet" style={{ fontSize: 12 }}>
+                שתי התמונות הראשונות מסוג ״עיצוב״ הן אלה שמופיעות בהצעה. בלי תמונות ההצעה
+                עדיין תקינה — מופיעים שני ריבועים ריקים במקומן.
+              </p>
             </div>
           </section>
 
@@ -602,7 +618,7 @@ export default async function OrderPage({
                     <figure key={p.id}>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
-                        src={order.accessToken ? `/order/${order.accessToken}/photo/${p.id}` : ""}
+                        src={`/photos/order/${p.id}`}
                         alt={p.kind}
                       />
                       <figcaption>

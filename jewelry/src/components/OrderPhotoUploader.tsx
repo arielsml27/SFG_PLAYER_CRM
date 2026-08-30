@@ -2,27 +2,13 @@
 
 import { useActionState, useRef, useState } from "react";
 import { uploadOrderPhotosAction } from "@/lib/customer-actions";
-
-const MAX_EDGE = 1600;
-type Pending = { name: string; dataUrl: string };
-
-async function shrink(file: File): Promise<Pending> {
-  const bitmap = await createImageBitmap(file);
-  const scale = Math.min(1, MAX_EDGE / Math.max(bitmap.width, bitmap.height));
-  const canvas = document.createElement("canvas");
-  canvas.width = Math.round(bitmap.width * scale);
-  canvas.height = Math.round(bitmap.height * scale);
-  const ctx = canvas.getContext("2d");
-  if (!ctx) throw new Error("הדפדפן לא תומך בעיבוד תמונה");
-  ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-  bitmap.close();
-  return { name: file.name, dataUrl: canvas.toDataURL("image/jpeg", 0.85) };
-}
+import { shrinkAll, type ShrunkPhoto } from "@/lib/shrink-image";
 
 /** העלאת סקיצות ותמונות של הפריט המוגמר, שהלקוח יראה בעמוד שלו. */
 export default function OrderPhotoUploader({ orderId }: { orderId: string }) {
-  const [pending, setPending] = useState<Pending[]>([]);
+  const [pending, setPending] = useState<ShrunkPhoto[]>([]);
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const [, formAction, sending] = useActionState(async (_: null, fd: FormData) => {
     await uploadOrderPhotosAction(fd);
@@ -33,12 +19,14 @@ export default function OrderPhotoUploader({ orderId }: { orderId: string }) {
   async function onPick(files: FileList | null) {
     if (!files?.length) return;
     setBusy(true);
+    setError(null);
     try {
-      const out: Pending[] = [];
-      for (const f of Array.from(files)) {
-        if (f.type.startsWith("image/")) out.push(await shrink(f));
-      }
+      const out = await shrinkAll(files);
       setPending((p) => [...p, ...out]);
+    } catch (e) {
+      // קובץ פגום או פורמט שהדפדפן לא מפענח. בלי ההודעה הזו הבחירה
+      // פשוט לא עושה כלום, וזה נראה כאילו ההעלאה לא קיימת.
+      setError(e instanceof Error ? e.message : "לא הצלחתי לקרוא את התמונה");
     } finally {
       setBusy(false);
       if (inputRef.current) inputRef.current.value = "";
@@ -74,6 +62,11 @@ export default function OrderPhotoUploader({ orderId }: { orderId: string }) {
         ) : null}
         {busy ? <span className="quiet">מעבד…</span> : null}
       </div>
+      {error ? (
+        <p className="danger" style={{ fontSize: 13 }}>
+          {error}
+        </p>
+      ) : null}
       {pending.length ? (
         <div className="photo-strip">
           {pending.map((p, i) => (

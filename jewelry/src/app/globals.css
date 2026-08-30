@@ -1397,3 +1397,70 @@ table.data td.name {
     break-inside: avoid;
   }
 }
+
+/* ---------------------------------------------------------------
+   תפריט פעולות בשורת ההזמנה
+   הפעולות שעושים על הזמנה בלי להיכנס אליה. מרונדר ל-body וממוקם
+   position: fixed מול הכפתור, כי הטבלה יושבת ב-overflow-x וחותכת
+   כל דבר שנפתח מתוכה.
+   --------------------------------------------------------------- */
+.row-menu {
+  position: relative;
+  display: inline-flex;
+}
+.row-menu-pop {
+  position: fixed;
+  z-index: 90;
+  max-height: calc(100vh - 24px);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px;
+  background: var(--surface-2);
+  border: 1px solid var(--accent-hair);
+  box-shadow: 0 18px 40px rgb(0 0 0 / 0.45);
+  text-align: start;
+}
+.row-menu-pop .micro {
+  padding: 4px 6px 2px;
+}
+.row-menu-pop button,
+.row-menu-pop a {
+  display: block;
+  width: 100%;
+  text-align: start;
+  background: none;
+  border: 0;
+  padding: 7px 8px;
+  font: inherit;
+  font-size: 13px;
+  color: var(--ink-1);
+  cursor: pointer;
+  text-decoration: none;
+}
+.row-menu-pop button:hover,
+.row-menu-pop a:hover {
+  background: var(--surface-3, rgb(255 255 255 / 0.05));
+  color: var(--accent);
+}
+.row-menu-pop button.primary {
+  color: var(--accent);
+  font-weight: 600;
+}
+.row-menu-pop button.danger {
+  color: var(--danger);
+}
+.row-menu-pop .sep {
+  border-top: 1px solid var(--accent-hair);
+  margin: 6px 0 2px;
+}
+.row-menu-pop p.quiet {
+  font-size: 12.5px;
+  line-height: 1.6;
+  padding: 2px 8px 6px;
+}
+.row-menu-pop .copied {
+  font-size: 12px;
+  padding: 4px 8px 0;
+}

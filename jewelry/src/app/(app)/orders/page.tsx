@@ -1,8 +1,10 @@
 import Link from "next/link";
-import { listOrders } from "@/lib/data";
+import { getSettings, listOrders } from "@/lib/data";
 import { ALL_ORDER_STATUSES } from "@/lib/constants";
 import { date, ils, relativeDays, usd } from "@/lib/format";
 import { Badge, Empty, PageHead, StatusBadge } from "@/components/ui";
+import OrderRowMenu from "@/components/OrderRowMenu";
+import { shareBase } from "@/lib/share";
 
 export default async function OrdersPage({
   searchParams,
@@ -10,7 +12,11 @@ export default async function OrdersPage({
   searchParams: Promise<{ status?: string; q?: string }>;
 }) {
   const { status, q } = await searchParams;
-  const orders = await listOrders({ status, query: q });
+  const [orders, settings] = await Promise.all([
+    listOrders({ status, query: q }),
+    getSettings(),
+  ]);
+  const base = shareBase(settings.publicBaseUrl);
 
   return (
     <>
@@ -50,6 +56,7 @@ export default async function OrdersPage({
                 <th>פריטים</th>
                 <th>מסירה</th>
                 <th>סה״כ</th>
+                <th />
               </tr>
             </thead>
             <tbody>
@@ -82,6 +89,18 @@ export default async function OrdersPage({
                       <span className={overdue ? "danger" : "muted"}>{date(o.promisedDate)}</span>
                     </td>
                     <td className="num">{o.isExport ? usd(o.totalUsd) : ils(o.totalIls)}</td>
+                    <td style={{ textAlign: "end" }}>
+                      <OrderRowMenu
+                        orderId={o.id}
+                        orderNumber={o.orderNumber}
+                        accessToken={o.accessToken}
+                        quoteEnabled={o.quoteEnabled}
+                        customerLinkEnabled={o.customerLinkEnabled}
+                        itemCount={o.itemCount}
+                        quoteUrl={o.accessToken ? `${base}/quote/${o.accessToken}` : null}
+                        customerUrl={o.accessToken ? `${base}/order/${o.accessToken}` : null}
+                      />
+                    </td>
                   </tr>
                 );
               })}

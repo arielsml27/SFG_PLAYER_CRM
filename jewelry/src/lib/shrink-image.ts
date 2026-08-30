@@ -11,7 +11,13 @@ export const QUALITY = 0.85;
 export type ShrunkPhoto = { name: string; dataUrl: string; kb: number };
 
 export async function shrinkImage(file: File): Promise<ShrunkPhoto> {
-  const bitmap = await createImageBitmap(file);
+  let bitmap: ImageBitmap;
+  try {
+    bitmap = await createImageBitmap(file);
+  } catch {
+    // createImageBitmap זורק הודעה באנגלית שלא אומרת כלום למי שבחר קובץ.
+    throw new Error(`לא הצלחתי לקרוא את "${file.name}" — הקובץ פגום או בפורמט שהדפדפן לא מכיר.`);
+  }
   const scale = Math.min(1, MAX_EDGE / Math.max(bitmap.width, bitmap.height));
   const w = Math.round(bitmap.width * scale);
   const h = Math.round(bitmap.height * scale);

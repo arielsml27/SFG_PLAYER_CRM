@@ -100,17 +100,14 @@ export default async function QuotePage({ params }: { params: Promise<{ token: s
             <SectionHead title={items.length > 1 ? item.name : "הפריט"} latin="ITEM DETAILS" />
             <div className="quote-item">
               <div className="quote-shots">
-                {photos.length ? (
-                  photos.slice(0, 2).map((p) => (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img key={p.id} src={`/quote/${token}/photo/${p.id}`} alt={item.name} />
-                  ))
-                ) : (
-                  <>
-                    <div className="slot" />
-                    <div className="slot" />
-                  </>
-                )}
+                {photos.slice(0, 2).map((p) => (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img key={p.id} src={`/quote/${token}/photo/${p.id}`} alt={item.name} />
+                ))}
+                {/* תמיד שני ריבועים: תמונה אחת לבדה משאירה חור בפריסה */}
+                {Array.from({ length: Math.max(0, 2 - photos.length) }, (_, i) => (
+                  <div key={`slot-${i}`} className="slot" />
+                ))}
               </div>
 
               <div className="stack-sm">
