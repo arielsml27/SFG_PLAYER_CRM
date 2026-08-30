@@ -1,7 +1,8 @@
 import { db, schema } from "@/db";
 import { desc } from "drizzle-orm";
 import { getSettings } from "@/lib/data";
-import { saveSettingsAction } from "@/lib/actions";
+import { runBackupAction, saveSettingsAction } from "@/lib/actions";
+import { backupDir, isOffMachine, listBackups } from "@/lib/backup";
 import {
   KARATS,
   MULTIPLIER_TIERS,
@@ -9,10 +10,13 @@ import {
   marginPctFromMultiplier,
 } from "@/lib/pricing";
 import { dateTime, ils, pct, usd } from "@/lib/format";
-import { Field, PageHead, SectionHead } from "@/components/ui";
+import { Badge, Cell, Field, PageHead, SectionHead } from "@/components/ui";
 
 export default async function SettingsPage() {
   const settings = await getSettings();
+  const backups = listBackups();
+  const backupBytes = backups.reduce((a, b) => a + b.bytes, 0);
+  const offMachine = isOffMachine();
   const history = await db
     .select()
     .from(schema.rateHistory)
@@ -165,6 +169,84 @@ export default async function SettingsPage() {
               </tbody>
             </table>
           </div>
+        </div>
+      </section>
+
+      <section>
+        <SectionHead title="גיבוי" latin="BACKUP" />
+        <div className="panel stack">
+          <div
+            className="cell-grid"
+            style={{ gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))" }}
+          >
+            <Cell
+              label="גיבוי אחרון"
+              value={backups[0] ? dateTime(backups[0].createdAt.toISOString()) : "עוד לא גובה"}
+            />
+            <Cell label="כמה נשמרו" value={<span className="num">{backups.length}</span>} />
+            <Cell
+              label="נפח"
+              value={<span className="num">{(backupBytes / 1024 / 1024).toFixed(1)}MB</span>}
+            />
+          </div>
+
+          <div className="row" style={{ justifyContent: "space-between" }}>
+            <span className="quiet num" style={{ fontSize: 12, direction: "ltr" }}>
+              {backupDir()}
+            </span>
+            <form action={runBackupAction}>
+              <button className="btn btn-primary btn-sm" type="submit">
+                גבה עכשיו
+              </button>
+            </form>
+          </div>
+
+          {offMachine ? (
+            <div className="row">
+              <Badge tone="good">הגיבוי יוצא מהמחשב</Badge>
+              <span className="quiet" style={{ fontSize: 12.5 }}>
+                תיקיית הגיבוי מוגדרת דרך BACKUP_DIR.
+              </span>
+            </div>
+          ) : (
+            <div className="panel-accent" style={{ padding: "12px 14px" }}>
+              <span className="micro warn">הגיבוי לא עוזב את המחשב</span>
+              <p style={{ fontSize: 13, marginTop: 4, lineHeight: 1.7 }}>
+                הגיבויים נשמרים ליד קובץ המערכת. זה מגן מפני טעות, לא מפני דיסק
+                שנשרף או מחשב שנגנב. הגדר <code>BACKUP_DIR</code> ב-<code>.env.local</code>{" "}
+                לתיקייה מסונכרנת ב-Google Drive, והגיבוי יעזוב את המחשב מעצמו.
+              </p>
+            </div>
+          )}
+
+          {backups.length > 0 ? (
+            <div className="table-scroll">
+              <table className="data" style={{ minWidth: 320 }}>
+                <thead>
+                  <tr>
+                    <th>קובץ</th>
+                    <th>מתי</th>
+                    <th>גודל</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {backups.slice(0, 8).map((b) => (
+                    <tr key={b.name}>
+                      <td className="num muted">{b.name}</td>
+                      <td className="num quiet">{dateTime(b.createdAt.toISOString())}</td>
+                      <td className="num">{(b.bytes / 1024 / 1024).toFixed(1)}MB</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : null}
+
+          <p className="quiet" style={{ fontSize: 12 }}>
+            גיבוי רץ אוטומטית בעליית המערכת ואחת ליום. נשמרים שבעת האחרונים,
+            ובנוסף אחד מכל חודש בשנה האחרונה. כל גיבוי נבדק בבדיקת שלמות לפני
+            שהוא נשמר.
+          </p>
         </div>
       </section>
 

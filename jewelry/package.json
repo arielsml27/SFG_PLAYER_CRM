@@ -13,7 +13,8 @@
     "db:seed": "node scripts/seed.mjs",
     "setup:secret": "node scripts/setup-secret.mjs",
     "tunnel": "node scripts/tunnel.mjs",
-    "setup:tunnel": "node scripts/setup-tunnel.mjs"
+    "setup:tunnel": "node scripts/setup-tunnel.mjs",
+    "backup": "node scripts/backup.mjs"
   },
   "dependencies": {
     "date-fns": "^4.4.0",

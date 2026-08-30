@@ -527,3 +527,13 @@ export async function deletePaymentAction(fd: FormData) {
   revalidatePath("/receivables");
   revalidatePath("/");
 }
+
+/* ---------------------------------------------------------------
+   גיבוי
+   --------------------------------------------------------------- */
+export async function runBackupAction() {
+  await requireUser();
+  const { runBackup } = await import("./backup");
+  runBackup();
+  revalidatePath("/settings");
+}
