@@ -6,6 +6,62 @@
 
 ---
 
+## חלק ‏0 — להביא את הקוד למחשב שלך
+
+המערכת רצה **על המחשב שלך**. המנהרה רק פותחת אליה דלת מבחוץ; היא לא
+מארחת כלום. לכן לפני הכל צריך שהקוד יהיה כאן.
+
+### מה צריך להיות מותקן
+
+בודקים בשורת פקודה (cmd) — שלוש שורות, אחת-אחת:
+
+```
+node -v      → צריך v22.13 ומעלה (מומלץ v24)
+pnpm -v      → כל גרסה
+git --version
+```
+
+חסר משהו:
+
+| חסר | להתקין |
+|---|---|
+| Node | `winget install --id OpenJS.NodeJS.LTS` |
+| pnpm | `corepack enable pnpm` (מגיע עם Node) |
+| git | `winget install --id Git.Git` |
+
+אחרי כל התקנה — **לסגור את חלון ה-cmd ולפתוח חדש**, אחרת הפקודה החדשה
+לא נקלטת.
+
+> **למה Node 22.13 ומעלה:** המערכת משתמשת ב-SQLite המובנה של Node
+> (`node:sqlite`). בגרסאות ישנות יותר הוא לא קיים, והמערכת לא תעלה.
+
+### הורדה והרצה ראשונה
+
+```bash
+cd %USERPROFILE%\Documents
+git clone https://github.com/arielsml27/SFG_PLAYER_CRM.git
+cd SFG_PLAYER_CRM\jewelry
+pnpm install
+pnpm db:migrate
+node scripts/seed.mjs your@email סיסמה-ארוכה-וקשה
+pnpm dev
+```
+
+נפתח ב-`http://localhost:3000`. נכנסים עם המייל והסיסמה שהזנת.
+
+מכאן והלאה, כדי לעדכן לגרסה חדשה:
+
+```bash
+git pull
+pnpm install
+pnpm db:migrate
+```
+
+`jewelry.db` — קובץ הנתונים — **לא נכנס לגיט**. הוא נשאר אצלך ו-`git pull`
+לא נוגע בו.
+
+---
+
 ## חלק א׳ — לפני שנפתחים החוצה (חובה)
 
 ### 1. סוד חתימה
