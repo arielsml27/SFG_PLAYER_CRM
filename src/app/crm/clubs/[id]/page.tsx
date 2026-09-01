@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getClubDetail, getAllClubs, getAllCrmUsers, getPlayerPickerList } from "@/lib/data";
-import { updateClub, addClubContact, deleteClubContact, deleteClub } from "@/lib/club-actions";
+import { updateClub, addClubContact, deleteClubContact, deleteClub, addClubTeam, deleteClubTeam, addClubTeamContact, deleteClubTeamContact } from "@/lib/club-actions";
 import { createRequest, updateRequest, deleteRequest, addProposedPlayer, removeProposedPlayer } from "@/lib/request-actions";
 import { getCurrentCrmUser } from "@/lib/current-user";
 import { REQUEST_STATUS_LABELS } from "@/lib/constants";
@@ -39,7 +39,7 @@ export default async function ClubDetailPage({
   ]);
 
   if (!detail) notFound();
-  const { club, contacts, requests } = detail;
+  const { club, contacts, teams, requests } = detail;
   const isAdmin = currentUser?.role === "ADMIN";
 
   return (
@@ -85,7 +85,7 @@ export default async function ClubDetailPage({
         {isAdmin && (
           <form action={deleteClub.bind(null, club.id)}>
             <ConfirmSubmitButton
-              confirmMessage={`למחוק את ${club.name}? הפעולה תמחק גם את אנשי הקשר של המועדון ולא ניתן לבטל אותה.`}
+              confirmMessage={`למחוק את ${club.name}? הפעולה תמחק גם את אאשי הקשר של המועדון ולא ניתן לבטל אותה.`}
               className="btn btn-outline btn-sm"
             >
               <Trash2 size={13} />
@@ -159,6 +159,103 @@ export default async function ClubDetailPage({
             <div>
               <label className="field-label">אימייל</label>
               <input name="email" className="input" />
+            </div>
+            <div className="md:col-span-2">
+              <button type="submit" className="btn btn-gold btn-sm">
+                הוסף
+              </button>
+            </div>
+          </form>
+        </details>
+      </div>
+
+      <div className="card p-4">
+        <h2 className="font-semibold mb-3">תתי-קבוצות (נוער, נערים א', נערים · וכו)</h2>
+        <div className="space-y-3">
+          {teams.map((t) => (
+            <div key={t.id} className="border rounded-lg p-3" style={{ borderColor: "var(--border)" }}>
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <span className="font-medium">{t.name}</span>
+                  {t.notes && (
+                    <span className="mr-2 text-xs" style={{ color: "var(--muted)" }}>
+                      · {t.notes}
+                    </span>
+                  )}
+                </div>
+                <form action={deleteClubTeam.bind(null, club.id, t.id)}>
+                  <button type="submit" className="btn btn-outline btn-sm">
+                    <Trash2 size={12} />
+                  </button>
+                </form>
+              </div>
+
+              <div className="mt-2 space-y-1.5">
+                {t.contacts.map((c: any) => (
+                  <div
+                    key={c.id}
+                    className="flex items-center justify-between gap-3 text-sm border-t pt-1.5"
+                    style={{ borderColor: "var(--border)" }}
+                  >
+                    <div>
+                      <span className="font-medium">{c.name}</span>
+                      {c.role && (
+                        <span className="mr-2" style={{ color: "var(--muted)" }}>
+                          · {c.role}
+                        </span>
+                      )}
+                      <div className="text-xs" style={{ color: "var(--muted)" }}>
+                        {[c.phone, c.email].filter(Boolean).join(" · ")}
+                      </div>
+                    </div>
+                    <form action={deleteClubTeamContact.bind(null, club.id, c.id)}>
+                      <button type="submit" className="btn btn-outline btn-sm">
+                        <Trash2 size={11} />
+                      </button>
+                    </form>
+                  </div>
+                ))}
+              </div>
+
+              <details className="mt-2">
+                <summary className="cursor-pointer text-xs flex items-center gap-1.5" style={{ color: "var(--gold)" }}>
+                  <Plus size={12} />
+                  הוסף איש קשר ל׳בומצה
+                </summary>
+                <form action={addClubTeamContact.bind(null, club.id, t.id)} className="grid grid-cols-2 gap-2 mt-2">
+                  <input name="name" placeholder="שם *" required className="input" />
+                  <input name="role" placeholder="תפקיד (מאמן/מנהל נוער...)" className="input" />
+                  <input name="phone" placeholder="טלפון" className="input" />
+                  <input name="email" placeholder="אימייל" className="input" />
+                  <div className="col-span-2">
+                    <button type="submit" className="btn btn-gold btn-sm">
+                      הוסף
+                    </button>
+                  </div>
+                </form>
+              </details>
+            </div>
+          ))}
+          {teams.length === 0 && (
+            <p className="text-sm" style={{ color: "var(--muted)" }}>
+              אין עדיין תתי-קבוצות
+            </p>
+          )}
+        </div>
+
+        <details className="mt-3">
+          <summary className="cursor-pointer text-sm flex items-center gap-1.5" style={{ color: "var(--gold)" }}>
+            <Plus size={14} />
+            הוסף תת-קבוצה
+          </summary>
+          <form action={addClubTeam.bind(null, club.id)} className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
+            <div>
+              <label className="field-label">שם הקבוצה * (למשל: נערים א')</label>
+              <input name="name" required className="input" />
+            </div>
+            <div>
+              <label className="field-label">הערות</label>
+              <input name="notes" className="input" />
             </div>
             <div className="md:col-span-2">
               <button type="submit" className="btn btn-gold btn-sm">
@@ -282,7 +379,7 @@ export default async function ClubDetailPage({
         <details className="mt-3">
           <summary className="cursor-pointer text-sm flex items-center gap-1.5" style={{ color: "var(--gold)" }}>
             <Plus size={14} />
-            בקשה חדשה למועדון הזה
+            בקשה חדשה למועדונים הזה
           </summary>
           <div className="mt-3">
             <RequestForm
@@ -297,7 +394,7 @@ export default async function ClubDetailPage({
       </div>
 
       <Link href="/crm/clubs" className="text-sm hover:underline" style={{ color: "var(--gold)" }}>
-        חזרה לרשימת המועדונים
+        → חזאר לנישואת המועדון
       </Link>
     </div>
   );
