@@ -38,6 +38,38 @@ export const clubContacts = sqliteTable("club_contacts", {
   createdAt: text("created_at").notNull().default(sql`(current_timestamp)`),
 });
 
+// ---------- Club sub-teams (age groups, e.g. נערים א', נוער, בוגרים) ----------
+export const clubTeams = sqliteTable("club_teams", {
+  id: id(),
+  clubId: text("club_id")
+    .notNull()
+    .references(() => clubs.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  notes: text("notes"),
+  createdAt: text("created_at").notNull().default(sql`(current_timestamp)`),
+});
+
+export const clubTeamContacts = sqliteTable("club_team_contacts", {
+  id: id(),
+  clubTeamId: text("club_team_id")
+    .notNull()
+    .references(() => clubTeams.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  role: text("role"),
+  phone: text("phone"),
+  email: text("email"),
+  createdAt: text("created_at").notNull().default(sql`(current_timestamp)`),
+});
+
+export const clubTeamsRelations = relations(clubTeams, ({ one, many }) => ({
+  club: one(clubs, { fields: [clubTeams.clubId], references: [clubs.id] }),
+  contacts: many(clubTeamContacts),
+}));
+
+export const clubTeamContactsRelations = relations(clubTeamContacts, ({ one }) => ({
+  team: one(clubTeams, { fields: [clubTeamContacts.clubTeamId], references: [clubTeams.id] }),
+}));
+
 // ---------- Players ----------
 export const players = sqliteTable("players", {
   id: id(),
@@ -502,6 +534,7 @@ export const clubsRelations = relations(clubs, ({ many }) => ({
   deals: many(deals),
   contacts: many(clubContacts),
   requests: many(clubRequests),
+  teams: many(clubTeams),
 }));
 
 export const clubContactsRelations = relations(clubContacts, ({ one }) => ({
