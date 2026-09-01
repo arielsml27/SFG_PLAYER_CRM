@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { players, clubContracts, representationAgreements, tasks, clubs, clubContacts, playerLinks, videos, documents, contacts, timelineEvents, deals, scoutingReports, questionnaireResponses, prospects, crmUsers, clubRequests, requestProposedPlayers, meetings } from "@/db/schema";
+import { players, clubContracts, representationAgreements, tasks, clubs, clubContacts, clubTeams, clubTeamContacts, playerLinks, videos, documents, contacts, timelineEvents, deals, scoutingReports, questionnaireResponses, prospects, crmUsers, clubRequests, requestProposedPlayers, meetings } from "@/db/schema";
 import { and, asc, desc, eq, gte, isNull, lte, like, or, sql } from "drizzle-orm";
 
 function todayISO() {
@@ -286,29 +286,51 @@ export async function getQuestionnaireResponses(playerId: string) {
   return db.select().from(questionnaireResponses).where(eq(questionnaireResponses.playerId, playerId));
 }
 
-export async function getAllClubs() {
-  return db.select().from(clubs).orderBy(asc(clubs.name));
+export async function getAllClubs(country?: string) {
+  const list = await db.select().from(clubs).orderBy(asc(clubs.name));
+  if (!country) return list;
+  return list.filter((c) => (c.country ?? "לא ידוע") === country);
+}
+
+export async function getCountriesWithClubCounts() {
+  const list = await db.select().from(clubs);
+  const counts = new Map<string, number>();
+  for (const c of list) {
+    const key = c.country?.trim() || "לא ידוע";
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+  return Array.from(counts.entries())
+    .map(([country, count]) => ({ country, count }))
+    .sort((a, b) => a.country.localeCompare(b.country, "he"));
 }
 
 export async function getClubDetail(id: string) {
   const club = (await db.select().from(clubs).where(eq(clubs.id, id)))[0];
   if (!club) return null;
 
-  const [contactList, requestRows, proposedRows, allPlayers, allUsers] = await Promise.all([
-    db.select().from(clubContacts).where(eq(clubContacts.clubId, id)).orderBy(desc(clubContacts.createdAt)),
-    db.select().from(clubRequests).where(eq(clubRequests.clubId, id)).orderBy(desc(clubRequests.createdAt)),
-    db.select().from(requestProposedPlayers),
-    db.select().from(players),
-    db.select().from(crmUsers),
-  ]);
+  const [contactList, requestRows, proposedRows, allPlayers, allUsers, teamRows, teamContactRows] =
+    await Promise.all([
+      db.select().from(clubContacts).where(eq(clubContacts.clubId, id)).orderBy(desc(clubContacts.createdAt)),
+      db.select().from(clubRequests).where(eq(clubRequests.clubId, id)).orderBy(desc(clubRequests.createdAt)),
+      db.select().from(requestProposedPlayers),
+      db.select().from(players),
+      db.select().from(crmUsers),
+      db.select().from(clubTeams).where(eq(clubTeams.clubId, id)).orderBy(asc(clubTeams.name)),
+      db.select().from(clubTeamContacts),
+    ]);
 
   const playerById = new Map(allPlayers.map((p) => [p.id, p]));
   const userById = new Map(allUsers.map((u) => [u.id, u]));
   const proposedByRequest = groupBy(proposedRows, (r) => r.requestId);
+  const teamContactsByTeam = groupBy(teamContactRows, (c) => c.clubTeamId);
 
   return {
     club,
     contacts: contactList,
+    teams: teamRows.map((t) => ({
+      ...t,
+      contacts: teamContactsByTeam.get(t.id) ?? [],
+    })),
     requests: requestRows.map((r) => ({
       ...r,
       handledBy: r.handledByUserId ? userById.get(r.handledByUserId) : undefined,
