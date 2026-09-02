@@ -1,28 +1,28 @@
 @import "tailwindcss";
 
 :root {
-  --background: #0c0d12;
-  --surface: #16171f;
-  --surface-2: #1e2029;
-  --foreground: #eef0f4;
-  --muted: #90939e;
-  --border: #2a2c37;
-  --sidebar-bg: #101119;
-  --sidebar-fg: #c7c9d4;
-  --gold: #5fe05f;
-  --navy: #8fb4ff;
+  --background: #0a0a0d;
+  --surface: #131317;
+  --surface-2: #1b1b21;
+  --foreground: #f4f4f6;
+  --muted: #8b8d99;
+  --border: #26262e;
+  --sidebar-bg: #060607;
+  --sidebar-fg: #d4d5db;
+  --gold: #93a8d6;
+  --navy: #93a8d6;
   --danger: #f77066;
   --danger-bg: rgba(247, 112, 102, 0.14);
   --warn: #f4b740;
   --warn-bg: rgba(244, 183, 64, 0.14);
-  --ok: #4ade80;
-  --ok-bg: rgba(74, 222, 128, 0.14);
+  --ok: #6ee0a8;
+  --ok-bg: rgba(110, 224, 168, 0.14);
 
-  --lp-bg: #08090c;
-  --lp-gold: #e3b563;
-  --lp-gold-soft: #f5dca4;
-  --lp-fg: #f5f6f8;
-  --lp-muted: #9a9ca6;
+  --lp-bg: #0a0a0d;
+  --lp-gold: #93a8d6;
+  --lp-gold-soft: #c3cdec;
+  --lp-fg: #f4f4f6;
+  --lp-muted: #8b8d99;
   --lp-glass-bg: rgba(255, 255, 255, 0.045);
   --lp-glass-border: rgba(255, 255, 255, 0.09);
 }
@@ -170,7 +170,7 @@ body {
 .badge-warn { background: var(--warn-bg); color: var(--warn); }
 .badge-ok { background: var(--ok-bg); color: var(--ok); }
 .badge-neutral { background: var(--surface-2); color: var(--muted); }
-.badge-gold { background: rgba(95, 224, 95, 0.14); color: var(--gold); }
+.badge-gold { background: rgba(179, 182, 207, 0.16); color: var(--gold); }
 
 .input {
   width: 100%;
@@ -208,7 +208,7 @@ label.field-label {
 }
 .btn:hover { opacity: 0.85; }
 .btn-primary { background: #4c5fd8; color: white; }
-.btn-gold { background: var(--gold); color: #06280c; }
+.btn-gold { background: var(--gold); color: #0a0a0d; }
 .btn-outline { background: var(--surface); color: var(--foreground); border-color: var(--border); }
 .btn-danger { background: var(--danger); color: #2b0705; }
 .btn-sm { padding: 0.3rem 0.6rem; font-size: 0.75rem; }
