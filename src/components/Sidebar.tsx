@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { Users, LayoutDashboard, ListChecks, Building2, Plus, LogOut, ShieldCheck, Eye, ClipboardList, CalendarClock } from "lucide-react";
 import { crmLogout } from "@/lib/crm-auth-actions";
@@ -28,17 +27,13 @@ export default function Sidebar({ currentUser }: { currentUser?: CurrentUserInfo
       style={{ background: "var(--sidebar-bg)", color: "var(--sidebar-fg)" }}
     >
       <div className="px-5 py-5 border-b border-white/10 flex items-center gap-3">
-        <Image
-          src="/logo-icon.png"
-          alt="SFG"
-          width={38}
-          height={38}
-          className="rounded-xl w-[38px] h-[38px]"
-        />
+        <svg width="34" height="34" viewBox="0 0 100 100" className="shrink-0">
+          <polygon points="0,10 30,10 50,58 70,10 100,10 58,100 42,100" fill="var(--sidebar-fg)" />
+        </svg>
         <div>
-          <div className="text-lg font-bold text-white leading-tight">SFG</div>
-          <div className="text-[11px]" style={{ color: "var(--gold)" }}>
-            Player CRM
+          <div className="text-lg font-bold text-white leading-tight tracking-[0.15em]">VERA</div>
+          <div className="text-[10px] tracking-[0.25em]" style={{ color: "var(--gold)" }}>
+            SPORTS GROUP
           </div>
         </div>
       </div>
@@ -54,7 +49,7 @@ export default function Sidebar({ currentUser }: { currentUser?: CurrentUserInfo
               className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                 active ? "" : "hover:bg-white/10"
               }`}
-              style={active ? { background: "var(--gold)", color: "#06280c" } : undefined}
+              style={active ? { background: "var(--gold)", color: "#0a0a0d" } : undefined}
             >
               <Icon size={17} />
               <span>{item.label}</span>
