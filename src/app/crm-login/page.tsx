@@ -1,4 +1,3 @@
-import Image from "next/image";
 import { crmLogin } from "@/lib/crm-auth-actions";
 
 export default async function CrmLoginPage({
@@ -17,11 +16,13 @@ export default async function CrmLoginPage({
     >
       <form action={crmLogin} className="card w-full max-w-sm p-8">
         <div className="flex items-center gap-3 mb-6">
-          <Image src="/logo-icon.png" alt="SFG" width={36} height={36} className="rounded-xl w-9 h-9" />
+          <svg width="32" height="32" viewBox="0 0 100 100" className="shrink-0">
+            <polygon points="0,10 30,10 50,58 70,10 100,10 58,100 42,100" fill="var(--foreground)" />
+          </svg>
           <div>
-            <div className="font-bold leading-tight">SFG</div>
-            <div className="text-xs" style={{ color: "var(--gold)" }}>
-              Player CRM
+            <div className="font-bold leading-tight tracking-[0.15em]">VERA</div>
+            <div className="text-[10px] tracking-[0.25em]" style={{ color: "var(--gold)" }}>
+              SPORTS GROUP
             </div>
           </div>
         </div>
