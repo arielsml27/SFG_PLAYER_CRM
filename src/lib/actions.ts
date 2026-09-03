@@ -35,9 +35,19 @@ import { generatePlayerAiSummaryText } from "@/lib/ai-summary";
 
 const PLAYER_PHOTO_DIR = path.join(process.cwd(), "public", "uploads", "players");
 
+// Some sources (e.g. saving an image from Google/Bing Images on Windows)
+// produce files named "*.jfif" or other uncommon extensions. Browsers and
+// static file servers don't reliably serve/display those, so we normalize
+// anything unrecognized to .jpg - the file content itself is a normal JPEG.
+const SAFE_IMAGE_EXTENSIONS = new Set([".jpg", ".jpeg", ".png", ".webp", ".gif"]);
+function safeImageExtension(filename: string): string {
+  const ext = path.extname(filename).toLowerCase();
+  return SAFE_IMAGE_EXTENSIONS.has(ext) ? ext : ".jpg";
+}
+
 async function savePlayerPhoto(file: File): Promise<string> {
   await mkdir(PLAYER_PHOTO_DIR, { recursive: true });
-  const ext = path.extname(file.name) || ".jpg";
+  const ext = safeImageExtension(file.name);
   const filename = `${crypto.randomUUID()}${ext}`;
   await writeFile(path.join(PLAYER_PHOTO_DIR, filename), Buffer.from(await file.arrayBuffer()));
   return `/uploads/players/${filename}`;
