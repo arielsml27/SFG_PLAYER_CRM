@@ -13,7 +13,7 @@ export default function AppShell({
   currentUser?: CurrentUserInfo;
 }) {
   const pathname = usePathname();
-  const isPrintable = pathname?.endsWith("/export");
+  const isPrintable = pathname?.endsWith("/export") || pathname?.endsWith("/proposal");
 
   if (isPrintable) {
     return <main className="min-h-full w-full">{children}</main>;
