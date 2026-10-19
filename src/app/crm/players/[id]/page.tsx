@@ -70,7 +70,7 @@ import {
   guessPositionGroup,
   RELOCATE_LABELS,
 } from "@/lib/constants";
-import { Pencil, Trash2, Plus, ExternalLink, FileOutput } from "lucide-react";
+import { Pencil, Trash2, Plus, ExternalLink, FileOutput, Send } from "lucide-react";
 import StarRating from "@/components/StarRating";
 import TechnicalSkillsSection from "@/components/TechnicalSkillsSection";
 import { QUESTIONNAIRE_SECTIONS, TOTAL_QUESTION_COUNT } from "@/lib/extended-questionnaire";
@@ -157,6 +157,10 @@ export default async function PlayerProfilePage({
             </div>
           </div>
           <div className="flex gap-2 shrink-0">
+            <Link href={`/crm/players/${id}/proposal`} target="_blank" className="btn btn-gold">
+              <Send size={14} />
+              הצעה למועדון
+            </Link>
             <Link href={`/crm/players/${id}/export`} target="_blank" className="btn btn-outline">
               <FileOutput size={14} />
               ייצוא דוח
