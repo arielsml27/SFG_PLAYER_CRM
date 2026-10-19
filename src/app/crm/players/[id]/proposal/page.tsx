@@ -74,6 +74,9 @@ export default async function PlayerProposalPage({ params }: { params: Promise<{
       playerId={id}
       name={basics.name}
       dataline={basics.dataline}
+      age={basics.age}
+      bornDate={basics.bornDate}
+      positionCode={basics.positionCode}
       facts={basics.facts}
       hive={hive}
       links={links}
