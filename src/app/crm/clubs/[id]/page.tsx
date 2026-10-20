@@ -4,10 +4,12 @@ import { getClubDetail, getAllClubs, getAllCrmUsers, getPlayerPickerList } from 
 import { updateClub, addClubContact, deleteClubContact, deleteClub, addClubTeam, deleteClubTeam, addClubTeamContact, deleteClubTeamContact } from "@/lib/club-actions";
 import { createRequest, updateRequest, deleteRequest, addProposedPlayer, removeProposedPlayer } from "@/lib/request-actions";
 import { getCurrentCrmUser } from "@/lib/current-user";
+import { getRequestLinksForClub } from "@/lib/request-links";
 import { REQUEST_STATUS_LABELS } from "@/lib/constants";
 import ClubForm from "@/components/ClubForm";
 import RequestForm from "@/components/RequestForm";
 import ConfirmSubmitButton from "@/components/ConfirmSubmitButton";
+import RequestLinkPanel from "@/components/RequestLinkPanel";
 import { Plus, Trash2, X, ExternalLink } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -30,12 +32,13 @@ export default async function ClubDetailPage({
 }) {
   const { id } = await params;
   const { deleteError } = await searchParams;
-  const [detail, clubOptions, users, playerOptions, currentUser] = await Promise.all([
+  const [detail, clubOptions, users, playerOptions, currentUser, requestLinks] = await Promise.all([
     getClubDetail(id),
     getAllClubs(),
     getAllCrmUsers(),
     getPlayerPickerList(),
     getCurrentCrmUser(),
+    getRequestLinksForClub(id),
   ]);
 
   if (!detail) notFound();
@@ -267,6 +270,15 @@ export default async function ClubDetailPage({
       </div>
 
       <div className="card p-4">
+        <h2 className="font-semibold mb-3">לינק לטופס בקשת שחקן</h2>
+        <RequestLinkPanel
+          clubId={club.id}
+          contacts={contacts.map((c) => ({ id: c.id, name: c.name, role: c.role }))}
+          links={requestLinks}
+        />
+      </div>
+
+      <div className="card p-4">
         <h2 className="font-semibold mb-3">בקשות</h2>
         <div className="space-y-3">
           {requests.map((r) => {
@@ -278,7 +290,10 @@ export default async function ClubDetailPage({
                   <div className="text-sm" style={{ color: "var(--muted)" }}>
                     {r.positionSought ? `מחפשים: ${r.positionSought}` : "—"}
                   </div>
-                  <span className={`badge ${toneFor(r.status)}`}>{REQUEST_STATUS_LABELS[r.status] ?? r.status}</span>
+                  <div className="flex items-center gap-2">
+                    {r.source && <span className="badge badge-gold">{r.source}</span>}
+                    <span className={`badge ${toneFor(r.status)}`}>{REQUEST_STATUS_LABELS[r.status] ?? r.status}</span>
+                  </div>
                 </div>
 
                 <dl className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-2 text-sm mt-3">

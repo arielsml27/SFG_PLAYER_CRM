@@ -1,9 +1,11 @@
 import { getRequests, getAllCrmUsers, getPlayerPickerList, getAllClubs } from "@/lib/data";
 import { createRequest, updateRequest, deleteRequest, addProposedPlayer, removeProposedPlayer } from "@/lib/request-actions";
 import { REQUEST_STATUS_LABELS } from "@/lib/constants";
+import { getGenericRequestLinks } from "@/lib/request-links";
+import RequestLinkPanel from "@/components/RequestLinkPanel";
 import RequestForm from "@/components/RequestForm";
 import ConfirmSubmitButton from "@/components/ConfirmSubmitButton";
-import { Plus, Trash2, X } from "lucide-react";
+import { Plus, Trash2, X, Link2 } from "lucide-react";
 
 function toneFor(status: string): string {
   return status === "OPEN" ? "badge-ok" : "badge-neutral";
@@ -15,11 +17,12 @@ function playerName(p: { firstName: string | null; lastName: string | null; full
 }
 
 export default async function RequestsPage() {
-  const [requestList, users, playerOptions, clubOptions] = await Promise.all([
+  const [requestList, users, playerOptions, clubOptions, genericLinks] = await Promise.all([
     getRequests(),
     getAllCrmUsers(),
     getPlayerPickerList(),
     getAllClubs(),
+    getGenericRequestLinks(),
   ]);
 
   return (
@@ -30,6 +33,16 @@ export default async function RequestsPage() {
           {requestList.length} בקשות
         </p>
       </div>
+
+      <details className="card p-4">
+        <summary className="cursor-pointer font-semibold text-sm flex items-center gap-2" style={{ color: "var(--navy)" }}>
+          <Link2 size={15} />
+          לינק כללי לטופס בקשת שחקן
+        </summary>
+        <div className="mt-4">
+          <RequestLinkPanel clubId={null} contacts={[]} links={genericLinks} />
+        </div>
+      </details>
 
       <details className="card p-4">
         <summary className="cursor-pointer font-semibold text-sm flex items-center gap-2" style={{ color: "var(--navy)" }}>
@@ -56,7 +69,10 @@ export default async function RequestsPage() {
                     {r.positionSought ? `מחפשים: ${r.positionSought}` : "—"}
                   </div>
                 </div>
-                <span className={`badge ${toneFor(r.status)}`}>{REQUEST_STATUS_LABELS[r.status] ?? r.status}</span>
+                <div className="flex items-center gap-2">
+                  {r.source && <span className="badge badge-gold">{r.source}</span>}
+                  <span className={`badge ${toneFor(r.status)}`}>{REQUEST_STATUS_LABELS[r.status] ?? r.status}</span>
+                </div>
               </div>
 
               <dl className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-2 text-sm mt-3">
