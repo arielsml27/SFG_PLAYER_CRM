@@ -38,3 +38,13 @@ export function agentDenied(result: Extract<AgentAuthResult, { ok: false }>, pat
   console.warn(`[agent-api] denied ${result.status} ${path}`);
   return result.status === 404 ? new Response("Not found", { status: 404 }) : agentJson({ error: "unauthorized" }, 401);
 }
+
+// Public origin as the client saw it. Behind Railway's proxy request.url carries
+// the container's internal host, so prefer the forwarded headers.
+export function publicOrigin(request: Request): string {
+  const host = request.headers.get("x-forwarded-host") ?? request.headers.get("host");
+  if (!host) return new URL(request.url).origin;
+  const fallbackProto = new URL(request.url).protocol.replace(":", "");
+  const proto = (request.headers.get("x-forwarded-proto") ?? fallbackProto).split(",")[0].trim();
+  return `${proto}://${host.split(",")[0].trim()}`;
+}
