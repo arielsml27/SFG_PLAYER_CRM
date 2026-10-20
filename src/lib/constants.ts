@@ -149,6 +149,42 @@ export const REQUEST_STATUS_LABELS: Record<string, string> = {
   CLOSED: "סגורה",
 };
 
+// Club contact relationship level. The number is a code, not a score:
+// 2 is the strongest tie, then 1, then 4, then 3 (see RELATIONSHIP_LEVEL_RANK).
+export const RELATIONSHIP_LEVELS = [1, 2, 3, 4] as const;
+export const RELATIONSHIP_LEVEL_LABELS: Record<number, string> = {
+  1: "בסדר",
+  2: "אח שלי",
+  3: "לא מכיר",
+  4: "לא מכיר אותו אבל מכיר מישהו חזק במועדון",
+};
+// Lower rank = stronger relationship.
+export const RELATIONSHIP_LEVEL_RANK: Record<number, number> = { 2: 0, 1: 1, 4: 2, 3: 3 };
+
+export function strongestRelationshipLevel(levels: (number | null | undefined)[]): number | null {
+  let best: number | null = null;
+  for (const l of levels) {
+    if (l == null || !(l in RELATIONSHIP_LEVEL_RANK)) continue;
+    if (best === null || RELATIONSHIP_LEVEL_RANK[l] < RELATIONSHIP_LEVEL_RANK[best]) best = l;
+  }
+  return best;
+}
+
+export const RELATIONSHIP_OWNERS = ["ariel", "idan", "both"] as const;
+export const RELATIONSHIP_OWNER_LABELS: Record<string, string> = {
+  ariel: "אריאל",
+  idan: "עידן",
+  both: "שנינו",
+};
+
+export const PROPOSAL_SENT_STATUSES = ["SENT", "REPLIED", "REJECTED", "PROGRESSED"] as const;
+export const PROPOSAL_SENT_STATUS_LABELS: Record<string, string> = {
+  SENT: "נשלח",
+  REPLIED: "התקבלה תגובה",
+  REJECTED: "נדחה",
+  PROGRESSED: "התקדם",
+};
+
 export const TIMELINE_EVENT_TYPES = [
   "FAMILY_CALL",
   "CLUB_CALL",

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { getAllClubs, getCountriesWithClubCounts } from "@/lib/data";
 import { createClub } from "@/lib/club-actions";
 import ClubForm from "@/components/ClubForm";
-import { Globe2, ChevronLeft } from "lucide-react";
+import { Globe2, ChevronLeft, Map as MapIcon } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -17,11 +17,17 @@ export default async function ClubsPage({
     const countries = await getCountriesWithClubCounts();
     return (
       <div className="max-w-4xl space-y-5">
-        <div>
-          <h1 className="text-2xl font-bold">מדינות</h1>
-          <p className="text-sm" style={{ color: "var(--muted)" }}>
-            בחר מדינה כדי לראות את המועדונים שלה
-          </p>
+        <div className="flex items-start justify-between gap-3 flex-wrap">
+          <div>
+            <h1 className="text-2xl font-bold">מדינות</h1>
+            <p className="text-sm" style={{ color: "var(--muted)" }}>
+              בחר מדינה כדי לראות את המועדונים שלה
+            </p>
+          </div>
+          <Link href="/crm/clubs/map" className="btn btn-outline btn-sm">
+            <MapIcon size={14} />
+            מפת מועדונים
+          </Link>
         </div>
 
         <div className="card overflow-x-auto">
@@ -80,11 +86,17 @@ export default async function ClubsPage({
 
   return (
     <div className="max-w-4xl space-y-5">
-      <div>
-        <Link href="/crm/clubs" className="text-sm hover:underline" style={{ color: "var(--muted)" }}>
-          ← כל המדינות
+      <div className="flex items-start justify-between gap-3 flex-wrap">
+        <div>
+          <Link href="/crm/clubs" className="text-sm hover:underline" style={{ color: "var(--muted)" }}>
+            ← כל המדינות
+          </Link>
+          <h1 className="text-2xl font-bold mt-1">מועדונים ב{country}</h1>
+        </div>
+        <Link href="/crm/clubs/map" className="btn btn-outline btn-sm">
+          <MapIcon size={14} />
+          מפת מועדונים
         </Link>
-        <h1 className="text-2xl font-bold mt-1">מועדונים ב{country}</h1>
       </div>
 
       <details className="card p-4">

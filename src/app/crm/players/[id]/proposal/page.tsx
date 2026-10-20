@@ -27,6 +27,7 @@ export default async function PlayerProposalPage({ params }: { params: Promise<{
   const visiblePlayerIds = currentUser ? await getVisiblePlayerIds(currentUser) : [];
   const detail = await getPlayerDetail(id, visiblePlayerIds);
   if (!detail) notFound();
+  const clubOptions = [...detail.allClubs].sort((a, b) => a.name.localeCompare(b.name, "he")).map((c) => ({ id: c.id, name: c.name }));
 
   const { player } = detail;
   const basics = buildProposalBasics(detail);
@@ -72,6 +73,7 @@ export default async function PlayerProposalPage({ params }: { params: Promise<{
   return (
     <VeraProposal
       playerId={id}
+      clubOptions={clubOptions}
       name={basics.name}
       dataline={basics.dataline}
       age={basics.age}

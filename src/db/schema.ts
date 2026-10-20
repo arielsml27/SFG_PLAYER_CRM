@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer, real, uniqueIndex } from "drizzle-orm/sqlite-core";
+import { sqliteTable, text, integer, real, uniqueIndex, type AnySQLiteColumn } from "drizzle-orm/sqlite-core";
 import { relations, sql } from "drizzle-orm";
 
 // ---------- Helpers ----------
@@ -23,6 +23,8 @@ export const clubs = sqliteTable("clubs", {
   transfermarktLink: text("transfermarkt_link"),
   logoPath: text("logo_path"),
   notes: text("notes"),
+  // "איש הקשר המקצועי שלנו": the club contact we work through (one of this club's club_contacts).
+  primaryContactId: text("primary_contact_id").references((): AnySQLiteColumn => clubContacts.id, { onDelete: "set null" }),
   ...timestamps,
 });
 
@@ -35,8 +37,38 @@ export const clubContacts = sqliteTable("club_contacts", {
   role: text("role"),
   phone: text("phone"),
   email: text("email"),
+  // 1 בסדר | 2 אח שלי | 3 לא מכיר | 4 לא מכיר אותו אבל מכיר מישהו חזק במועדון
+  // (strength order is 2 > 1 > 4 > 3, see RELATIONSHIP_LEVEL_RANK in constants).
+  relationshipLevel: integer("relationship_level"),
+  // ariel | idan | both
+  relationshipOwner: text("relationship_owner"),
+  lastContactAt: text("last_contact_at"), // ISO date
   createdAt: text("created_at").notNull().default(sql`(current_timestamp)`),
 });
+
+// ---------- Proposals sent (log of player proposals sent to clubs) ----------
+export const proposalsSent = sqliteTable("proposals_sent", {
+  id: id(),
+  playerId: text("player_id")
+    .notNull()
+    .references(() => players.id, { onDelete: "cascade" }),
+  clubId: text("club_id").references(() => clubs.id, { onDelete: "set null" }),
+  // Free-text club name for clubs that are not in the CRM.
+  clubNameFree: text("club_name_free"),
+  sentAt: text("sent_at").notNull().default(sql`(current_timestamp)`),
+  sentBy: text("sent_by"),
+  // he | en | sr
+  language: text("language"),
+  // SENT | REPLIED | REJECTED | PROGRESSED
+  status: text("status").notNull().default("SENT"),
+  notes: text("notes"),
+  ...timestamps,
+});
+
+export const proposalsSentRelations = relations(proposalsSent, ({ one }) => ({
+  player: one(players, { fields: [proposalsSent.playerId], references: [players.id] }),
+  club: one(clubs, { fields: [proposalsSent.clubId], references: [clubs.id] }),
+}));
 
 // ---------- Club sub-teams (age groups, e.g. נערים א', נוער, בוגרים) ----------
 export const clubTeams = sqliteTable("club_teams", {
@@ -521,6 +553,7 @@ export const playersRelations = relations(players, ({ one, many }) => ({
   tasks: many(tasks),
   deals: many(deals),
   questionnaireResponses: many(questionnaireResponses),
+  proposalsSent: many(proposalsSent),
   scoutingReport: one(scoutingReports, { fields: [players.id], references: [scoutingReports.playerId] }),
 }));
 
@@ -528,13 +561,15 @@ export const scoutingReportsRelations = relations(scoutingReports, ({ one }) => 
   player: one(players, { fields: [scoutingReports.playerId], references: [players.id] }),
 }));
 
-export const clubsRelations = relations(clubs, ({ many }) => ({
+export const clubsRelations = relations(clubs, ({ one, many }) => ({
   players: many(players),
   clubContracts: many(clubContracts),
   deals: many(deals),
   contacts: many(clubContacts),
+  primaryContact: one(clubContacts, { fields: [clubs.primaryContactId], references: [clubContacts.id] }),
   requests: many(clubRequests),
   teams: many(clubTeams),
+  proposalsSent: many(proposalsSent),
 }));
 
 export const clubContactsRelations = relations(clubContacts, ({ one }) => ({

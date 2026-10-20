@@ -162,6 +162,13 @@
       "when": 1787812820261,
       "tag": "0022_numerous_bloodaxe",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "6",
+      "when": 1792489876648,
+      "tag": "0024_club_relationship_map",
+      "breakpoints": true
     }
   ]
 }
