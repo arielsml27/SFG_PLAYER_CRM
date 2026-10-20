@@ -18,6 +18,7 @@ import {
   type ProposalLink,
 } from "@/lib/proposal";
 import { translateProposalTexts, type ProposalTexts } from "@/lib/proposal-actions";
+import { cutoutPortrait } from "@/lib/portrait-cutout";
 
 type Props = {
   playerId: string;
@@ -85,6 +86,27 @@ export default function VeraProposal(props: Props) {
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const [loaded, setLoaded] = useState(false);
+  // White-background headshots are cut out in the browser so the portrait
+  // floats on the sheet; other photos are shown as uploaded.
+  const [cutout, setCutout] = useState<{ from: string; src: string } | null>(null);
+  const photoSrc = cutout && cutout.from === props.photoUrl ? cutout.src : props.photoUrl;
+  const photoIsCutout = !!cutout && cutout.from === props.photoUrl;
+
+  useEffect(() => {
+    const url = props.photoUrl;
+    if (!url) return;
+    let cancelled = false;
+    cutoutPortrait(url)
+      .then((src) => {
+        if (!cancelled && src) setCutout({ from: url, src });
+      })
+      .catch(() => {
+        /* keep the original photo */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [props.photoUrl]);
 
   const sheetRef = useRef<HTMLElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
@@ -177,11 +199,9 @@ export default function VeraProposal(props: Props) {
   const qrLink = chosenLinks.find((l) => l.isVideo && props.qr[l.id]);
   const transferShort = TRANSFER_SHORT[terms.transfer]?.[lang] ?? "";
   const transferMain = terms.amount || transferShort;
-  const transferSub = terms.amount
-    ? transferShort
-    : ["fee", "fee_training", "loan_option"].includes(terms.transfer)
-      ? NEGOTIABLE[lang]
-      : "";
+  // Salary already says "Negotiable"; the transfer cell only adds the option
+  // under an amount.
+  const transferSub = terms.amount ? transferShort : "";
   const positionName = props.positionCode ? POSITION_NAMES[props.positionCode]?.[lang] ?? props.positionCode : "";
   const subtitle = [positionName, t.facts.club].filter((x) => x && x.trim()).join(" · ");
   const [availMain, ...availRest] = (t.availability ?? "").split(" · ");
@@ -346,10 +366,10 @@ export default function VeraProposal(props: Props) {
           </header>
 
           <section className="vp-hero">
-            <figure className={`vp-photo${props.photoUrl ? "" : " vp-photo-empty"}`}>
-              {props.photoUrl ? (
+            <figure className={`vp-photo${photoSrc ? (photoIsCutout ? " vp-photo-cutout" : "") : " vp-photo-empty"}`}>
+              {photoSrc ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={props.photoUrl} alt={displayName} />
+                <img src={photoSrc} alt={displayName} />
               ) : (
                 <span>{u.photo}</span>
               )}
@@ -370,7 +390,7 @@ export default function VeraProposal(props: Props) {
           </section>
 
           <section className="vp-keys">
-            <KeyCell k={u.age} main={props.age !== null ? String(props.age) : "–"} sub={props.bornDate ? `${u.born} ${props.bornDate}` : ""} big />
+            <KeyCell k={u.age} main={props.age !== null ? String(props.age) : "–"} sub={props.bornDate ? `${u.born} ${props.bornDate}` : ""} />
             <KeyCell k={u.transfer} main={transferMain} sub={transferSub} />
             <KeyCell k={u.salaryShort} main={terms.salary || NEGOTIABLE[lang]} />
             {availMain && <KeyCell k={u.availShort} main={availMain} sub={availRest.join(" · ")} />}
@@ -475,9 +495,9 @@ function seasonLabel(today: string): string {
   return `${start}/${String((start + 1) % 100).padStart(2, "0")}`;
 }
 
-function KeyCell({ k, main, sub, big }: { k: string; main: string; sub?: string; big?: boolean }) {
+function KeyCell({ k, main, sub }: { k: string; main: string; sub?: string }) {
   return (
-    <div className={big ? "vp-key vp-key-big" : "vp-key"}>
+    <div className="vp-key">
       <span className="vp-key-k">{k}</span>
       <span className="vp-key-v">
         <bdi>{main}</bdi>

@@ -91,7 +91,7 @@ details.vp-ed-group[open] summary { margin-bottom: 4px; }
 .vp-sheet h2, .vp-sheet h3, .vp-sheet p, .vp-sheet ul, .vp-sheet dl, .vp-sheet figure { margin: 0; }
 .vp-sheet > * { position: relative; }
 .vp-sheet > section, .vp-top { padding-inline: 46px; }
-.vp-cut { position: absolute; inset: 0 0 auto; width: 100%; height: 330px; pointer-events: none; }
+.vp-cut { position: absolute; inset: 0 0 auto; width: 100%; height: 330px; pointer-events: none; -webkit-mask-image: linear-gradient(to bottom, #000 55%, transparent 92%); mask-image: linear-gradient(to bottom, #000 55%, transparent 92%); }
 .vp-cut-1 { fill: var(--vp-aub); opacity: 0.5; }
 .vp-cut-2 { fill: var(--vp-plum-2); opacity: 0.45; }
 
@@ -108,10 +108,10 @@ details.vp-ed-group[open] summary { margin-bottom: 4px; }
 .vp-photo {
   position: relative; height: 200px; overflow: hidden;
   background: radial-gradient(110% 90% at 50% 30%, #3a2a62 0%, var(--vp-aub) 45%, var(--vp-deep) 100%);
-  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 58px), calc(100% - 28px) 100%, 0 100%);
 }
-.vp-sheet[dir="rtl"] .vp-photo { clip-path: polygon(0 0, 100% 0, 100% 100%, 28px 100%, 0 calc(100% - 58px)); }
 .vp-photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 22%; display: block; }
+.vp-photo-cutout { overflow: visible; background: radial-gradient(closest-side at 50% 45%, rgba(86, 69, 127, 0.5), rgba(86, 69, 127, 0)); }
+.vp-photo-cutout img { object-fit: contain; object-position: 50% 100%; }
 .vp-photo-empty { display: grid; place-items: center; border: 1px dashed var(--vp-plum-2); }
 .vp-photo-empty span { font-size: 12px; color: var(--vp-steel); text-align: center; padding: 8px; }
 .vp-ident { min-width: 0; }
@@ -120,19 +120,18 @@ details.vp-ed-group[open] summary { margin-bottom: 4px; }
 .vp-alt { margin-top: 8px !important; font: 400 18px "Archivo Variable", sans-serif; font-stretch: 112%; letter-spacing: 0.04em; color: var(--vp-silver); }
 .vp-sub { margin-top: 12px !important; font-size: 17px; font-weight: 600; color: var(--vp-silver); }
 
-/* key numbers: age, transfer, salary, availability (neon) */
-.vp-keys { margin-top: 26px; display: grid; grid-auto-columns: minmax(0, 1fr); grid-auto-flow: column; border-block: 1px solid var(--vp-neon-dim); }
-.vp-key { display: flex; flex-direction: column; gap: 3px; padding: 14px 18px 15px; border-inline-start: 1px solid var(--vp-neon-dim); min-width: 0; }
-.vp-key:first-child { border-inline-start: 0; padding-inline-start: 0; }
+/* key numbers: age, transfer, salary, availability (neon). No boxes:
+   one hairline inside the margins, even spacing, one size for every value. */
+.vp-sheet > .vp-keys { margin: 30px 46px 0; padding: 18px 0 0; border-top: 1px solid rgba(86, 69, 127, 0.75); display: flex; justify-content: space-between; gap: 24px; }
+.vp-key { flex: 0 1 auto; display: flex; flex-direction: column; gap: 5px; min-width: 0; }
 .vp-key-k { font: 500 10.5px/1.3 var(--vp-mono); letter-spacing: 0.18em; text-transform: uppercase; color: var(--vp-steel); }
 .vp-sheet[lang="he"] .vp-key-k { font: 600 13px/1.3 var(--vp-body); letter-spacing: 0.02em; }
-.vp-key-v { font: 650 20px/1.2 var(--vp-display); font-stretch: 104%; color: var(--vp-neon); text-shadow: var(--vp-neon-glow); overflow-wrap: anywhere; }
+.vp-key-v { font: 650 22px/1.15 var(--vp-display); font-stretch: 104%; color: var(--vp-neon); overflow-wrap: anywhere; }
 .vp-sheet[lang="he"] .vp-key-v { font-family: var(--vp-body); font-weight: 700; }
-.vp-key-big .vp-key-v { font-size: 40px; line-height: 1; font-stretch: 110%; }
 .vp-key-s { font-size: 12.5px; line-height: 1.35; color: var(--vp-silver); }
 
 /* summary + hive */
-.vp-mid { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 34px; padding-top: 28px; align-items: start; }
+.vp-mid { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 34px; padding-top: 38px; align-items: start; }
 .vp-mid-r { min-width: 0; }
 .vp-lede { margin-top: 10px !important; font-size: 16px; line-height: 1.7; color: var(--vp-mist); }
 .vp-hive { background: var(--vp-deep); padding: 12px 10px 10px; border: 1px solid var(--vp-neon-dim); clip-path: polygon(0 0, 100% 0, 100% calc(100% - 74px), calc(100% - 36px) 100%, 0 100%); }
