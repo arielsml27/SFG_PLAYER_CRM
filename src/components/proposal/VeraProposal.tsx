@@ -8,7 +8,9 @@ import {
   NEGOTIABLE,
   PROPOSAL_LANGS,
   PROPOSAL_UI,
+  POSITION_NAMES,
   TRANSFER_OPTIONS,
+  TRANSFER_SHORT,
   type HiveAxis,
   type Localized,
   type ProposalFact,
@@ -21,6 +23,9 @@ type Props = {
   playerId: string;
   name: Localized;
   dataline: string[];
+  age: number | null;
+  bornDate: string;
+  positionCode: string | null;
   facts: ProposalFact[];
   hive: HiveAxis[];
   links: ProposalLink[];
@@ -170,9 +175,16 @@ export default function VeraProposal(props: Props) {
   const altName = lang === "he" ? names.en : "";
   const chosenLinks = props.links.filter((l) => selected.includes(l.id));
   const qrLink = chosenLinks.find((l) => l.isVideo && props.qr[l.id]);
-  const transferMain = TRANSFER_OPTIONS[terms.transfer]?.[lang] ?? "";
-  const transferSub = terms.amount || (["fee", "fee_training", "loan_option"].includes(terms.transfer) ? NEGOTIABLE[lang] : "");
-  const visibleFacts = props.facts.filter((f) => (t.facts[f.id] ?? "").trim());
+  const transferShort = TRANSFER_SHORT[terms.transfer]?.[lang] ?? "";
+  const transferMain = terms.amount || transferShort;
+  const transferSub = terms.amount
+    ? transferShort
+    : ["fee", "fee_training", "loan_option"].includes(terms.transfer)
+      ? NEGOTIABLE[lang]
+      : "";
+  const positionName = props.positionCode ? POSITION_NAMES[props.positionCode]?.[lang] ?? props.positionCode : "";
+  const subtitle = [positionName, t.facts.club].filter((x) => x && x.trim()).join(" · ");
+  const [availMain, ...availRest] = (t.availability ?? "").split(" · ");
   const missing = useMemo(() => {
     const m: string[] = [];
     if (!props.photoUrl) m.push("אין תמונה בכרטיס השחקן");
@@ -249,44 +261,19 @@ export default function VeraProposal(props: Props) {
         <fieldset className="vp-ed-group">
           <legend>טקסט ({LANG_NAMES[lang]})</legend>
           <label className="vp-field">
-            <span>סטטוס (שורה מתחת לשם)</span>
-            <input id="vp-status" dir={rtl ? "rtl" : "ltr"} value={t.status} onChange={(e) => patch({ status: e.target.value })} />
+            <span>סיכום מקצועי · עד כ-450 תווים ({t.summary.length})</span>
+            <textarea id="vp-summary" dir={rtl ? "rtl" : "ltr"} rows={7} value={t.summary} onChange={(e) => patch({ summary: e.target.value })} />
           </label>
           <label className="vp-field">
-            <span>סיכום מקצועי · עד כ-330 תווים ({t.summary.length})</span>
-            <textarea id="vp-summary" dir={rtl ? "rtl" : "ltr"} rows={5} value={t.summary} onChange={(e) => patch({ summary: e.target.value })} />
+            <span>מועדון נוכחי ({LANG_NAMES[lang]})</span>
+            <input
+              id="vp-club"
+              dir={rtl ? "rtl" : "ltr"}
+              value={t.facts.club ?? ""}
+              onChange={(e) => patch({ facts: { ...t.facts, club: e.target.value } })}
+            />
           </label>
-          {[0, 1, 2].map((i) => (
-            <label key={i} className="vp-field">
-              <span>למה הוא · {i + 1}</span>
-              <input
-                id={`vp-why-${i}`}
-                dir={rtl ? "rtl" : "ltr"}
-                value={t.why[i] ?? ""}
-                onChange={(e) => {
-                  const why = [...t.why];
-                  why[i] = e.target.value;
-                  patch({ why });
-                }}
-              />
-            </label>
-          ))}
         </fieldset>
-
-        <details className="vp-ed-group">
-          <summary>נתוני מפתח ({LANG_NAMES[lang]})</summary>
-          {props.facts.map((f) => (
-            <label key={f.id} className="vp-field">
-              <span>{f.label.he}</span>
-              <input
-                id={`vp-fact-${f.id}`}
-                dir={rtl ? "rtl" : "ltr"}
-                value={t.facts[f.id] ?? ""}
-                onChange={(e) => patch({ facts: { ...t.facts, [f.id]: e.target.value } })}
-              />
-            </label>
-          ))}
-        </details>
 
         <fieldset className="vp-ed-group">
           <legend>וידאו וקישורים מהכרטיס</legend>
@@ -328,7 +315,7 @@ export default function VeraProposal(props: Props) {
             ))}
           </ul>
         )}
-        {overflow && <p className="vp-ed-error">הטקסט ארוך מעמוד אחד. קצר את הסיכום או את הנקודות.</p>}
+        {overflow && <p className="vp-ed-error">הטקסט ארוך מעמוד אחד. קצר את הסיכום.</p>}
 
         <button type="button" className="btn btn-gold vp-print" onClick={savePdf}>
           שמור PDF ({LANG_NAMES[lang]})
@@ -374,39 +361,26 @@ export default function VeraProposal(props: Props) {
                   <bdi>{altName}</bdi>
                 </p>
               )}
-              <p className="vp-dataline" dir="ltr">
-                {props.dataline.join(" · ")}
-              </p>
-              {t.status && <span className="vp-pill">{t.status}</span>}
+              {subtitle && (
+                <p className="vp-sub">
+                  <bdi>{subtitle}</bdi>
+                </p>
+              )}
             </div>
           </section>
 
-          {visibleFacts.length > 0 && (
-            <section className="vp-sec">
-              <h3>{u.facts}</h3>
-              <dl className="vp-facts">
-                {visibleFacts.map((f) => (
-                  <div key={f.id} className="vp-fact">
-                    <dt>{f.label[lang]}</dt>
-                    <dd>
-                      <bdi>{t.facts[f.id]}</bdi>
-                    </dd>
-                  </div>
-                ))}
-              </dl>
-            </section>
-          )}
-
-          <section className="vp-sec">
-            <h3>{u.terms}</h3>
-            <div className="vp-terms">
-              <TermCell k={u.transfer} main={transferMain} sub={transferSub} />
-              <TermCell k={u.salary} main={terms.salary || NEGOTIABLE[lang]} />
-              {t.availability && <TermCell k={u.avail} main={t.availability} />}
-            </div>
+          <section className="vp-keys">
+            <KeyCell k={u.age} main={props.age !== null ? String(props.age) : "–"} sub={props.bornDate ? `${u.born} ${props.bornDate}` : ""} big />
+            <KeyCell k={u.transfer} main={transferMain} sub={transferSub} />
+            <KeyCell k={u.salaryShort} main={terms.salary || NEGOTIABLE[lang]} />
+            {availMain && <KeyCell k={u.availShort} main={availMain} sub={availRest.join(" · ")} />}
           </section>
 
           <section className="vp-mid">
+            <div className="vp-mid-r">
+              <h3>{u.summary}</h3>
+              <p className="vp-lede">{t.summary}</p>
+            </div>
             <figure className="vp-hive">
               <figcaption className="vp-hive-h">
                 <span>{u.hive}</span>
@@ -417,22 +391,6 @@ export default function VeraProposal(props: Props) {
               <Hive axes={props.hive} lang={lang} />
               <p className="vp-hive-src">{props.hive.length ? u.hiveSource : u.pending}</p>
             </figure>
-            <div className="vp-mid-r">
-              <h3>{u.summary}</h3>
-              <p className="vp-lede">{t.summary}</p>
-              {t.why.some((w) => w.trim()) && (
-                <>
-                  <h3 className="vp-why-h">{u.why}</h3>
-                  <ul className="vp-why">
-                    {t.why
-                      .filter((w) => w.trim())
-                      .map((w, i) => (
-                        <li key={i}>{w}</li>
-                      ))}
-                  </ul>
-                </>
-              )}
-            </div>
           </section>
 
           {chosenLinks.length > 0 && (
@@ -443,7 +401,7 @@ export default function VeraProposal(props: Props) {
                   <a key={l.id} className="vp-link" href={l.url} target="_blank" rel="noopener noreferrer">
                     <span className="vp-link-t">{l.type}</span>
                     <span className="vp-link-d">
-                      <bdi>{l.title}</bdi>
+                      <bdi>{linkCaption(l)}</bdi>
                     </span>
                     <span className="vp-link-a" aria-hidden="true">
                       {rtl ? "←" : "→"}
@@ -496,6 +454,20 @@ export default function VeraProposal(props: Props) {
   );
 }
 
+// When the title only repeats the link type ("Transfermarkt" / "TRANSFERMARKT"),
+// show the short address instead so the printed page still says where it goes.
+function linkCaption(l: ProposalLink): string {
+  const title = l.title.trim();
+  if (title && title.toLowerCase() !== l.type.toLowerCase()) return title;
+  try {
+    const u = new URL(l.url);
+    const path = u.pathname.split("/").filter(Boolean).slice(0, 1).join("/");
+    return `${u.hostname.replace(/^www\./, "")}${path ? `/${path}` : ""}`;
+  } catch {
+    return title || l.url;
+  }
+}
+
 function seasonLabel(today: string): string {
   // today is dd.mm.yyyy; seasons turn over in July
   const [, mm, yyyy] = today.split(".").map(Number);
@@ -503,15 +475,15 @@ function seasonLabel(today: string): string {
   return `${start}/${String((start + 1) % 100).padStart(2, "0")}`;
 }
 
-function TermCell({ k, main, sub }: { k: string; main: string; sub?: string }) {
+function KeyCell({ k, main, sub, big }: { k: string; main: string; sub?: string; big?: boolean }) {
   return (
-    <div className="vp-term">
-      <span className="vp-term-k">{k}</span>
-      <span className="vp-term-v">
+    <div className={big ? "vp-key vp-key-big" : "vp-key"}>
+      <span className="vp-key-k">{k}</span>
+      <span className="vp-key-v">
         <bdi>{main}</bdi>
       </span>
       {sub && (
-        <span className="vp-term-s">
+        <span className="vp-key-s">
           <bdi>{sub}</bdi>
         </span>
       )}
@@ -520,11 +492,11 @@ function TermCell({ k, main, sub }: { k: string; main: string; sub?: string }) {
 }
 
 function Hive({ axes, lang }: { axes: HiveAxis[]; lang: ProposalLang }) {
-  const W = 480;
-  const H = 392;
+  const W = 500;
+  const H = 420;
   const cx = W / 2;
   const cy = H / 2 + 6;
-  const R = 118;
+  const R = 128;
   const n = axes.length || 6;
   const pt = (i: number, r: number): [number, number] => {
     const a = -Math.PI / 2 + (i * 2 * Math.PI) / n;
@@ -547,10 +519,10 @@ function Hive({ axes, lang }: { axes: HiveAxis[]; lang: ProposalLang }) {
           <polygon className="vp-shape" points={poly((i) => (R * Math.max(0, Math.min(10, axes[i].value))) / 10)} />
           {axes.map((a, i) => {
             const [x, y] = pt(i, (R * Math.max(0, Math.min(10, a.value))) / 10);
-            return <circle key={a.key} className="vp-node" cx={x} cy={y} r={3.6} />;
+            return <circle key={a.key} className="vp-node" cx={x} cy={y} r={4.2} />;
           })}
           {axes.map((a, i) => {
-            const [x, y] = pt(i, R + 24);
+            const [x, y] = pt(i, R + 26);
             const ang = -90 + (i * 360) / n;
             const c = Math.cos((ang * Math.PI) / 180);
             const anchor = Math.abs(c) < 0.2 ? "middle" : c > 0 ? "start" : "end";
@@ -558,21 +530,21 @@ function Hive({ axes, lang }: { axes: HiveAxis[]; lang: ProposalLang }) {
             if (Math.abs(c) < 0.2 && ang < 0)
               return (
                 <g key={a.key}>
-                  <text className="vp-lbl-val" x={x} y={y - 18} textAnchor="middle">{val}</text>
+                  <text className="vp-lbl-val" x={x} y={y - 22} textAnchor="middle">{val}</text>
                   <text className="vp-lbl" x={x} y={y} textAnchor="middle">{a.label[lang]}</text>
                 </g>
               );
             if (Math.abs(c) < 0.2)
               return (
                 <g key={a.key}>
-                  <text className="vp-lbl" x={x} y={y + 12} textAnchor="middle">{a.label[lang]}</text>
-                  <text className="vp-lbl-val" x={x} y={y + 30} textAnchor="middle">{val}</text>
+                  <text className="vp-lbl" x={x} y={y + 14} textAnchor="middle">{a.label[lang]}</text>
+                  <text className="vp-lbl-val" x={x} y={y + 36} textAnchor="middle">{val}</text>
                 </g>
               );
             return (
               <g key={a.key}>
-                <text className="vp-lbl" x={x} y={y - 2} textAnchor={anchor}>{a.label[lang]}</text>
-                <text className="vp-lbl-val" x={x} y={y + 16} textAnchor={anchor}>{val}</text>
+                <text className="vp-lbl" x={x} y={y - 3} textAnchor={anchor}>{a.label[lang]}</text>
+                <text className="vp-lbl-val" x={x} y={y + 19} textAnchor={anchor}>{val}</text>
               </g>
             );
           })}

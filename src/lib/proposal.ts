@@ -30,6 +30,33 @@ export const TRANSFER_OPTIONS: Record<string, Record<ProposalLang, string>> = {
 };
 export const NEGOTIABLE: Record<ProposalLang, string> = { he: "לפי משא ומתן", en: "Negotiable", sr: "Po dogovoru" };
 
+// Short forms for the big key-number cells on the sheet.
+export const TRANSFER_SHORT: Record<string, Record<ProposalLang, string>> = {
+  free_agent: { he: "שחקן חופשי", en: "Free agent", sr: "Slobodan igrač" },
+  free_transfer: { he: "ללא תשלום", en: "Free transfer", sr: "Bez obeštećenja" },
+  training_comp: { he: "דמי השבחה בלבד", en: "Training comp. only", sr: "Samo naknada za školovanje" },
+  fee: { he: "בתשלום", en: "Transfer fee", sr: "Uz obeštećenje" },
+  fee_training: { he: "תשלום + דמי השבחה", en: "Fee + training comp.", sr: "Obeštećenje + naknada" },
+  loan: { he: "השאלה", en: "Loan", sr: "Pozajmica" },
+  loan_option: { he: "השאלה + אופציה", en: "Loan + option", sr: "Pozajmica + opcija" },
+};
+
+export const POSITION_NAMES: Record<string, Record<ProposalLang, string>> = {
+  GK: { he: "שוער", en: "Goalkeeper", sr: "Golman" },
+  CB: { he: "בלם", en: "Centre-back", sr: "Štoper" },
+  RB: { he: "מגן ימני", en: "Right-back", sr: "Desni bek" },
+  LB: { he: "מגן שמאלי", en: "Left-back", sr: "Levi bek" },
+  FB: { he: "מגן", en: "Full-back", sr: "Bek" },
+  DM: { he: "קשר הגנתי", en: "Defensive midfielder", sr: "Defanzivni vezni" },
+  CM: { he: "קשר מרכזי", en: "Central midfielder", sr: "Centralni vezni" },
+  AM: { he: "קשר התקפי", en: "Attacking midfielder", sr: "Ofanzivni vezni" },
+  RW: { he: "כנף ימין", en: "Right winger", sr: "Desno krilo" },
+  LW: { he: "כנף שמאל", en: "Left winger", sr: "Levo krilo" },
+  W: { he: "כנף", en: "Winger", sr: "Krilo" },
+  SS: { he: "חלוץ שני", en: "Second striker", sr: "Drugi napadač" },
+  ST: { he: "חלוץ", en: "Striker", sr: "Napadač" },
+};
+
 export const PROPOSAL_UI: Record<ProposalLang, Record<string, string>> = {
   he: {
     eyebrow: "הצעת שחקן", prepared: "עבור", facts: "נתוני מפתח", hive: "כוורת תכונות", summary: "סיכום מקצועי",
@@ -37,6 +64,7 @@ export const PROPOSAL_UI: Record<ProposalLang, Record<string, string>> = {
     conf: "חסוי · מיועד לשימוש המועדון בלבד", photo: "תמונת שחקן", terms: "תנאי עסקה", transfer: "העברה",
     salary: "שכר מבוקש (משוער)", avail: "זמינות", pending: "ממתין לדוח סקאוטינג",
     hiveSource: "הערכת סקאוטינג VERA, סולם 1 עד 10", phone: "טלפון", email: "מייל",
+    age: "גיל", salaryShort: "שכר משוער", availShort: "זמינות", born: "נולד",
   },
   en: {
     eyebrow: "Player proposal", prepared: "for", facts: "Key facts", hive: "Attribute hive", summary: "Scouting summary",
@@ -44,6 +72,7 @@ export const PROPOSAL_UI: Record<ProposalLang, Record<string, string>> = {
     conf: "Confidential · prepared for club use", photo: "Player photo", terms: "Deal terms", transfer: "Transfer",
     salary: "Salary expectation (est.)", avail: "Available from", pending: "Scouting report pending",
     hiveSource: "VERA scouting assessment, 1 to 10 scale", phone: "Phone", email: "Email",
+    age: "Age", salaryShort: "Salary (est.)", availShort: "Available", born: "Born",
   },
   sr: {
     eyebrow: "Predlog igrača", prepared: "za", facts: "Ključni podaci", hive: "Profil kvaliteta", summary: "Skauting rezime",
@@ -51,6 +80,7 @@ export const PROPOSAL_UI: Record<ProposalLang, Record<string, string>> = {
     conf: "Poverljivo · samo za upotrebu kluba", photo: "Fotografija igrača", terms: "Uslovi transfera", transfer: "Transfer",
     salary: "Očekivana plata (procena)", avail: "Dostupan od", pending: "Skauting izveštaj u pripremi",
     hiveSource: "VERA skauting procena, skala 1 do 10", phone: "Telefon", email: "Email",
+    age: "Godine", salaryShort: "Plata (procena)", availShort: "Dostupan", born: "Rođen",
   },
 };
 
@@ -218,6 +248,9 @@ export function buildProposalBasics(detail: any) {
   }
 
   return {
+    age,
+    bornDate: fmtDate(p.dateOfBirth) ?? "",
+    positionCode: mainCode,
     name: {
       he: p.fullNameHebrew || `${p.firstName} ${p.lastName}`,
       en: p.fullNameEnglish || "",
@@ -344,7 +377,7 @@ export function collectLinks(detail: any): { all: ProposalLink[]; defaults: stri
 }
 
 // First 2-3 sentences of a longer text, capped to fit the one-page layout.
-export function trimSummary(text?: string | null, max = 340): string {
+export function trimSummary(text?: string | null, max = 450): string {
   if (!text) return "";
   const sentences = text.replace(/\s+/g, " ").trim().match(/[^.!?]+[.!?]+/g) ?? [text];
   let out = "";
