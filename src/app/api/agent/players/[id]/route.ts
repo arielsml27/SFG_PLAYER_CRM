@@ -1,7 +1,7 @@
 import { getPlayerDetail } from "@/lib/data";
 import { calcAge } from "@/lib/format";
 import { buildHive } from "@/lib/proposal";
-import { agentDenied, agentJson, checkAgentToken } from "@/lib/agent-auth";
+import { agentDenied, agentJson, checkAgentToken, publicOrigin } from "@/lib/agent-auth";
 
 export const dynamic = "force-dynamic";
 
@@ -38,7 +38,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   if (!detail) return agentJson({ error: "not_found" }, 404);
 
   const { player: p, scoutingReport: r } = detail;
-  const origin = new URL(request.url).origin;
+  const origin = publicOrigin(request);
 
   const scouting = r
     ? {
