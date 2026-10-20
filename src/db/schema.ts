@@ -479,8 +479,35 @@ export const clubRequests = sqliteTable("club_requests", {
   dealPartner: text("deal_partner"),
   // OPEN | CLOSED
   status: text("status").notNull().default("OPEN"),
+  // Where the request came from. Null for requests typed into the CRM,
+  // "טופס: <contact name>" for submissions of the public request form.
+  source: text("source"),
+  requestLinkId: text("request_link_id").references(() => requestLinks.id, { onDelete: "set null" }),
   ...timestamps,
 });
+
+// ---------- Request links (public "player request" form tokens for clubs) ----------
+// A coach or sporting director opens /request/<token> (no login) and fills a
+// 20-second form; each submission becomes a club_requests row. The token is
+// the only credential, so it is long and random. Tied to a club and optionally
+// to one club contact (prefills name/role/phone), or to neither (generic link).
+export const requestLinks = sqliteTable("request_links", {
+  id: id(),
+  token: text("token").notNull().unique(),
+  clubId: text("club_id").references(() => clubs.id, { onDelete: "set null" }),
+  contactId: text("contact_id").references(() => clubContacts.id, { onDelete: "set null" }),
+  contactName: text("contact_name"),
+  createdBy: text("created_by").references(() => crmUsers.id, { onDelete: "set null" }),
+  active: integer("active", { mode: "boolean" }).notNull().default(true),
+  createdAt: text("created_at").notNull().default(sql`(current_timestamp)`),
+});
+
+export const requestLinksRelations = relations(requestLinks, ({ one, many }) => ({
+  club: one(clubs, { fields: [requestLinks.clubId], references: [clubs.id] }),
+  contact: one(clubContacts, { fields: [requestLinks.contactId], references: [clubContacts.id] }),
+  createdByUser: one(crmUsers, { fields: [requestLinks.createdBy], references: [crmUsers.id] }),
+  requests: many(clubRequests),
+}));
 
 export const requestProposedPlayers = sqliteTable(
   "request_proposed_players",
@@ -500,6 +527,7 @@ export const requestProposedPlayers = sqliteTable(
 export const clubRequestsRelations = relations(clubRequests, ({ one, many }) => ({
   handledBy: one(crmUsers, { fields: [clubRequests.handledByUserId], references: [crmUsers.id] }),
   club: one(clubs, { fields: [clubRequests.clubId], references: [clubs.id] }),
+  requestLink: one(requestLinks, { fields: [clubRequests.requestLinkId], references: [requestLinks.id] }),
   proposedPlayers: many(requestProposedPlayers),
 }));
 
@@ -535,6 +563,7 @@ export const clubsRelations = relations(clubs, ({ many }) => ({
   contacts: many(clubContacts),
   requests: many(clubRequests),
   teams: many(clubTeams),
+  requestLinks: many(requestLinks),
 }));
 
 export const clubContactsRelations = relations(clubContacts, ({ one }) => ({
