@@ -2,12 +2,13 @@
 
 import { db } from "@/db";
 import { clubs, clubContacts, clubTeams, clubTeamContacts } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { getCurrentCrmUser } from "@/lib/current-user";
+import { RELATIONSHIP_LEVELS, RELATIONSHIP_OWNERS } from "@/lib/constants";
 
 async function requireAdmin() {
     const user = await getCurrentCrmUser();
@@ -89,6 +90,18 @@ export async function updateClub(clubId: string, formData: FormData) {
     revalidatePath("/crm/clubs");
 }
 
+function relationshipLevel(fd: FormData): number | null {
+    const v = str(fd, "relationshipLevel");
+    if (!v) return null;
+    const n = Number(v);
+    return (RELATIONSHIP_LEVELS as readonly number[]).includes(n) ? n : null;
+}
+
+function relationshipOwner(fd: FormData): string | null {
+    const v = str(fd, "relationshipOwner");
+    return v && (RELATIONSHIP_OWNERS as readonly string[]).includes(v) ? v : null;
+}
+
 export async function addClubContact(clubId: string, formData: FormData) {
     const name = str(formData, "name");
     if (!name) return;
@@ -98,13 +111,57 @@ export async function addClubContact(clubId: string, formData: FormData) {
           role: str(formData, "role"),
           phone: str(formData, "phone"),
           email: str(formData, "email"),
+          relationshipLevel: relationshipLevel(formData),
+          relationshipOwner: relationshipOwner(formData),
+          lastContactAt: str(formData, "lastContactAt"),
     });
     revalidatePath(`/crm/clubs/${clubId}`);
+    revalidatePath("/crm/clubs/map");
+}
+
+export async function updateClubContact(clubId: string, contactId: string, formData: FormData) {
+    const name = str(formData, "name");
+    if (!name) return;
+    await db
+      .update(clubContacts)
+      .set({
+            name,
+            role: str(formData, "role"),
+            phone: str(formData, "phone"),
+            email: str(formData, "email"),
+            relationshipLevel: relationshipLevel(formData),
+            relationshipOwner: relationshipOwner(formData),
+            lastContactAt: str(formData, "lastContactAt"),
+      })
+      .where(and(eq(clubContacts.id, contactId), eq(clubContacts.clubId, clubId)));
+    revalidatePath(`/crm/clubs/${clubId}`);
+    revalidatePath("/crm/clubs/map");
 }
 
 export async function deleteClubContact(clubId: string, contactId: string) {
     await db.delete(clubContacts).where(eq(clubContacts.id, contactId));
     revalidatePath(`/crm/clubs/${clubId}`);
+    revalidatePath("/crm/clubs/map");
+}
+
+// "איש הקשר המקצועי שלנו": must be one of this club's own contacts (or empty to clear).
+export async function setClubPrimaryContact(clubId: string, formData: FormData) {
+    const contactId = str(formData, "primaryContactId");
+    let primaryContactId: string | null = null;
+    if (contactId) {
+          const rows = await db
+            .select({ id: clubContacts.id })
+            .from(clubContacts)
+            .where(and(eq(clubContacts.id, contactId), eq(clubContacts.clubId, clubId)));
+          if (!rows.length) return;
+          primaryContactId = contactId;
+    }
+    await db
+      .update(clubs)
+      .set({ primaryContactId, updatedAt: new Date().toISOString() })
+      .where(eq(clubs.id, clubId));
+    revalidatePath(`/crm/clubs/${clubId}`);
+    revalidatePath("/crm/clubs/map");
 }
 
 export async function deleteClub(clubId: string) {

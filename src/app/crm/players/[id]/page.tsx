@@ -69,7 +69,11 @@ import {
   TECHNICAL_SKILLS_BY_POSITION,
   guessPositionGroup,
   RELOCATE_LABELS,
+  PROPOSAL_SENT_STATUSES,
+  PROPOSAL_SENT_STATUS_LABELS,
 } from "@/lib/constants";
+import { updateProposalSentStatus, deleteProposalSent } from "@/lib/proposal-sent-actions";
+import { LANG_NAMES, type ProposalLang } from "@/lib/proposal";
 import { Pencil, Trash2, Plus, ExternalLink, FileOutput, Send } from "lucide-react";
 import StarRating from "@/components/StarRating";
 import TechnicalSkillsSection from "@/components/TechnicalSkillsSection";
@@ -192,7 +196,7 @@ export default async function PlayerProfilePage({
       </div>
 
       <div className="card p-5">
-        {tab === "overview" && <OverviewTab id={id} player={player} club={detail.club} report={detail.scoutingReport} />}
+        {tab === "overview" && <OverviewTab id={id} player={player} club={detail.club} report={detail.scoutingReport} proposalsSent={detail.proposalsSent} />}
         {tab === "contract" && <ContractTab id={id} detail={detail} />}
         {tab === "representation" && <RepresentationTab id={id} detail={detail} />}
         {tab === "professional" && <ProfessionalTab player={player} />}
@@ -212,7 +216,7 @@ export default async function PlayerProfilePage({
 
 // ---------------- Tabs ----------------
 
-function OverviewTab({ id, player, club, report }: any) {
+function OverviewTab({ id, player, club, report, proposalsSent }: any) {
   const positionGroup = report?.positionGroup ?? guessPositionGroup(player.mainPosition);
   const allAttributes = report ? buildAllAttributesData(report, positionGroup) : [];
   const { strengths, improvements } = summarizePlayerScouting(allAttributes);
@@ -256,6 +260,18 @@ function OverviewTab({ id, player, club, report }: any) {
           <p className="text-sm whitespace-pre-wrap">{player.notes}</p>
         </div>
       )}
+
+      <div className="mt-6 card p-4">
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="font-bold text-sm" style={{ color: "var(--navy)" }}>
+            הצעות שנשלחו למועדונים
+          </h3>
+          <Link href={`/crm/players/${id}/proposal`} target="_blank" className="text-xs hover:underline" style={{ color: "var(--gold)" }}>
+            הצעה חדשה ←
+          </Link>
+        </div>
+        <ProposalsSentList proposals={proposalsSent ?? []} />
+      </div>
 
       <div className="mt-6 card p-4">
         <div className="flex items-center justify-between mb-2">
@@ -830,6 +846,73 @@ function DealsTab({ id, detail }: any) {
 }
 
 // ---------------- Shared small components ----------------
+
+type ProposalSentRow = {
+  id: string;
+  clubNameFree: string | null;
+  sentAt: string;
+  sentBy: string | null;
+  language: string | null;
+  status: string;
+  club?: { id: string; name: string };
+};
+
+function ProposalsSentList({ proposals }: { proposals: ProposalSentRow[] }) {
+  if (proposals.length === 0) return <Empty text="עדיין לא נשלחו הצעות. ההצעות נרשמות אוטומטית כששולחים הצעה למועדון." />;
+  return (
+    <table className="data-table">
+      <thead>
+        <tr>
+          <th>מועדון</th>
+          <th>נשלח</th>
+          <th>שפה</th>
+          <th>נשלח על ידי</th>
+          <th>סטטוס</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {proposals.map((p) => (
+          <tr key={p.id}>
+            <td className="font-medium">
+              {p.club ? (
+                <Link href={`/crm/clubs/${p.club.id}`} className="hover:underline" style={{ color: "var(--gold)" }}>
+                  {p.club.name}
+                </Link>
+              ) : (
+                p.clubNameFree ?? "—"
+              )}
+            </td>
+            <td>{formatDate(p.sentAt)}</td>
+            <td>{p.language ? LANG_NAMES[p.language as ProposalLang] ?? p.language : "—"}</td>
+            <td>{p.sentBy ?? "—"}</td>
+            <td>
+              <form
+                action={async (fd) => {
+                  "use server";
+                  await updateProposalSentStatus(p.id, String(fd.get("status")));
+                }}
+              >
+                <AutoSubmitSelect
+                  name="status"
+                  defaultValue={p.status}
+                  options={PROPOSAL_SENT_STATUSES.map((s) => ({ value: s, label: PROPOSAL_SENT_STATUS_LABELS[s] }))}
+                />
+              </form>
+            </td>
+            <td>
+              <form action={deleteProposalSent.bind(null, p.id)}>
+                <ConfirmSubmitButton confirmMessage="למחוק את הרישום של ההצעה?">
+                  <Trash2 size={13} />
+                </ConfirmSubmitButton>
+              </form>
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
 
 function TabSection({ title, addForm, children }: { title: string; addForm?: React.ReactNode; children: React.ReactNode }) {
   return (

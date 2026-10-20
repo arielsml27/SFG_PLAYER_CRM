@@ -1,5 +1,6 @@
 import { db } from "@/db";
-import { players, clubContracts, representationAgreements, tasks, clubs, clubContacts, clubTeams, clubTeamContacts, playerLinks, videos, documents, contacts, timelineEvents, deals, scoutingReports, questionnaireResponses, prospects, crmUsers, clubRequests, requestProposedPlayers, meetings } from "@/db/schema";
+import { players, clubContracts, representationAgreements, tasks, clubs, clubContacts, clubTeams, clubTeamContacts, playerLinks, videos, documents, contacts, timelineEvents, deals, scoutingReports, questionnaireResponses, prospects, crmUsers, clubRequests, requestProposedPlayers, meetings, proposalsSent } from "@/db/schema";
+import { RELATIONSHIP_LEVEL_RANK, strongestRelationshipLevel } from "@/lib/constants";
 import { and, asc, desc, eq, gte, isNull, lte, like, or, sql } from "drizzle-orm";
 
 function todayISO() {
@@ -245,7 +246,7 @@ export async function getPlayerDetail(id: string, visiblePlayerIds: string[] | n
   const player = (await db.select().from(players).where(eq(players.id, id)))[0];
   if (!player) return null;
 
-  const [club, contracts, representation, links, videoList, docList, contactList, timeline, taskList, dealList, allClubs, scoutingReportRows, questionnaireRows] =
+  const [club, contracts, representation, links, videoList, docList, contactList, timeline, taskList, dealList, allClubs, scoutingReportRows, questionnaireRows, proposalRows] =
     await Promise.all([
       player.currentClubId ? db.select().from(clubs).where(eq(clubs.id, player.currentClubId)) : Promise.resolve([]),
       db.select().from(clubContracts).where(eq(clubContracts.playerId, id)).orderBy(desc(clubContracts.startDate)),
@@ -260,6 +261,7 @@ export async function getPlayerDetail(id: string, visiblePlayerIds: string[] | n
       db.select().from(clubs),
       db.select().from(scoutingReports).where(eq(scoutingReports.playerId, id)),
       db.select().from(questionnaireResponses).where(eq(questionnaireResponses.playerId, id)),
+      db.select().from(proposalsSent).where(eq(proposalsSent.playerId, id)).orderBy(desc(proposalsSent.sentAt)),
     ]);
 
   const clubById = new Map(allClubs.map((c) => [c.id, c]));
@@ -279,6 +281,7 @@ export async function getPlayerDetail(id: string, visiblePlayerIds: string[] | n
     allClubs,
     scoutingReport: scoutingReportRows[0],
     questionnaireResponses: questionnaireRows,
+    proposalsSent: proposalRows.map((p) => ({ ...p, club: p.clubId ? clubById.get(p.clubId) : undefined })),
   };
 }
 
@@ -308,7 +311,7 @@ export async function getClubDetail(id: string) {
   const club = (await db.select().from(clubs).where(eq(clubs.id, id)))[0];
   if (!club) return null;
 
-  const [contactList, requestRows, proposedRows, allPlayers, allUsers, teamRows, teamContactRows] =
+  const [contactList, requestRows, proposedRows, allPlayers, allUsers, teamRows, teamContactRows, proposalRows] =
     await Promise.all([
       db.select().from(clubContacts).where(eq(clubContacts.clubId, id)).orderBy(desc(clubContacts.createdAt)),
       db.select().from(clubRequests).where(eq(clubRequests.clubId, id)).orderBy(desc(clubRequests.createdAt)),
@@ -317,6 +320,7 @@ export async function getClubDetail(id: string) {
       db.select().from(crmUsers),
       db.select().from(clubTeams).where(eq(clubTeams.clubId, id)).orderBy(asc(clubTeams.name)),
       db.select().from(clubTeamContacts),
+      db.select().from(proposalsSent).where(eq(proposalsSent.clubId, id)).orderBy(desc(proposalsSent.sentAt)),
     ]);
 
   const playerById = new Map(allPlayers.map((p) => [p.id, p]));
@@ -327,6 +331,8 @@ export async function getClubDetail(id: string) {
   return {
     club,
     contacts: contactList,
+    primaryContact: club.primaryContactId ? contactList.find((c) => c.id === club.primaryContactId) : undefined,
+    proposalsSent: proposalRows.map((p) => ({ ...p, player: playerById.get(p.playerId) })),
     teams: teamRows.map((t) => ({
       ...t,
       contacts: teamContactsByTeam.get(t.id) ?? [],
@@ -339,6 +345,69 @@ export async function getClubDetail(id: string) {
         .filter((x) => !!x.player),
     })),
   };
+}
+
+// ---------- Club relationship map (מפת מועדונים) ----------
+
+export type ClubMapRow = {
+  id: string;
+  name: string;
+  country: string | null;
+  league: string | null;
+  contactsCount: number;
+  strongestRelationshipLevel: number | null;
+  primaryContactName: string | null;
+  proposalsCount: number;
+  openRequestsCount: number;
+};
+
+// One row per club, sorted strongest relationship first (2 > 1 > 4 > 3, then
+// clubs with no rated contact), then by name.
+export async function getClubMap(): Promise<ClubMapRow[]> {
+  const [clubList, contactRows, proposalRows, requestRows] = await Promise.all([
+    db.select().from(clubs),
+    db.select().from(clubContacts),
+    db.select({ clubId: proposalsSent.clubId }).from(proposalsSent),
+    db.select({ clubId: clubRequests.clubId }).from(clubRequests).where(eq(clubRequests.status, "OPEN")),
+  ]);
+
+  const contactsByClub = groupBy(contactRows, (c) => c.clubId);
+  const contactById = new Map(contactRows.map((c) => [c.id, c]));
+  const proposalsByClub = new Map<string, number>();
+  for (const p of proposalRows) if (p.clubId) proposalsByClub.set(p.clubId, (proposalsByClub.get(p.clubId) ?? 0) + 1);
+  const openRequestsByClub = new Map<string, number>();
+  for (const r of requestRows) if (r.clubId) openRequestsByClub.set(r.clubId, (openRequestsByClub.get(r.clubId) ?? 0) + 1);
+
+  const rows: ClubMapRow[] = clubList.map((c) => {
+    const clubContactList = contactsByClub.get(c.id) ?? [];
+    const primary = c.primaryContactId ? contactById.get(c.primaryContactId) : undefined;
+    return {
+      id: c.id,
+      name: c.name,
+      country: c.country,
+      league: c.league,
+      contactsCount: clubContactList.length,
+      strongestRelationshipLevel: strongestRelationshipLevel(clubContactList.map((x) => x.relationshipLevel)),
+      primaryContactName: primary?.name ?? null,
+      proposalsCount: proposalsByClub.get(c.id) ?? 0,
+      openRequestsCount: openRequestsByClub.get(c.id) ?? 0,
+    };
+  });
+
+  return rows.sort(compareClubMapRows);
+}
+
+export function compareClubMapRows(a: ClubMapRow, b: ClubMapRow): number {
+  const ra = relationshipRank(a.strongestRelationshipLevel);
+  const rb = relationshipRank(b.strongestRelationshipLevel);
+  if (ra !== rb) return ra - rb;
+  if (a.contactsCount !== b.contactsCount) return b.contactsCount - a.contactsCount;
+  return a.name.localeCompare(b.name, "he");
+}
+
+function relationshipRank(level: number | null): number {
+  if (level === null) return 99;
+  return RELATIONSHIP_LEVEL_RANK[level] ?? 98;
 }
 
 export async function getAllTasks(params: { status?: string } = {}, visiblePlayerIds: string[] | null = null) {

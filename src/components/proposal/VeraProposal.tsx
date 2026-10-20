@@ -18,9 +18,11 @@ import {
   type ProposalLink,
 } from "@/lib/proposal";
 import { translateProposalTexts, type ProposalTexts } from "@/lib/proposal-actions";
+import { logProposalSent } from "@/lib/proposal-sent-actions";
 
 type Props = {
   playerId: string;
+  clubOptions: { id: string; name: string }[];
   name: Localized;
   dataline: string[];
   age: number | null;
@@ -83,7 +85,9 @@ export default function VeraProposal(props: Props) {
   const [contact, setContact] = useState<Contact>({ name: DEFAULT_CONTACT.name, phone: DEFAULT_CONTACT.phone, email: DEFAULT_CONTACT.email });
   const [overflow, setOverflow] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [sentNote, setSentNote] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const [logging, startLogging] = useTransition();
   const [loaded, setLoaded] = useState(false);
 
   const sheetRef = useRef<HTMLElement>(null);
@@ -161,6 +165,34 @@ export default function VeraProposal(props: Props) {
     });
   }
 
+  // "מיועד למועדון" is free text backed by the CRM club list; an exact name match
+  // links the sent proposal to that club, anything else is kept as free text.
+  const preparedForTrim = preparedFor.trim();
+  const matchedClub = preparedForTrim
+    ? props.clubOptions.find((c) => c.name.trim().toLowerCase() === preparedForTrim.toLowerCase()) ?? null
+    : null;
+
+  function markSent() {
+    if (!preparedForTrim) {
+      setSentNote("כדי לרשום שליחה, מלא קודם למי ההצעה מיועדת.");
+      return;
+    }
+    setSentNote(null);
+    const payload = { playerId: props.playerId, clubId: matchedClub?.id ?? null, clubNameFree: matchedClub ? null : preparedForTrim, language: lang };
+    startLogging(async () => {
+      const res = await logProposalSent(payload);
+      if (!res.ok) {
+        setSentNote(res.error);
+        return;
+      }
+      setSentNote(
+        res.updated
+          ? `עודכן: הצעה ל${preparedForTrim} כבר נרשמה ב-24 השעות האחרונות.`
+          : `נרשם: הצעה נשלחה ל${preparedForTrim}${matchedClub ? "" : " (מועדון שלא במערכת)"}.`
+      );
+    });
+  }
+
   function savePdf() {
     const display = (lang === "he" ? names.he : names[lang] || names.en) || "player";
     const prev = document.title;
@@ -169,6 +201,8 @@ export default function VeraProposal(props: Props) {
     setTimeout(() => {
       document.title = prev;
     }, 1000);
+    // Saving the PDF for a named club is the "send" action, so log it as sent.
+    if (preparedForTrim) markSent();
   }
 
   const displayName = (lang === "he" ? names.he : names[lang] || names.en) || names.he || "";
@@ -229,7 +263,21 @@ export default function VeraProposal(props: Props) {
 
         <label className="vp-field">
           <span>מיועד למועדון</span>
-          <input id="vp-for" value={preparedFor} onChange={(e) => setPreparedFor(e.target.value)} placeholder="Red Star Belgrade" />
+          <input
+            id="vp-for"
+            list="vp-for-clubs"
+            value={preparedFor}
+            onChange={(e) => setPreparedFor(e.target.value)}
+            placeholder="Red Star Belgrade"
+          />
+          <datalist id="vp-for-clubs">
+            {props.clubOptions.map((c) => (
+              <option key={c.id} value={c.name} />
+            ))}
+          </datalist>
+          {preparedForTrim && (
+            <span>{matchedClub ? "מועדון מהמערכת, ההצעה תירשם בכרטיס המועדון" : "מועדון שלא במערכת, יירשם כטקסט חופשי"}</span>
+          )}
         </label>
 
         <fieldset className="vp-ed-group">
@@ -321,6 +369,10 @@ export default function VeraProposal(props: Props) {
           שמור PDF ({LANG_NAMES[lang]})
         </button>
         <p className="vp-ed-note">בחלון ההדפסה בחר &quot;שמירה כ-PDF&quot;. בטלפון: שיתוף, הדפסה, ואז שמירה.</p>
+        <button type="button" className="btn btn-outline vp-print" onClick={markSent} disabled={logging}>
+          {logging ? "רושם…" : "סמן שההצעה נשלחה למועדון"}
+        </button>
+        {sentNote && <p className="vp-ed-note">{sentNote}</p>}
       </aside>
 
       <div className="vp-stage" ref={stageRef}>
