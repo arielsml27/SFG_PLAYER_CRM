@@ -35,7 +35,7 @@ export const TRANSFER_SHORT: Record<string, Record<ProposalLang, string>> = {
   free_agent: { he: "שחקן חופשי", en: "Free agent", sr: "Slobodan igrač" },
   free_transfer: { he: "ללא תשלום", en: "Free transfer", sr: "Bez obeštećenja" },
   training_comp: { he: "דמי השבחה בלבד", en: "Training comp. only", sr: "Samo naknada za školovanje" },
-  fee: { he: "בתשלום", en: "Transfer fee", sr: "Uz obeštećenje" },
+  fee: { he: "דמי העברה", en: "Transfer fee", sr: "Uz obeštećenje" },
   fee_training: { he: "תשלום + דמי השבחה", en: "Fee + training comp.", sr: "Obeštećenje + naknada" },
   loan: { he: "השאלה", en: "Loan", sr: "Pozajmica" },
   loan_option: { he: "השאלה + אופציה", en: "Loan + option", sr: "Pozajmica + opcija" },
