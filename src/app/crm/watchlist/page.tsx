@@ -1,10 +1,16 @@
 import { getProspects, getAllCrmUsers } from "@/lib/data";
-import { createProspect, updateProspect, deleteProspect } from "@/lib/prospect-actions";
+import { createProspect, updateProspect, deleteProspect, setProspectChecked } from "@/lib/prospect-actions";
 import { PROSPECT_STATUS_LABELS } from "@/lib/constants";
 import { formatDate } from "@/lib/format";
 import ProspectForm from "@/components/ProspectForm";
 import ConfirmSubmitButton from "@/components/ConfirmSubmitButton";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, ExternalLink, MessageCircle, CheckCircle2, Circle } from "lucide-react";
+
+function waLink(phone: string): string {
+  let digits = phone.replace(/\D/g, "");
+  if (digits.startsWith("0")) digits = "972" + digits.slice(1);
+  return `https://wa.me/${digits}`;
+}
 
 function toneFor(status: string): string {
   if (status === "MEETING_SCHEDULED" || status === "MEETING_HELD") return "badge-ok";
@@ -47,7 +53,19 @@ export default async function WatchlistPage() {
                     {[p.club, p.position, p.age ? `גיל ${p.age}` : null].filter(Boolean).join(" · ") || "—"}
                   </div>
                 </div>
-                <span className={`badge ${toneFor(p.status)}`}>{PROSPECT_STATUS_LABELS[p.status] ?? p.status}</span>
+                <div className="flex items-center gap-2">
+                  <form action={setProspectChecked.bind(null, p.id, !p.checked)}>
+                    <button
+                      type="submit"
+                      className={`badge ${p.checked ? "badge-ok" : "badge-neutral"} flex items-center gap-1 cursor-pointer`}
+                      title={p.checked ? "לחץ כדי לסמן כלא נבדק" : "לחץ כדי לסמן כנבדק"}
+                    >
+                      {p.checked ? <CheckCircle2 size={13} /> : <Circle size={13} />}
+                      {p.checked ? "נבדק" : "לא נבדק"}
+                    </button>
+                  </form>
+                  <span className={`badge ${toneFor(p.status)}`}>{PROSPECT_STATUS_LABELS[p.status] ?? p.status}</span>
+                </div>
               </div>
 
               <dl className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-2 text-sm mt-3">
@@ -58,6 +76,32 @@ export default async function WatchlistPage() {
                 <div className="flex justify-between gap-3 border-b pb-1" style={{ borderColor: "var(--border)" }}>
                   <dt style={{ color: "var(--muted)" }}>מי פנה</dt>
                   <dd className="font-medium">{contactedBy ? contactedBy.name || contactedBy.email : "—"}</dd>
+                </div>
+                <div className="flex justify-between gap-3 border-b pb-1" style={{ borderColor: "var(--border)" }}>
+                  <dt style={{ color: "var(--muted)" }}>Transfermarkt</dt>
+                  <dd className="font-medium">
+                    {p.transfermarktUrl ? (
+                      <a href={p.transfermarktUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 hover:underline" style={{ color: "var(--gold)" }}>
+                        <ExternalLink size={13} />
+                        פרופיל
+                      </a>
+                    ) : (
+                      "—"
+                    )}
+                  </dd>
+                </div>
+                <div className="flex justify-between gap-3 border-b pb-1" style={{ borderColor: "var(--border)" }}>
+                  <dt style={{ color: "var(--muted)" }}>וואטסאפ</dt>
+                  <dd className="font-medium">
+                    {p.whatsapp ? (
+                      <a href={waLink(p.whatsapp)} target="_blank" rel="noopener noreferrer" dir="ltr" className="inline-flex items-center gap-1 hover:underline" style={{ color: "var(--gold)" }}>
+                        <MessageCircle size={13} />
+                        {p.whatsapp}
+                      </a>
+                    ) : (
+                      "—"
+                    )}
+                  </dd>
                 </div>
                 {p.status === "MEETING_SCHEDULED" && (
                   <>
@@ -74,17 +118,15 @@ export default async function WatchlistPage() {
                   </>
                 )}
                 {p.status === "MEETING_HELD" && (
-                  <>
-                    <div className="flex justify-between gap-3 border-b pb-1" style={{ borderColor: "var(--border)" }}>
-                      <dt style={{ color: "var(--muted)" }}>תאריך פולואפ</dt>
-                      <dd className="font-medium">{p.followUpDate ? formatDate(p.followUpDate) : "—"}</dd>
-                    </div>
-                    <div className="flex justify-between gap-3 border-b pb-1 md:col-span-2" style={{ borderColor: "var(--border)" }}>
-                      <dt style={{ color: "var(--muted)" }}>הערות</dt>
-                      <dd className="font-medium whitespace-pre-wrap text-right">{p.notes ?? "—"}</dd>
-                    </div>
-                  </>
+                  <div className="flex justify-between gap-3 border-b pb-1" style={{ borderColor: "var(--border)" }}>
+                    <dt style={{ color: "var(--muted)" }}>תאריך פולואפ</dt>
+                    <dd className="font-medium">{p.followUpDate ? formatDate(p.followUpDate) : "—"}</dd>
+                  </div>
                 )}
+                <div className="flex justify-between gap-3 border-b pb-1 md:col-span-2" style={{ borderColor: "var(--border)" }}>
+                  <dt style={{ color: "var(--muted)" }}>חוות דעת</dt>
+                  <dd className="font-medium whitespace-pre-wrap text-right">{p.notes ?? "—"}</dd>
+                </div>
               </dl>
 
               <div className="flex items-center justify-between mt-3">
