@@ -472,6 +472,22 @@ export const meetingsRelations = relations(meetings, ({ one }) => ({
   responsible: one(crmUsers, { fields: [meetings.responsibleUserId], references: [crmUsers.id] }),
 }));
 
+// ---------- Partners and contacts (שותפים ואנשי קשר — trusted agents, scouts, intermediaries) ----------
+export const partners = sqliteTable("partners", {
+  id: id(),
+  name: text("name").notNull(),
+  organization: text("organization"),
+  role: text("role"),
+  country: text("country"),
+  city: text("city"),
+  phone: text("phone"),
+  whatsapp: text("whatsapp"),
+  email: text("email"),
+  notes: text("notes"),
+  trusted: integer("trusted", { mode: "boolean" }).notNull().default(false),
+  ...timestamps,
+});
+
 // ---------- Club requests (בקשות — incoming mandates from clubs/agents) ----------
 export const clubRequests = sqliteTable("club_requests", {
   id: id(),

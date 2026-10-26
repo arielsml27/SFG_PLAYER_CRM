@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Users, LayoutDashboard, ListChecks, Building2, Plus, LogOut, ShieldCheck, Eye, ClipboardList, CalendarClock } from "lucide-react";
+import { Users, LayoutDashboard, ListChecks, Building2, Plus, LogOut, ShieldCheck, Eye, ClipboardList, CalendarClock, Contact } from "lucide-react";
 import { crmLogout } from "@/lib/crm-auth-actions";
 
 const NAV = [
@@ -13,6 +13,7 @@ const NAV = [
   { href: "/crm/tasks", label: "משימות", icon: ListChecks },
   { href: "/crm/meetings", label: "פגישות", icon: CalendarClock },
   { href: "/crm/clubs", label: "מועדונים", icon: Building2 },
+  { href: "/crm/partners", label: "שותפים ואנשי קשר", icon: Contact },
 ];
 
 type CurrentUserInfo = { name: string | null; email: string; role: string } | null;

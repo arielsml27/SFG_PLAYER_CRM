@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { players, clubContracts, representationAgreements, tasks, clubs, clubContacts, clubTeams, clubTeamContacts, playerLinks, videos, documents, contacts, timelineEvents, deals, scoutingReports, questionnaireResponses, prospects, crmUsers, clubRequests, requestProposedPlayers, meetings } from "@/db/schema";
+import { players, clubContracts, representationAgreements, tasks, clubs, clubContacts, clubTeams, clubTeamContacts, playerLinks, videos, documents, contacts, timelineEvents, deals, scoutingReports, questionnaireResponses, prospects, crmUsers, clubRequests, requestProposedPlayers, meetings, partners } from "@/db/schema";
 import { and, asc, desc, eq, gte, isNull, lte, like, or, sql } from "drizzle-orm";
 
 function todayISO() {
@@ -188,6 +188,26 @@ export async function getProspects() {
 
 export async function getAllCrmUsers() {
   return db.select().from(crmUsers).orderBy(crmUsers.email);
+}
+
+// ---------- Partners and contacts (שותפים ואנשי קשר) ----------
+
+export async function getPartners(opts: { q?: string; trustedOnly?: boolean } = {}) {
+  const rows = await db
+    .select()
+    .from(partners)
+    .where(opts.trustedOnly ? eq(partners.trusted, true) : undefined)
+    .orderBy(asc(partners.name));
+  const q = opts.q?.trim().toLowerCase();
+  if (!q) return rows;
+  return rows.filter((p) =>
+    [p.name, p.organization, p.country].some((v) => v && v.toLowerCase().includes(q))
+  );
+}
+
+export async function getPartner(partnerId: string) {
+  const rows = await db.select().from(partners).where(eq(partners.id, partnerId));
+  return rows[0] ?? null;
 }
 
 // ---------- Meetings (פגישות) ----------
