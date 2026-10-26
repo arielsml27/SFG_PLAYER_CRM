@@ -64,6 +64,14 @@ export async function setProspectChecked(prospectId: string, checked: boolean) {
   revalidatePath("/crm/watchlist");
 }
 
+export async function setProspectNotRelevant(prospectId: string, value: boolean) {
+  await db
+    .update(prospects)
+    .set({ notRelevantNow: value, updatedAt: new Date().toISOString() })
+    .where(eq(prospects.id, prospectId));
+  revalidatePath("/crm/watchlist");
+}
+
 export async function deleteProspect(prospectId: string) {
   await db.delete(prospects).where(eq(prospects.id, prospectId));
   revalidatePath("/crm/watchlist");

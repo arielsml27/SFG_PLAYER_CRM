@@ -449,6 +449,8 @@ export const prospects = sqliteTable("prospects", {
   transfermarktUrl: text("transfermarkt_url"),
   whatsapp: text("whatsapp"),
   checked: integer("checked", { mode: "boolean" }).notNull().default(false),
+  // "לא רלוונטי כרגע" — visual flag only, rendered in red on the watchlist.
+  notRelevantNow: integer("not_relevant_now", { mode: "boolean" }).notNull().default(false),
   reminderSentAt: text("reminder_sent_at"),
   ...timestamps,
 });
