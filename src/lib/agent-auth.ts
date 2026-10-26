@@ -11,16 +11,25 @@ function digest(value: string): Buffer {
   return createHash("sha256").update(value).digest();
 }
 
+// AGENT_API_TOKEN is the main agent's token; AGENT_SCOUT_TOKEN is a separate
+// token for the scheduled scouting agent, so either can be revoked alone.
+function configuredTokens(): string[] {
+  return [process.env.AGENT_API_TOKEN ?? "", process.env.AGENT_SCOUT_TOKEN ?? ""].filter(
+    (t) => t.length >= MIN_TOKEN_LENGTH
+  );
+}
+
 export function checkAgentToken(request: Request): AgentAuthResult {
-  const expected = process.env.AGENT_API_TOKEN ?? "";
+  const tokens = configuredTokens();
   // Not configured: behave as if the endpoint does not exist.
-  if (expected.length < MIN_TOKEN_LENGTH) return { ok: false, status: 404 };
+  if (tokens.length === 0) return { ok: false, status: 404 };
 
   const header = request.headers.get("authorization") ?? "";
   const supplied = header.toLowerCase().startsWith("bearer ") ? header.slice(7).trim() : "";
   if (!supplied) return { ok: false, status: 401 };
 
-  return timingSafeEqual(digest(supplied), digest(expected)) ? { ok: true } : { ok: false, status: 401 };
+  const got = digest(supplied);
+  return tokens.some((t) => timingSafeEqual(got, digest(t))) ? { ok: true } : { ok: false, status: 401 };
 }
 
 export function agentJson(body: unknown, status = 200): Response {
