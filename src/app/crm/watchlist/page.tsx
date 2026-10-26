@@ -1,5 +1,5 @@
 import { getProspects, getAllCrmUsers } from "@/lib/data";
-import { createProspect, updateProspect, deleteProspect, setProspectChecked } from "@/lib/prospect-actions";
+import { createProspect, updateProspect, deleteProspect, setProspectChecked, setProspectNotRelevant } from "@/lib/prospect-actions";
 import { PROSPECT_STATUS_LABELS } from "@/lib/constants";
 import { formatDate } from "@/lib/format";
 import ProspectForm from "@/components/ProspectForm";
@@ -45,7 +45,20 @@ export default async function WatchlistPage() {
         {prospectsList.map((p) => {
           const contactedBy = p.contactedByUserId ? userById.get(p.contactedByUserId) : undefined;
           return (
-            <div key={p.id} className="card p-4">
+            <div
+              key={p.id}
+              className="card p-4"
+              style={
+                p.notRelevantNow
+                  ? {
+                      background: "var(--danger-bg)",
+                      borderColor: "var(--danger)",
+                      borderInlineStartWidth: "4px",
+                    }
+                  : undefined
+              }
+              data-not-relevant={p.notRelevantNow ? "true" : undefined}
+            >
               <div className="flex items-center justify-between gap-3 flex-wrap">
                 <div>
                   <div className="font-semibold">{p.name}</div>
@@ -54,6 +67,27 @@ export default async function WatchlistPage() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
+                  <form action={setProspectNotRelevant.bind(null, p.id, !p.notRelevantNow)}>
+                    <button
+                      type="submit"
+                      role="switch"
+                      aria-checked={p.notRelevantNow}
+                      className={`badge ${p.notRelevantNow ? "badge-danger" : "badge-neutral"} flex items-center gap-1 cursor-pointer`}
+                      style={p.notRelevantNow ? { border: "1px solid var(--danger)" } : undefined}
+                    >
+                      <span
+                        aria-hidden="true"
+                        className="inline-block rounded-sm"
+                        style={{
+                          width: "0.8rem",
+                          height: "0.8rem",
+                          border: "1.5px solid currentColor",
+                          background: p.notRelevantNow ? "currentColor" : "transparent",
+                        }}
+                      />
+                      לא רלוונטי כרגע
+                    </button>
+                  </form>
                   <form action={setProspectChecked.bind(null, p.id, !p.checked)}>
                     <button
                       type="submit"
