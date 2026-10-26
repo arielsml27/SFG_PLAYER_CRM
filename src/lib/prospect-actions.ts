@@ -34,7 +34,9 @@ function valuesFromForm(formData: FormData) {
     meetingTime: hasMeeting ? str(formData, "meetingTime") : null,
     meetingLocation: hasMeeting ? str(formData, "meetingLocation") : null,
     followUpDate: meetingHeld ? str(formData, "followUpDate") : null,
-    notes: meetingHeld ? str(formData, "notes") : null,
+    notes: str(formData, "notes"),
+    transfermarktUrl: str(formData, "transfermarktUrl"),
+    whatsapp: str(formData, "whatsapp"),
     // Once handled, clear the reminder clock so a future relapse to an
     // unhandled status starts counting fresh instead of firing immediately.
     ...(UNHANDLED_STATUSES.includes(status) ? {} : { reminderSentAt: null }),
@@ -50,6 +52,14 @@ export async function updateProspect(prospectId: string, formData: FormData) {
   await db
     .update(prospects)
     .set({ ...valuesFromForm(formData), updatedAt: new Date().toISOString() })
+    .where(eq(prospects.id, prospectId));
+  revalidatePath("/crm/watchlist");
+}
+
+export async function setProspectChecked(prospectId: string, checked: boolean) {
+  await db
+    .update(prospects)
+    .set({ checked, updatedAt: new Date().toISOString() })
     .where(eq(prospects.id, prospectId));
   revalidatePath("/crm/watchlist");
 }
