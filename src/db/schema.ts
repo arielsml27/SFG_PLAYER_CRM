@@ -446,6 +446,9 @@ export const prospects = sqliteTable("prospects", {
   meetingLocation: text("meeting_location"),
   followUpDate: text("follow_up_date"),
   notes: text("notes"),
+  transfermarktUrl: text("transfermarkt_url"),
+  whatsapp: text("whatsapp"),
+  checked: integer("checked", { mode: "boolean" }).notNull().default(false),
   reminderSentAt: text("reminder_sent_at"),
   ...timestamps,
 });
