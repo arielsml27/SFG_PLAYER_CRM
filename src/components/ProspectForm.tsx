@@ -18,6 +18,8 @@ type ProspectDefaults = {
   meetingLocation?: string | null;
   followUpDate?: string | null;
   notes?: string | null;
+  transfermarktUrl?: string | null;
+  whatsapp?: string | null;
 };
 
 export default function ProspectForm({
@@ -54,6 +56,14 @@ export default function ProspectForm({
       <div>
         <label className="field-label">טלפון הורה</label>
         <input name="parentPhone" defaultValue={defaultValues?.parentPhone ?? ""} className="input" />
+      </div>
+      <div>
+        <label className="field-label">וואטסאפ</label>
+        <input name="whatsapp" type="tel" dir="ltr" placeholder="+972..." defaultValue={defaultValues?.whatsapp ?? ""} className="input" />
+      </div>
+      <div className="md:col-span-2">
+        <label className="field-label">לינק Transfermarkt</label>
+        <input name="transfermarktUrl" type="url" dir="ltr" placeholder="https://www.transfermarkt.com/..." defaultValue={defaultValues?.transfermarktUrl ?? ""} className="input" />
       </div>
       <div>
         <label className="field-label">מי פנה</label>
@@ -106,12 +116,13 @@ export default function ProspectForm({
             <label className="field-label">תאריך פולואפ</label>
             <input type="date" name="followUpDate" defaultValue={defaultValues?.followUpDate ?? ""} className="input" />
           </div>
-          <div className="md:col-span-2">
-            <label className="field-label">הערות</label>
-            <textarea name="notes" defaultValue={defaultValues?.notes ?? ""} className="input" rows={3} />
-          </div>
         </>
       )}
+
+      <div className="md:col-span-2">
+        <label className="field-label">חוות דעת</label>
+        <textarea name="notes" defaultValue={defaultValues?.notes ?? ""} className="input" rows={3} />
+      </div>
 
       <div className="md:col-span-2">
         <button type="submit" className="btn btn-gold btn-sm">
