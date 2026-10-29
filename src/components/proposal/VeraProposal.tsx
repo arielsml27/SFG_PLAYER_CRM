@@ -332,7 +332,13 @@ export default function VeraProposal(props: Props) {
 
           <header className="vp-top">
             <span className="vp-wordmark" dir="ltr">
-              VERA
+              <svg viewBox="0 0 100 100" aria-hidden="true">
+                <polygon points="0,10 30,10 50,58 70,10 100,10 58,100 42,100" />
+              </svg>
+              <span>
+                <span className="vp-wm-name">VERA</span>
+                <span className="vp-wm-sub">SPORTS GROUP</span>
+              </span>
             </span>
             <span className="vp-top-meta">
               {u.eyebrow} · <bdi>{seasonLabel(props.today)}</bdi>
