@@ -40,7 +40,7 @@ export default async function PlayerProposalPage({ params }: { params: Promise<{
         type: "svg",
         margin: 0,
         errorCorrectionLevel: "M",
-        color: { dark: "#160F2AFF", light: "#00000000" },
+        color: { dark: "#0A0A0DFF", light: "#00000000" },
       });
     } catch {
       /* a malformed URL just gets no QR code */
