@@ -1,3 +1,5 @@
+import { redirect } from "next/navigation";
+import { getCurrentCrmUser } from "@/lib/current-user";
 import { getMeetings, getAllCrmUsers } from "@/lib/data";
 import { createMeeting, deleteMeeting } from "@/lib/meeting-actions";
 import { formatDate } from "@/lib/format";
@@ -8,6 +10,10 @@ import { Trash2 } from "lucide-react";
 export const dynamic = "force-dynamic";
 
 export default async function MeetingsPage() {
+  const currentUser = await getCurrentCrmUser();
+  if (!currentUser) redirect("/crm-login");
+  if (currentUser.role !== "ADMIN") redirect("/crm");
+
   const [meetingList, users] = await Promise.all([getMeetings(), getAllCrmUsers()]);
 
   return (

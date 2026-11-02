@@ -5,13 +5,15 @@ import { usePathname } from "next/navigation";
 import { Users, LayoutDashboard, ListChecks, Building2, Plus, LogOut, ShieldCheck, Eye, ClipboardList, CalendarClock } from "lucide-react";
 import { crmLogout } from "@/lib/crm-auth-actions";
 
+// adminOnly sections are agency-level data (not tied to a specific player);
+// the pages and server actions enforce this too, the sidebar only hides them.
 const NAV = [
   { href: "/crm", label: "דשבורד", icon: LayoutDashboard },
   { href: "/crm/players", label: "שחקנים", icon: Users },
-  { href: "/crm/watchlist", label: "שחקנים למעקב", icon: Eye },
-  { href: "/crm/requests", label: "בקשות", icon: ClipboardList },
+  { href: "/crm/watchlist", label: "שחקנים למעקב", icon: Eye, adminOnly: true },
+  { href: "/crm/requests", label: "בקשות", icon: ClipboardList, adminOnly: true },
   { href: "/crm/tasks", label: "משימות", icon: ListChecks },
-  { href: "/crm/meetings", label: "פגישות", icon: CalendarClock },
+  { href: "/crm/meetings", label: "פגישות", icon: CalendarClock, adminOnly: true },
   { href: "/crm/clubs", label: "מועדונים", icon: Building2 },
 ];
 
@@ -19,7 +21,10 @@ type CurrentUserInfo = { name: string | null; email: string; role: string } | nu
 
 export default function Sidebar({ currentUser }: { currentUser?: CurrentUserInfo }) {
   const pathname = usePathname();
-  const nav = currentUser?.role === "ADMIN" ? [...NAV, { href: "/crm/admin/users", label: "משתמשים", icon: ShieldCheck }] : NAV;
+  const isAdmin = currentUser?.role === "ADMIN";
+  const nav = isAdmin
+    ? [...NAV, { href: "/crm/admin/users", label: "משתמשים", icon: ShieldCheck }]
+    : NAV.filter((item) => !item.adminOnly);
 
   return (
     <aside

@@ -2,6 +2,7 @@
 
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { requireAdmin } from "@/lib/permissions";
 import { db } from "@/db";
 import { meetings } from "@/db/schema";
 
@@ -24,11 +25,13 @@ function valuesFromForm(formData: FormData) {
 }
 
 export async function createMeeting(formData: FormData) {
+  await requireAdmin();
   await db.insert(meetings).values(valuesFromForm(formData));
   revalidatePath("/crm/meetings");
 }
 
 export async function deleteMeeting(meetingId: string) {
+  await requireAdmin();
   await db.delete(meetings).where(eq(meetings.id, meetingId));
   revalidatePath("/crm/meetings");
 }

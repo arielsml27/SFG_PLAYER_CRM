@@ -1,3 +1,5 @@
+import { redirect } from "next/navigation";
+import { getCurrentCrmUser } from "@/lib/current-user";
 import { getRequests, getAllCrmUsers, getPlayerPickerList, getAllClubs } from "@/lib/data";
 import { createRequest, updateRequest, deleteRequest, addProposedPlayer, removeProposedPlayer } from "@/lib/request-actions";
 import { REQUEST_STATUS_LABELS } from "@/lib/constants";
@@ -15,6 +17,10 @@ function playerName(p: { firstName: string | null; lastName: string | null; full
 }
 
 export default async function RequestsPage() {
+  const currentUser = await getCurrentCrmUser();
+  if (!currentUser) redirect("/crm-login");
+  if (currentUser.role !== "ADMIN") redirect("/crm");
+
   const [requestList, users, playerOptions, clubOptions] = await Promise.all([
     getRequests(),
     getAllCrmUsers(),

@@ -7,15 +7,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { getCurrentCrmUser } from "@/lib/current-user";
-
-async function requireAdmin() {
-    const user = await getCurrentCrmUser();
-    if (!user || user.role !== "ADMIN") {
-          throw new Error("Admins only.");
-    }
-    return user;
-}
+import { requireAdmin, requireCrmUser } from "@/lib/permissions";
 
 const CLUB_LOGO_DIR = path.join(process.cwd(), "public", "uploads", "clubs");
 
@@ -39,6 +31,7 @@ function bool(fd: FormData, key: string): boolean {
 }
 
 export async function createClub(formData: FormData) {
+  await requireCrmUser();
     const logoFile = formData.get("logo");
     const logoPath = logoFile instanceof File && logoFile.size > 0 ? await saveClubLogo(logoFile) : null;
 
@@ -61,6 +54,7 @@ export async function createClub(formData: FormData) {
 }
 
 export async function updateClub(clubId: string, formData: FormData) {
+  await requireCrmUser();
     const logoFile = formData.get("logo");
     const removeLogo = bool(formData, "removeLogo");
     let logoPath: string | null | undefined = undefined;
@@ -90,6 +84,7 @@ export async function updateClub(clubId: string, formData: FormData) {
 }
 
 export async function addClubContact(clubId: string, formData: FormData) {
+  await requireCrmUser();
     const name = str(formData, "name");
     if (!name) return;
     await db.insert(clubContacts).values({
@@ -103,6 +98,7 @@ export async function addClubContact(clubId: string, formData: FormData) {
 }
 
 export async function deleteClubContact(clubId: string, contactId: string) {
+  await requireCrmUser();
     await db.delete(clubContacts).where(eq(clubContacts.id, contactId));
     revalidatePath(`/crm/clubs/${clubId}`);
 }
@@ -123,6 +119,7 @@ export async function deleteClub(clubId: string) {
 // ---------- Club sub-teams (age groups) ----------
 
 export async function addClubTeam(clubId: string, formData: FormData) {
+  await requireCrmUser();
     const name = str(formData, "name");
     if (!name) return;
     await db.insert(clubTeams).values({
@@ -134,11 +131,13 @@ export async function addClubTeam(clubId: string, formData: FormData) {
 }
 
 export async function deleteClubTeam(clubId: string, teamId: string) {
+  await requireCrmUser();
     await db.delete(clubTeams).where(eq(clubTeams.id, teamId));
     revalidatePath(`/crm/clubs/${clubId}`);
 }
 
 export async function addClubTeamContact(clubId: string, teamId: string, formData: FormData) {
+  await requireCrmUser();
     const name = str(formData, "name");
     if (!name) return;
     await db.insert(clubTeamContacts).values({
@@ -152,6 +151,7 @@ export async function addClubTeamContact(clubId: string, teamId: string, formDat
 }
 
 export async function deleteClubTeamContact(clubId: string, contactId: string) {
+  await requireCrmUser();
     await db.delete(clubTeamContacts).where(eq(clubTeamContacts.id, contactId));
     revalidatePath(`/crm/clubs/${clubId}`);
 }
