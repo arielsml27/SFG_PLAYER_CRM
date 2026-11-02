@@ -60,26 +60,26 @@ export const POSITION_NAMES: Record<string, Record<ProposalLang, string>> = {
 export const PROPOSAL_UI: Record<ProposalLang, Record<string, string>> = {
   he: {
     eyebrow: "הצעת שחקן", prepared: "עבור", facts: "נתוני מפתח", hive: "כוורת תכונות", summary: "סיכום מקצועי",
-    why: "למה הוא", links: "וידאו ונתונים", scan: "סרקו לווידאו", contact: "לשאלות נוספות ותיאום",
+    why: "תכונות בולטות", links: "וידאו ונתונים", scan: "סרקו לווידאו", contact: "לשאלות נוספות ותיאום",
     conf: "חסוי · מיועד לשימוש המועדון בלבד", photo: "תמונת שחקן", terms: "תנאי עסקה", transfer: "העברה",
     salary: "שכר מבוקש (משוער)", avail: "זמינות", pending: "ממתין לדוח סקאוטינג",
-    hiveSource: "הערכת סקאוטינג VERA, סולם 1 עד 10", phone: "טלפון", email: "מייל",
+    hiveSource: "הערכת סקאוטינג VERA", phone: "טלפון", email: "מייל",
     age: "גיל", salaryShort: "שכר משוער", availShort: "זמינות", born: "נולד",
   },
   en: {
     eyebrow: "Player proposal", prepared: "for", facts: "Key facts", hive: "Attribute hive", summary: "Scouting summary",
-    why: "Why him", links: "Video and data", scan: "Scan to watch", contact: "Further information",
+    why: "Standout traits", links: "Video and data", scan: "Scan to watch", contact: "Further information",
     conf: "Confidential · prepared for club use", photo: "Player photo", terms: "Deal terms", transfer: "Transfer",
     salary: "Salary expectation (est.)", avail: "Available from", pending: "Scouting report pending",
-    hiveSource: "VERA scouting assessment, 1 to 10 scale", phone: "Phone", email: "Email",
+    hiveSource: "VERA scouting assessment", phone: "Phone", email: "Email",
     age: "Age", salaryShort: "Salary (est.)", availShort: "Available", born: "Born",
   },
   sr: {
     eyebrow: "Predlog igrača", prepared: "za", facts: "Ključni podaci", hive: "Profil kvaliteta", summary: "Skauting rezime",
-    why: "Zašto on", links: "Video i podaci", scan: "Skenirajte za video", contact: "Dodatne informacije",
+    why: "Istaknute osobine", links: "Video i podaci", scan: "Skenirajte za video", contact: "Dodatne informacije",
     conf: "Poverljivo · samo za upotrebu kluba", photo: "Fotografija igrača", terms: "Uslovi transfera", transfer: "Transfer",
     salary: "Očekivana plata (procena)", avail: "Dostupan od", pending: "Skauting izveštaj u pripremi",
-    hiveSource: "VERA skauting procena, skala 1 do 10", phone: "Telefon", email: "Email",
+    hiveSource: "VERA skauting procena", phone: "Telefon", email: "Email",
     age: "Godine", salaryShort: "Plata (procena)", availShort: "Dostupan", born: "Rođen",
   },
 };
