@@ -3,7 +3,8 @@
 import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { db } from "@/db";
-import { clubRequests, requestProposedPlayers } from "@/db/schema";
+import { clubRequests, requestProposedPlayers, requestProposedProspects } from "@/db/schema";
+import { getCurrentCrmUser } from "@/lib/current-user";
 
 function str(fd: FormData, key: string): string | null {
   const v = fd.get(key);
@@ -55,4 +56,37 @@ export async function removeProposedPlayer(requestId: string, playerId: string) 
     .delete(requestProposedPlayers)
     .where(and(eq(requestProposedPlayers.requestId, requestId), eq(requestProposedPlayers.playerId, playerId)));
   revalidatePath("/crm/requests");
+}
+
+// ---------- Watchlist prospects proposed to a request ----------
+
+async function requireAdminForProspectProposal() {
+  const user = await getCurrentCrmUser();
+  if (!user || user.role !== "ADMIN") {
+    throw new Error("רק מנהל יכול להציע שחקן מהמעקב לבקשה");
+  }
+  return user;
+}
+
+// Called from the watchlist card: the form carries the chosen requestId.
+export async function proposeProspectToRequest(prospectId: string, formData: FormData) {
+  await requireAdminForProspectProposal();
+  const requestId = str(formData, "requestId");
+  if (!requestId) return;
+  const [request] = await db.select({ id: clubRequests.id }).from(clubRequests).where(eq(clubRequests.id, requestId));
+  if (!request) throw new Error("הבקשה לא נמצאה");
+  await db.insert(requestProposedProspects).values({ requestId, prospectId }).onConflictDoNothing();
+  revalidatePath("/crm/watchlist");
+  revalidatePath("/crm/requests");
+  revalidatePath("/crm/clubs");
+}
+
+export async function removeProposedProspect(requestId: string, prospectId: string) {
+  await requireAdminForProspectProposal();
+  await db
+    .delete(requestProposedProspects)
+    .where(and(eq(requestProposedProspects.requestId, requestId), eq(requestProposedProspects.prospectId, prospectId)));
+  revalidatePath("/crm/watchlist");
+  revalidatePath("/crm/requests");
+  revalidatePath("/crm/clubs");
 }

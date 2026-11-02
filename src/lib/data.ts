@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { players, clubContracts, representationAgreements, tasks, clubs, clubContacts, clubTeams, clubTeamContacts, playerLinks, videos, documents, contacts, timelineEvents, deals, scoutingReports, questionnaireResponses, prospects, crmUsers, clubRequests, requestProposedPlayers, meetings } from "@/db/schema";
+import { players, clubContracts, representationAgreements, tasks, clubs, clubContacts, clubTeams, clubTeamContacts, playerLinks, videos, documents, contacts, timelineEvents, deals, scoutingReports, questionnaireResponses, prospects, crmUsers, clubRequests, requestProposedPlayers, meetings, requestProposedProspects } from "@/db/schema";
 import { and, asc, desc, eq, gte, isNull, lte, like, or, sql } from "drizzle-orm";
 
 function todayISO() {
@@ -186,6 +186,44 @@ export async function getProspects() {
   return db.select().from(prospects).orderBy(desc(prospects.createdAt));
 }
 
+// Open club requests, for the "הצע למועדון" picker on the watchlist.
+export async function getOpenRequestsForPicker() {
+  const [requestRows, allClubs] = await Promise.all([
+    db.select().from(clubRequests).where(eq(clubRequests.status, "OPEN")).orderBy(desc(clubRequests.createdAt)),
+    db.select({ id: clubs.id, name: clubs.name, country: clubs.country }).from(clubs),
+  ]);
+  const clubById = new Map(allClubs.map((c) => [c.id, c]));
+  return requestRows.map((r) => {
+    const club = r.clubId ? clubById.get(r.clubId) : undefined;
+    const label = [club?.name ?? "בקשה ללא קבוצה", club?.country, r.positionSought ? `מחפשים: ${r.positionSought}` : null]
+      .filter(Boolean)
+      .join(" · ");
+    return { id: r.id, label, clubName: club?.name ?? null, positionSought: r.positionSought };
+  });
+}
+
+// prospectId -> list of requests it was already proposed to (for the watchlist card).
+export async function getProposedRequestsByProspect() {
+  const [links, requestRows, allClubs] = await Promise.all([
+    db.select().from(requestProposedProspects),
+    db.select().from(clubRequests),
+    db.select({ id: clubs.id, name: clubs.name }).from(clubs),
+  ]);
+  const clubById = new Map(allClubs.map((c) => [c.id, c]));
+  const requestById = new Map(requestRows.map((r) => [r.id, r]));
+  const out = new Map<string, { requestId: string; label: string; status: string }[]>();
+  for (const link of links) {
+    const r = requestById.get(link.requestId);
+    if (!r) continue;
+    const club = r.clubId ? clubById.get(r.clubId) : undefined;
+    const label = [club?.name ?? "בקשה ללא קבוצה", r.positionSought].filter(Boolean).join(" · ");
+    const list = out.get(link.prospectId) ?? [];
+    list.push({ requestId: r.id, label, status: r.status });
+    out.set(link.prospectId, list);
+  }
+  return out;
+}
+
 export async function getAllCrmUsers() {
   return db.select().from(crmUsers).orderBy(crmUsers.email);
 }
@@ -207,18 +245,22 @@ export async function getMeetings() {
 // ---------- Club requests (בקשות) ----------
 
 export async function getRequests() {
-  const [requestList, allUsers, proposedRows, allPlayers, allClubs] = await Promise.all([
+  const [requestList, allUsers, proposedRows, allPlayers, allClubs, proposedProspectRows, allProspects] = await Promise.all([
     db.select().from(clubRequests).orderBy(desc(clubRequests.createdAt)),
     db.select().from(crmUsers),
     db.select().from(requestProposedPlayers),
     db.select().from(players),
     db.select().from(clubs),
+    db.select().from(requestProposedProspects),
+    db.select({ id: prospects.id, name: prospects.name, club: prospects.club, position: prospects.position }).from(prospects),
   ]);
 
   const userById = new Map(allUsers.map((u) => [u.id, u]));
   const playerById = new Map(allPlayers.map((p) => [p.id, p]));
   const clubById = new Map(allClubs.map((c) => [c.id, c]));
+  const prospectById = new Map(allProspects.map((p) => [p.id, p]));
   const proposedByRequest = groupBy(proposedRows, (r) => r.requestId);
+  const proposedProspectsByRequest = groupBy(proposedProspectRows, (r) => r.requestId);
 
   return requestList.map((r) => ({
     ...r,
@@ -227,6 +269,9 @@ export async function getRequests() {
     proposedPlayers: (proposedByRequest.get(r.id) ?? [])
       .map((link) => ({ linkId: link.id, player: playerById.get(link.playerId) }))
       .filter((x) => !!x.player),
+    proposedProspects: (proposedProspectsByRequest.get(r.id) ?? [])
+      .map((link) => ({ linkId: link.id, prospect: prospectById.get(link.prospectId) }))
+      .filter((x) => !!x.prospect),
   }));
 }
 

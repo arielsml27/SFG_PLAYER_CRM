@@ -1,5 +1,5 @@
 import { getRequests, getAllCrmUsers, getPlayerPickerList, getAllClubs } from "@/lib/data";
-import { createRequest, updateRequest, deleteRequest, addProposedPlayer, removeProposedPlayer } from "@/lib/request-actions";
+import { createRequest, updateRequest, deleteRequest, addProposedPlayer, removeProposedPlayer, removeProposedProspect } from "@/lib/request-actions";
 import { REQUEST_STATUS_LABELS } from "@/lib/constants";
 import RequestForm from "@/components/RequestForm";
 import ConfirmSubmitButton from "@/components/ConfirmSubmitButton";
@@ -101,7 +101,21 @@ export default async function RequestsPage() {
                       </button>
                     </form>
                   ))}
-                  {r.proposedPlayers.length === 0 && (
+                  {r.proposedProspects.map((x) => (
+                    <form key={x.linkId} action={removeProposedProspect.bind(null, r.id, x.prospect!.id)}>
+                      <button
+                        type="submit"
+                        className="badge badge-warn flex items-center gap-1"
+                        style={{ cursor: "pointer" }}
+                        title="שחקן מרשימת המעקב. לחץ להסרה"
+                      >
+                        {x.prospect!.name}
+                        <span className="text-xs opacity-75">(מעקב)</span>
+                        <X size={11} />
+                      </button>
+                    </form>
+                  ))}
+                  {r.proposedPlayers.length === 0 && r.proposedProspects.length === 0 && (
                     <span className="text-sm" style={{ color: "var(--muted)" }}>
                       עדיין לא הוצעו שחקנים
                     </span>

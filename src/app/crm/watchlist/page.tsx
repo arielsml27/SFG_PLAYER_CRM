@@ -1,10 +1,12 @@
-import { getProspects, getAllCrmUsers } from "@/lib/data";
+import { getProspects, getAllCrmUsers, getOpenRequestsForPicker, getProposedRequestsByProspect } from "@/lib/data";
+import { getCurrentCrmUser } from "@/lib/current-user";
+import { proposeProspectToRequest, removeProposedProspect } from "@/lib/request-actions";
 import { createProspect, updateProspect, deleteProspect, setProspectChecked, setProspectNotRelevant } from "@/lib/prospect-actions";
 import { PROSPECT_STATUS_LABELS } from "@/lib/constants";
 import { formatDate } from "@/lib/format";
 import ProspectForm from "@/components/ProspectForm";
 import ConfirmSubmitButton from "@/components/ConfirmSubmitButton";
-import { Plus, Trash2, ExternalLink, MessageCircle, CheckCircle2, Circle } from "lucide-react";
+import { Plus, Trash2, ExternalLink, MessageCircle, CheckCircle2, Circle, Send, X } from "lucide-react";
 
 function waLink(phone: string): string {
   let digits = phone.replace(/\D/g, "");
@@ -19,8 +21,15 @@ function toneFor(status: string): string {
 }
 
 export default async function WatchlistPage() {
-  const [prospectsList, users] = await Promise.all([getProspects(), getAllCrmUsers()]);
+  const [prospectsList, users, openRequests, proposedByProspect, currentUser] = await Promise.all([
+    getProspects(),
+    getAllCrmUsers(),
+    getOpenRequestsForPicker(),
+    getProposedRequestsByProspect(),
+    getCurrentCrmUser(),
+  ]);
   const userById = new Map(users.map((u) => [u.id, u]));
+  const canPropose = currentUser?.role === "ADMIN";
 
   return (
     <div className="max-w-5xl space-y-5">
@@ -162,6 +171,63 @@ export default async function WatchlistPage() {
                   <dd className="font-medium whitespace-pre-wrap text-right">{p.notes ?? "—"}</dd>
                 </div>
               </dl>
+
+              {canPropose && (() => {
+                const proposedTo = proposedByProspect.get(p.id) ?? [];
+                const proposedIds = new Set(proposedTo.map((x) => x.requestId));
+                const available = openRequests.filter((r) => !proposedIds.has(r.id));
+                return (
+                  <div className="mt-3">
+                    <div className="text-xs font-semibold mb-2" style={{ color: "var(--muted)" }}>
+                      הוצע למועדון
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {proposedTo.map((x) => (
+                        <form key={x.requestId} action={removeProposedProspect.bind(null, x.requestId, p.id)}>
+                          <button
+                            type="submit"
+                            className={`badge ${x.status === "OPEN" ? "badge-ok" : "badge-neutral"} flex items-center gap-1`}
+                            style={{ cursor: "pointer" }}
+                            title="הסר מהבקשה"
+                          >
+                            {x.label}
+                            <X size={11} />
+                          </button>
+                        </form>
+                      ))}
+                      {proposedTo.length === 0 && (
+                        <span className="text-sm" style={{ color: "var(--muted)" }}>
+                          עדיין לא הוצע לאף בקשה
+                        </span>
+                      )}
+                    </div>
+                    {available.length > 0 ? (
+                      <form action={proposeProspectToRequest.bind(null, p.id)} className="flex items-center gap-2 mt-2">
+                        <select name="requestId" className="input" defaultValue="" required>
+                          <option value="" disabled>
+                            בחר בקשה פתוחה
+                          </option>
+                          {available.map((r) => (
+                            <option key={r.id} value={r.id}>
+                              {r.label}
+                            </option>
+                          ))}
+                        </select>
+                        <button type="submit" className="btn btn-outline btn-sm shrink-0 flex items-center gap-1">
+                          <Send size={13} />
+                          הצע למועדון
+                        </button>
+                      </form>
+                    ) : (
+                      openRequests.length === 0 && (
+                        <div className="text-xs mt-2" style={{ color: "var(--muted)" }}>
+                          אין בקשות פתוחות להציע אליהן
+                        </div>
+                      )
+                    )}
+                  </div>
+                );
+              })()}
 
               <div className="flex items-center justify-between mt-3">
                 <details>
