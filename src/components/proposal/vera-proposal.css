@@ -141,6 +141,11 @@ details.vp-ed-group[open] summary { margin-bottom: 4px; }
 .vp-mid { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 34px; padding-top: 28px; align-items: start; }
 .vp-mid-r { min-width: 0; }
 .vp-lede { margin-top: 10px !important; font-size: 16px; line-height: 1.7; color: var(--vp-mist); }
+.vp-traits { margin-top: 18px; }
+.vp-traits h3 { margin: 0 0 8px; }
+.vp-traits ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
+.vp-traits li { position: relative; padding-inline-start: 16px; font-size: 14px; line-height: 1.5; color: var(--vp-mist); }
+.vp-traits li::before { content: ""; position: absolute; inset-inline-start: 0; top: 0.62em; width: 7px; height: 7px; transform: rotate(45deg); background: var(--vp-accent); }
 .vp-hive { background: var(--vp-aub); padding: 12px 10px 10px; border: 1px solid var(--vp-neon-dim); clip-path: polygon(0 0, 100% 0, 100% calc(100% - 74px), calc(100% - 36px) 100%, 0 100%); }
 .vp-sheet[dir="rtl"] .vp-hive { clip-path: polygon(0 0, 100% 0, 100% 100%, 36px 100%, 0 calc(100% - 74px)); }
 .vp-hive-h { display: flex; justify-content: space-between; align-items: baseline; padding-inline: 4px; font-size: 13px; font-weight: 600; color: var(--vp-mist); }
