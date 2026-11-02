@@ -502,10 +502,33 @@ export const requestProposedPlayers = sqliteTable(
   (table) => [uniqueIndex("request_proposed_players_idx").on(table.requestId, table.playerId)]
 );
 
+// Watchlist leads (prospects) proposed to a club request. Separate from
+// request_proposed_players because a prospect is not yet a player record.
+export const requestProposedProspects = sqliteTable(
+  "request_proposed_prospects",
+  {
+    id: id(),
+    requestId: text("request_id")
+      .notNull()
+      .references(() => clubRequests.id, { onDelete: "cascade" }),
+    prospectId: text("prospect_id")
+      .notNull()
+      .references(() => prospects.id, { onDelete: "cascade" }),
+    ...timestamps,
+  },
+  (table) => [uniqueIndex("request_proposed_prospects_idx").on(table.requestId, table.prospectId)]
+);
+
 export const clubRequestsRelations = relations(clubRequests, ({ one, many }) => ({
   handledBy: one(crmUsers, { fields: [clubRequests.handledByUserId], references: [crmUsers.id] }),
   club: one(clubs, { fields: [clubRequests.clubId], references: [clubs.id] }),
   proposedPlayers: many(requestProposedPlayers),
+  proposedProspects: many(requestProposedProspects),
+}));
+
+export const requestProposedProspectsRelations = relations(requestProposedProspects, ({ one }) => ({
+  request: one(clubRequests, { fields: [requestProposedProspects.requestId], references: [clubRequests.id] }),
+  prospect: one(prospects, { fields: [requestProposedProspects.prospectId], references: [prospects.id] }),
 }));
 
 export const requestProposedPlayersRelations = relations(requestProposedPlayers, ({ one }) => ({
