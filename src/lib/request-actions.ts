@@ -4,6 +4,7 @@ import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { db } from "@/db";
 import { clubRequests, requestProposedPlayers } from "@/db/schema";
+import { requireAdmin } from "@/lib/permissions";
 
 function str(fd: FormData, key: string): string | null {
   const v = fd.get(key);
@@ -26,11 +27,13 @@ function valuesFromForm(formData: FormData) {
 }
 
 export async function createRequest(formData: FormData) {
+  await requireAdmin();
   await db.insert(clubRequests).values(valuesFromForm(formData));
   revalidatePath("/crm/requests");
 }
 
 export async function updateRequest(requestId: string, formData: FormData) {
+  await requireAdmin();
   await db
     .update(clubRequests)
     .set({ ...valuesFromForm(formData), updatedAt: new Date().toISOString() })
@@ -39,11 +42,13 @@ export async function updateRequest(requestId: string, formData: FormData) {
 }
 
 export async function deleteRequest(requestId: string) {
+  await requireAdmin();
   await db.delete(clubRequests).where(eq(clubRequests.id, requestId));
   revalidatePath("/crm/requests");
 }
 
 export async function addProposedPlayer(requestId: string, formData: FormData) {
+  await requireAdmin();
   const playerId = str(formData, "playerId");
   if (!playerId) return;
   await db.insert(requestProposedPlayers).values({ requestId, playerId }).onConflictDoNothing();
@@ -51,6 +56,7 @@ export async function addProposedPlayer(requestId: string, formData: FormData) {
 }
 
 export async function removeProposedPlayer(requestId: string, playerId: string) {
+  await requireAdmin();
   await db
     .delete(requestProposedPlayers)
     .where(and(eq(requestProposedPlayers.requestId, requestId), eq(requestProposedPlayers.playerId, playerId)));

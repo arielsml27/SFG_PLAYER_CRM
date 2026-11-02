@@ -1,3 +1,5 @@
+import { redirect } from "next/navigation";
+import { getCurrentCrmUser } from "@/lib/current-user";
 import { getProspects, getAllCrmUsers } from "@/lib/data";
 import { createProspect, updateProspect, deleteProspect, setProspectChecked, setProspectNotRelevant } from "@/lib/prospect-actions";
 import { PROSPECT_STATUS_LABELS } from "@/lib/constants";
@@ -19,6 +21,10 @@ function toneFor(status: string): string {
 }
 
 export default async function WatchlistPage() {
+  const currentUser = await getCurrentCrmUser();
+  if (!currentUser) redirect("/crm-login");
+  if (currentUser.role !== "ADMIN") redirect("/crm");
+
   const [prospectsList, users] = await Promise.all([getProspects(), getAllCrmUsers()]);
   const userById = new Map(users.map((u) => [u.id, u]));
 

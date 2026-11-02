@@ -2,6 +2,7 @@
 
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { requireAdmin } from "@/lib/permissions";
 import { db } from "@/db";
 import { prospects } from "@/db/schema";
 
@@ -44,11 +45,13 @@ function valuesFromForm(formData: FormData) {
 }
 
 export async function createProspect(formData: FormData) {
+  await requireAdmin();
   await db.insert(prospects).values(valuesFromForm(formData));
   revalidatePath("/crm/watchlist");
 }
 
 export async function updateProspect(prospectId: string, formData: FormData) {
+  await requireAdmin();
   await db
     .update(prospects)
     .set({ ...valuesFromForm(formData), updatedAt: new Date().toISOString() })
@@ -57,6 +60,7 @@ export async function updateProspect(prospectId: string, formData: FormData) {
 }
 
 export async function setProspectChecked(prospectId: string, checked: boolean) {
+  await requireAdmin();
   await db
     .update(prospects)
     .set({ checked, updatedAt: new Date().toISOString() })
@@ -65,6 +69,7 @@ export async function setProspectChecked(prospectId: string, checked: boolean) {
 }
 
 export async function setProspectNotRelevant(prospectId: string, value: boolean) {
+  await requireAdmin();
   await db
     .update(prospects)
     .set({ notRelevantNow: value, updatedAt: new Date().toISOString() })
@@ -73,6 +78,7 @@ export async function setProspectNotRelevant(prospectId: string, value: boolean)
 }
 
 export async function deleteProspect(prospectId: string) {
+  await requireAdmin();
   await db.delete(prospects).where(eq(prospects.id, prospectId));
   revalidatePath("/crm/watchlist");
 }

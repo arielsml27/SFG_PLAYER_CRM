@@ -4,6 +4,7 @@ import { db } from "@/db";
 import {
   players,
   clubs,
+  userPlayerAssignments,
   clubContracts,
   representationAgreements,
   playerLinks,
@@ -32,6 +33,7 @@ import { redirect } from "next/navigation";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { generatePlayerAiSummaryText } from "@/lib/ai-summary";
+import { requireAdmin, requireCrmUser, requirePlayerAccess, requireTaskAccess } from "@/lib/permissions";
 
 const PLAYER_PHOTO_DIR = path.join(process.cwd(), "public", "uploads", "players");
 
@@ -70,6 +72,7 @@ function bool(fd: FormData, key: string): boolean {
 // ---------- Player ----------
 
 export async function createPlayer(formData: FormData) {
+  const creator = await requireCrmUser();
   let clubId: string | null = str(formData, "currentClubId");
   const newClubName = str(formData, "newClubName");
   if (newClubName) {
@@ -130,12 +133,18 @@ export async function createPlayer(formData: FormData) {
     })
     .returning();
 
+  // An AGENT only sees assigned players, so assign the one they just created.
+  if (creator.role !== "ADMIN") {
+    await db.insert(userPlayerAssignments).values({ userId: creator.id, playerId: player.id }).onConflictDoNothing();
+  }
+
   revalidatePath("/crm/players");
   revalidatePath("/crm");
   redirect(`/crm/players/${player.id}`);
 }
 
 export async function updatePlayer(playerId: string, formData: FormData) {
+  await requirePlayerAccess(playerId);
   let clubId: string | null = str(formData, "currentClubId");
   const newClubName = str(formData, "newClubName");
   if (newClubName) {
@@ -220,6 +229,7 @@ export async function updatePlayer(playerId: string, formData: FormData) {
 }
 
 export async function deletePlayer(playerId: string) {
+  await requireAdmin();
   await db.delete(players).where(eq(players.id, playerId));
   revalidatePath("/crm/players");
   revalidatePath("/crm");
@@ -229,6 +239,7 @@ export async function deletePlayer(playerId: string) {
 // ---------- Club contract ----------
 
 export async function addClubContract(playerId: string, formData: FormData) {
+  await requirePlayerAccess(playerId);
   await db.insert(clubContracts).values({
     playerId,
     clubId: str(formData, "clubId"),
@@ -248,6 +259,7 @@ export async function addClubContract(playerId: string, formData: FormData) {
 }
 
 export async function deleteClubContract(playerId: string, contractId: string) {
+  await requirePlayerAccess(playerId);
   await db.delete(clubContracts).where(eq(clubContracts.id, contractId));
   revalidatePath(`/crm/players/${playerId}`);
   revalidatePath("/crm");
@@ -256,6 +268,7 @@ export async function deleteClubContract(playerId: string, contractId: string) {
 // ---------- Representation ----------
 
 export async function addRepresentation(playerId: string, formData: FormData) {
+  await requirePlayerAccess(playerId);
   await db.insert(representationAgreements).values({
     playerId,
     startDate: str(formData, "startDate") ?? "",
@@ -273,6 +286,7 @@ export async function addRepresentation(playerId: string, formData: FormData) {
 }
 
 export async function deleteRepresentation(playerId: string, repId: string) {
+  await requirePlayerAccess(playerId);
   await db.delete(representationAgreements).where(eq(representationAgreements.id, repId));
   revalidatePath(`/crm/players/${playerId}`);
   revalidatePath("/crm");
@@ -281,6 +295,7 @@ export async function deleteRepresentation(playerId: string, repId: string) {
 // ---------- Links ----------
 
 export async function addLink(playerId: string, formData: FormData) {
+  await requirePlayerAccess(playerId);
   await db.insert(playerLinks).values({
     playerId,
     type: str(formData, "type") ?? "OTHER",
@@ -293,6 +308,7 @@ export async function addLink(playerId: string, formData: FormData) {
 }
 
 export async function deleteLink(playerId: string, linkId: string) {
+  await requirePlayerAccess(playerId);
   await db.delete(playerLinks).where(eq(playerLinks.id, linkId));
   revalidatePath(`/crm/players/${playerId}`);
 }
@@ -300,6 +316,7 @@ export async function deleteLink(playerId: string, linkId: string) {
 // ---------- Videos ----------
 
 export async function addVideo(playerId: string, formData: FormData) {
+  await requirePlayerAccess(playerId);
   await db.insert(videos).values({
     playerId,
     title: str(formData, "title") ?? "",
@@ -314,6 +331,7 @@ export async function addVideo(playerId: string, formData: FormData) {
 }
 
 export async function deleteVideo(playerId: string, videoId: string) {
+  await requirePlayerAccess(playerId);
   await db.delete(videos).where(eq(videos.id, videoId));
   revalidatePath(`/crm/players/${playerId}`);
 }
@@ -321,6 +339,7 @@ export async function deleteVideo(playerId: string, videoId: string) {
 // ---------- Documents ----------
 
 export async function addDocument(playerId: string, formData: FormData) {
+  await requirePlayerAccess(playerId);
   await db.insert(documents).values({
     playerId,
     title: str(formData, "title") ?? "",
@@ -334,6 +353,7 @@ export async function addDocument(playerId: string, formData: FormData) {
 }
 
 export async function deleteDocument(playerId: string, documentId: string) {
+  await requirePlayerAccess(playerId);
   await db.delete(documents).where(eq(documents.id, documentId));
   revalidatePath(`/crm/players/${playerId}`);
 }
@@ -341,6 +361,7 @@ export async function deleteDocument(playerId: string, documentId: string) {
 // ---------- Contacts ----------
 
 export async function addContact(playerId: string, formData: FormData) {
+  await requirePlayerAccess(playerId);
   await db.insert(contacts).values({
     playerId,
     name: str(formData, "name") ?? "",
@@ -356,6 +377,7 @@ export async function addContact(playerId: string, formData: FormData) {
 }
 
 export async function deleteContact(playerId: string, contactId: string) {
+  await requirePlayerAccess(playerId);
   await db.delete(contacts).where(eq(contacts.id, contactId));
   revalidatePath(`/crm/players/${playerId}`);
 }
@@ -363,6 +385,7 @@ export async function deleteContact(playerId: string, contactId: string) {
 // ---------- Timeline ----------
 
 export async function addTimelineEvent(playerId: string, formData: FormData) {
+  await requirePlayerAccess(playerId);
   await db.insert(timelineEvents).values({
     playerId,
     type: str(formData, "type") ?? "INTERNAL_NOTE",
@@ -376,6 +399,7 @@ export async function addTimelineEvent(playerId: string, formData: FormData) {
 }
 
 export async function deleteTimelineEvent(playerId: string, eventId: string) {
+  await requirePlayerAccess(playerId);
   await db.delete(timelineEvents).where(eq(timelineEvents.id, eventId));
   revalidatePath(`/crm/players/${playerId}`);
 }
@@ -384,6 +408,8 @@ export async function deleteTimelineEvent(playerId: string, eventId: string) {
 
 export async function addTask(formData: FormData) {
   const playerId = str(formData, "playerId");
+  if (playerId) await requirePlayerAccess(playerId);
+  else await requireCrmUser();
   await db.insert(tasks).values({
     playerId,
     title: str(formData, "title") ?? "",
@@ -400,6 +426,7 @@ export async function addTask(formData: FormData) {
 }
 
 export async function updateTaskStatus(taskId: string, status: string, playerId?: string | null) {
+  await requireTaskAccess(taskId);
   await db.update(tasks).set({ status, updatedAt: new Date().toISOString() }).where(eq(tasks.id, taskId));
   if (playerId) revalidatePath(`/crm/players/${playerId}`);
   revalidatePath("/crm/tasks");
@@ -407,6 +434,7 @@ export async function updateTaskStatus(taskId: string, status: string, playerId?
 }
 
 export async function deleteTask(taskId: string, playerId?: string | null) {
+  await requireTaskAccess(taskId);
   await db.delete(tasks).where(eq(tasks.id, taskId));
   if (playerId) revalidatePath(`/crm/players/${playerId}`);
   revalidatePath("/crm/tasks");
@@ -416,6 +444,7 @@ export async function deleteTask(taskId: string, playerId?: string | null) {
 // ---------- Deals ----------
 
 export async function addDeal(playerId: string, formData: FormData) {
+  await requirePlayerAccess(playerId);
   await db.insert(deals).values({
     playerId,
     clubId: str(formData, "clubId"),
@@ -432,6 +461,7 @@ export async function addDeal(playerId: string, formData: FormData) {
 }
 
 export async function deleteDeal(playerId: string, dealId: string) {
+  await requirePlayerAccess(playerId);
   await db.delete(deals).where(eq(deals.id, dealId));
   revalidatePath(`/crm/players/${playerId}`);
   revalidatePath("/crm");
@@ -449,6 +479,7 @@ const FIXED_RATING_SKILLS = [
 ].map(([key]) => key);
 
 export async function upsertScoutingReport(playerId: string, formData: FormData) {
+  await requirePlayerAccess(playerId);
   const ratingValues = Object.fromEntries(FIXED_RATING_SKILLS.map((key) => [key, num(formData, key)]));
 
   const positionGroup = POSITION_GROUPS.includes(str(formData, "positionGroup") as any)
@@ -486,6 +517,7 @@ export async function upsertScoutingReport(playerId: string, formData: FormData)
 // ---------- AI player summary ----------
 
 export async function generatePlayerAiSummary(playerId: string) {
+  await requirePlayerAccess(playerId);
   const player = (await db.select().from(players).where(eq(players.id, playerId)))[0];
   if (!player) return;
 
