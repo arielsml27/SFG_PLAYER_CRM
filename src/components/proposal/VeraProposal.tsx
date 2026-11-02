@@ -265,6 +265,16 @@ export default function VeraProposal(props: Props) {
             <textarea id="vp-summary" dir={rtl ? "rtl" : "ltr"} rows={7} value={t.summary} onChange={(e) => patch({ summary: e.target.value })} />
           </label>
           <label className="vp-field">
+            <span>תכונות בולטות · עד 3, שורה לכל תכונה</span>
+            <textarea
+              id="vp-why"
+              dir={rtl ? "rtl" : "ltr"}
+              rows={3}
+              value={t.why.join("\n")}
+              onChange={(e) => patch({ why: [...e.target.value.split("\n"), "", "", ""].slice(0, 3) })}
+            />
+          </label>
+          <label className="vp-field">
             <span>מועדון נוכחי ({LANG_NAMES[lang]})</span>
             <input
               id="vp-club"
@@ -340,15 +350,6 @@ export default function VeraProposal(props: Props) {
                 <span className="vp-wm-sub">SPORTS GROUP</span>
               </span>
             </span>
-            <span className="vp-top-meta">
-              {u.eyebrow} · <bdi>{seasonLabel(props.today)}</bdi>
-              {preparedFor && (
-                <>
-                  {" "}
-                  · {u.prepared} <bdi>{preparedFor}</bdi>
-                </>
-              )}
-            </span>
           </header>
 
           <section className="vp-hero">
@@ -386,6 +387,16 @@ export default function VeraProposal(props: Props) {
             <div className="vp-mid-r">
               <h3>{u.summary}</h3>
               <p className="vp-lede">{t.summary}</p>
+              {t.why.some((w) => w.trim()) && (
+                <div className="vp-traits">
+                  <h3>{u.why}</h3>
+                  <ul>
+                    {t.why.filter((w) => w.trim()).map((w, i) => (
+                      <li key={i}>{w}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
             <figure className="vp-hive">
               <figcaption className="vp-hive-h">
@@ -474,13 +485,6 @@ function linkCaption(l: ProposalLink): string {
   }
 }
 
-function seasonLabel(today: string): string {
-  // today is dd.mm.yyyy; seasons turn over in July
-  const [, mm, yyyy] = today.split(".").map(Number);
-  const start = mm >= 7 ? yyyy : yyyy - 1;
-  return `${start}/${String((start + 1) % 100).padStart(2, "0")}`;
-}
-
 function KeyCell({ k, main, sub, big }: { k: string; main: string; sub?: string; big?: boolean }) {
   return (
     <div className={big ? "vp-key vp-key-big" : "vp-key"}>
@@ -532,11 +536,9 @@ function Hive({ axes, lang }: { axes: HiveAxis[]; lang: ProposalLang }) {
             const ang = -90 + (i * 360) / n;
             const c = Math.cos((ang * Math.PI) / 180);
             const anchor = Math.abs(c) < 0.2 ? "middle" : c > 0 ? "start" : "end";
-            const val = a.value.toFixed(1);
             if (Math.abs(c) < 0.2 && ang < 0)
               return (
                 <g key={a.key}>
-                  <text className="vp-lbl-val" x={x} y={y - 22} textAnchor="middle">{val}</text>
                   <text className="vp-lbl" x={x} y={y} textAnchor="middle">{a.label[lang]}</text>
                 </g>
               );
@@ -544,13 +546,11 @@ function Hive({ axes, lang }: { axes: HiveAxis[]; lang: ProposalLang }) {
               return (
                 <g key={a.key}>
                   <text className="vp-lbl" x={x} y={y + 14} textAnchor="middle">{a.label[lang]}</text>
-                  <text className="vp-lbl-val" x={x} y={y + 36} textAnchor="middle">{val}</text>
                 </g>
               );
             return (
               <g key={a.key}>
                 <text className="vp-lbl" x={x} y={y - 3} textAnchor={anchor}>{a.label[lang]}</text>
-                <text className="vp-lbl-val" x={x} y={y + 19} textAnchor={anchor}>{val}</text>
               </g>
             );
           })}
